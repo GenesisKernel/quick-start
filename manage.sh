@@ -16,9 +16,9 @@ APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
 DOCKER_APP_DIR_SIZE_M=1126 # to update run 'du -sm /Applications/Docker.app'
 
-APLA_CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.3/Apla-0.3.3.dmg"
+APLA_CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.4/Apla-0.3.4.dmg"
 APLA_CLIENT_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Apla.app'
-APLA_CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.3/apla-0.3.3-x86_64.AppImage"
+APLA_CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.4/apla-0.3.4-x86_64.AppImage"
 
 SED_E="sed -E"
 
