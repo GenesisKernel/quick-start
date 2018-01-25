@@ -2,11 +2,15 @@
 
 ### Configuration ### begin ###
 
+SED_E="sed -E"
+
 DB_PORT=15432
+CF_PORT=18100
 WEB_PORT_SHIFT=8300
 CLIENT_PORT_SHIFT=17300
 
 CONT_DB_PORT=5432
+CONT_CF_PORT=8000
 CONT_WEB_PORT_SHIFT=80
 CONT_CLIENT_PORT_SHIFT=7000
 
@@ -14,13 +18,21 @@ DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
 APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
-DOCKER_APP_DIR_SIZE_M=1126 # to update run 'du -sm /Applications/Docker.app'
+DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
+DOCKER_MAC_APP_DIR_SIZE_M=1136 # to update run 'du -sm /Applications/Docker.app'
+DOCKER_MAC_APP_DIR="/Applications/Docker.app"
+DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
+DOCKER_APP_NAME="Docker"
 
-APLA_CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.5/Apla-0.3.5.dmg"
-APLA_CLIENT_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Apla.app'
-APLA_CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.5/apla-0.3.5-x86_64.AppImage"
+CLIENT_DMG_DL_URL="https://www.dropbox.com/s/qksahfyc6ogp6tv/Genesis-0.3.5.dmg?dl=1"
+CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
+CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
+CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
+CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
 
-SED_E="sed -E"
+CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/e9fun3xir0gfpsr/genesis-front-0.3.5-x86_64.AppImage?dl=1"
+CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
+CLIENT_APP_NAME="Genesis"
 
 BF_CONT_NAME="genesis-bf"
 BF_CONT_IMAGE="str16071985/genesis-bf"
@@ -31,6 +43,14 @@ DB_CONT_NAME="genesis-db"
 DB_CONT_IMAGE="str16071985/genesis-db"
 DB_CONT_BUILD_DIR="genesis-db"
 TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
+
+CF_CONT_NAME="genesis-cf"
+CF_CONT_IMAGE="str16071985/genesis-cf"
+CF_CONT_BUILD_DIR="genesis-cf"
+#CF_CONT_NAME="genesis-cf2"
+#CF_CONT_IMAGE="str16071985/genesis-cf2"
+#CF_CONT_BUILD_DIR="genesis-cf2"
+TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
@@ -214,6 +234,7 @@ check_host_ports() {
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
     local d_port; d_port=$4; [ -z "$d_port" ] && d_port=$DB_PORT
+    local cfp; cfp=$CF_PORT # FIXME: Change to argument
 
     local result; result=0
 
@@ -224,6 +245,15 @@ check_host_ports() {
     else
         echo "FREE"
     fi
+
+    echo -n "Checking centrifugo port $cfp: "
+    if [ -n "$(get_host_port_proc $cfp)" ]; then
+        echo "BUSY"
+        result=5
+    else
+        echo "FREE"
+    fi
+
 
     local w_port; local c_port; local run_cmd
     for i in $(seq 1 $num); do
@@ -280,7 +310,7 @@ get_app_dir_size_m() {
 
 download_and_check_dmg() {
     local dmg_url; dmg_url="$1"
-    local dmg_basename; dmg_basename="$(basename "$dmg_url")"
+    local dmg_basename; dmg_basename="$2"
     (
         update_global_downloads_and_apps_dir_vars
 
@@ -357,116 +387,13 @@ download_and_install_dmg() {
     return $result
 }
 
+### Download/install #### end ####
+
+
+### Docker ### begin ###
+
 install_mac_docker_directly() {
-    download_and_install_dmg "/Applications/Docker.app/Contents/MacOS/Docker" "/Applications/Docker.app" "$DOCKER_DMG_DL_URL" "$(basename "$DOCKER_DMG_DL_URL")" "Docker" $DOCKER_APP_DIR_SIZE_M
-}
-
-uninstall_mac_docker() {
-    if [ "${USER}" != "root" ]; then
-        echo "Please run this command with sudo or as root"
-    	return 2
-    fi
-
-    if [ -e /Applications/Docker.app/Contents/MacOS/Docker ]; then
-        /Applications/Docker.app/Contents/MacOS/Docker --uninstall
-    fi
-    
-    if [ -n "$(command -v  docker-machine)" ]; then
-        while true; do
-            read -p "Remove all Docker Machine VMs? (Y/N): " yn
-            case $yn in
-                [Yy]* ) docker-machine rm -f $(docker-machine ls -q); break ;;
-                [Nn]* ) break ;;
-                * ) echo "Please answer yes or no."; exit 1;;
-            esac
-        done
-    fi
-    
-    echo "Removing Docker from Applications..."
-    [ -e /Applications/Docker.app ] \
-        && rm -rf /Applications/Docker.app
-    
-    echo "Removing docker binaries..."
-    [ -e /usr/local/bin/docker ] \
-        && rm -f /usr/local/bin/docker
-    [ -e /usr/local/bin/docker-machine ] \
-        && rm -f /usr/local/bin/docker-machine
-    find /usr/local/bin -name 'docker-machine-driver*' -delete
-    [ -e /usr/local/bin/docker-compose ] \
-        && rm -f /usr/local/bin/docker-compose
-    
-    echo "Removing boot2docker.iso"
-    [ -e /usr/local/share/boot2docker ] \
-        && rm -rf /usr/local/share/boot2docker
-    
-    echo "Forget packages"
-    pkgutil --forget io.docker.pkg.docker
-    pkgutil --forget io.docker.pkg.dockercompose
-    pkgutil --forget io.docker.pkg.dockermachine
-    pkgutil --forget io.boot2dockeriso.pkg.boot2dockeriso
-   
-    local pids; pids="$(pgrep docker)" 
-    [ -n "$pids" ] && echo "Terminating docker processes ..." \
-        && kill $pids
-
-    echo "Docker completely removed"
-}
-
-uninstall_docker() {
-    local os_type; os_type="$(get_os_type)"
-    case $os_type in
-        mac)
-            uninstall_mac_docker
-            ;;
-        *)
-            echo "Sorry, but $os_type is not supported yet"
-            return 10
-            ;;
-    esac
-}
-
-check_docker_ready_status() {
-    [ -z "$(command -v docker)" ] && return 100
-    docker ps -a 1>&2>/dev/null
-}
-
-wait_docker_ready_status() {
-    local timeout_secs; [ -z "$1" ] && timeout_secs=15 || timeout_secs=$1
-    local end_time; end_time=$(( $(date +%s) + timeout_secs ))
-
-    echo "Waiting ($timeout_secs seconds) for docker daemon ready status ..."
-
-    local cnt; cnt=1
-    local stop; stop=0;
-    local result; result=0;
-    while [ $stop -eq 0 ]; do
-        [ $cnt -gt 1 ] && sleep 1
-        echo -n "    try $cnt: "
-        check_docker_ready_status; result=$?
-        case $result in
-            0) stop=1; echo "ok" ;;
-            *) [ $(date +%s) -lt $end_time ] || stop=1 ;;
-        esac
-        cnt=$(expr $cnt + 1)
-    done
-    return $result
-}
-
-start_mac_docker() {
-    install_mac_docker_directly
-    open -n /Applications/Docker.app
-    wait_proc docker 120
-    [ $? -ne 0 ] \
-        && echo "No docker process. Please reinstall docker." \
-        && echo "You can use $(basename "$0") uninstall-docker to uninstall docker" \
-        && return 10
-    wait_docker_ready_status 120
-    [ $? -ne 0 ] \
-        && echo "Docker daemon isn't ready. Please reinstall docker." \
-        && echo "You can use $(basename "$0") uninstall-docker to uninstall docker" \
-        && return 11
-    echo "Docker ready"
-    return 0
+    download_and_install_dmg "$DOCKER_MAC_APP_BIN" "$DOCKER_MAC_APP_DIR" "$DOCKER_DMG_DL_URL" "$DOCKER_DMG_BASENAME" "$DOCKER_APP_NAME" $DOCKER_MAC_APP_DIR_SIZE_M
 }
 
 install_linux_docker() {
@@ -535,6 +462,133 @@ install_linux_docker() {
     esac
 }
 
+install_docker() {
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        mac)
+            install_mac_docker_directly
+            ;;
+
+        linux)
+            install_linux_docker
+            ;;
+
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            return 10
+            ;;
+    esac
+}
+
+uninstall_mac_docker() {
+    if [ "${USER}" != "root" ]; then
+        echo "Please run this command with sudo or as root"
+    	return 2
+    fi
+
+    if [ -e "$DOCKER_MAC_APP_BIN" ]; then
+        $DOCKER_MAC_APP_BIN --uninstall
+    fi
+    
+    if [ -n "$(command -v  docker-machine)" ]; then
+        while true; do
+            read -p "Remove all $DOCKER_APP_NAME Machine VMs? (Y/N): " yn
+            case $yn in
+                [Yy]* ) docker-machine rm -f $(docker-machine ls -q); break ;;
+                [Nn]* ) break ;;
+                * ) echo "Please answer yes or no."; exit 1;;
+            esac
+        done
+    fi
+    
+    echo "Removing $DOCKER_APP_NAME from Applications..."
+    [ -e "$DOCKER_MAC_APP_DIR" ] \
+        && rm -rf "$DOCKER_MAC_APP_DIR"
+    
+    echo "Removing $DOCKER_APP_NAME binaries..."
+    [ -e /usr/local/bin/docker ] \
+        && rm -f /usr/local/bin/docker
+    [ -e /usr/local/bin/docker-machine ] \
+        && rm -f /usr/local/bin/docker-machine
+    find /usr/local/bin -name 'docker-machine-driver*' -delete
+    [ -e /usr/local/bin/docker-compose ] \
+        && rm -f /usr/local/bin/docker-compose
+    
+    echo "Removing boot2docker.iso"
+    [ -e /usr/local/share/boot2docker ] \
+        && rm -rf /usr/local/share/boot2docker
+    
+    echo "Forget packages"
+    pkgutil --forget io.docker.pkg.docker
+    pkgutil --forget io.docker.pkg.dockercompose
+    pkgutil --forget io.docker.pkg.dockermachine
+    pkgutil --forget io.boot2dockeriso.pkg.boot2dockeriso
+   
+    local pids; pids="$(pgrep docker)" 
+    [ -n "$pids" ] && echo "Terminating docker processes ..." \
+        && kill $pids
+
+    echo "$DOCKER_APP_NAME completely removed"
+}
+
+uninstall_docker() {
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        mac)
+            uninstall_mac_docker
+            ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            return 10
+            ;;
+    esac
+}
+
+check_docker_ready_status() {
+    [ -z "$(command -v docker)" ] && return 100
+    docker ps -a 1>&2>/dev/null
+}
+
+wait_docker_ready_status() {
+    local timeout_secs; [ -z "$1" ] && timeout_secs=15 || timeout_secs=$1
+    local end_time; end_time=$(( $(date +%s) + timeout_secs ))
+
+    echo "Waiting ($timeout_secs seconds) for docker daemon ready status ..."
+
+    local cnt; cnt=1
+    local stop; stop=0;
+    local result; result=0;
+    while [ $stop -eq 0 ]; do
+        [ $cnt -gt 1 ] && sleep 1
+        echo -n "    try $cnt: "
+        check_docker_ready_status; result=$?
+        case $result in
+            0) stop=1; echo "ok" ;;
+            *) [ $(date +%s) -lt $end_time ] || stop=1 ;;
+        esac
+        cnt=$(expr $cnt + 1)
+    done
+    return $result
+}
+
+start_mac_docker() {
+    install_mac_docker_directly
+    open -n "$DOCKER_MAC_APP_DIR"
+    wait_proc docker 120
+    [ $? -ne 0 ] \
+        && echo "No docker process. Please reinstall docker." \
+        && echo "You can use $(basename "$0") uninstall-docker to uninstall docker" \
+        && return 10
+    wait_docker_ready_status 120
+    [ $? -ne 0 ] \
+        && echo "Docker daemon isn't ready. Please reinstall docker." \
+        && echo "You can use $(basename "$0") uninstall-docker to uninstall docker" \
+        && return 11
+    echo "Docker ready"
+    return 0
+}
+
+
 start_linux_docker() {
     install_linux_docker "$(get_linux_dist)"
     [ -n "$(command -v docker)" ] && return 0
@@ -556,22 +610,54 @@ start_docker() {
     esac
 }
 
-install_mac_apla_client_directly() {
-    download_and_install_dmg "/Applications/Apla.app/Contents/MacOS/Apla" "/Applications/Apla.app" "$APLA_CLIENT_DMG_DL_URL" "$(basename "$APLA_CLIENT_DMG_DL_URL")" "Apla" $APLA_CLIENT_APP_DIR_SIZE_M
+### Docker #### end ####
+
+
+### Client ### begin ###
+
+install_mac_client_directly() {
+    download_and_install_dmg "$CLIENT_MAC_APP_BIN" "$CLIENT_MAC_APP_DIR" "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME" "$CLIENT_APP_NAME" $CLIENT_MAC_APP_DIR_SIZE_M
 }
 
-install_linux_apla_client_directly() {
+uninstall_mac_client() {
+    if [ "${USER}" != "root" ]; then
+        echo "Please run this command with sudo or as root"
+    	return 2
+    fi
+
+    if [ -e "$CLIENT_MAC_APP_DIR" ]; then
+        echo "Removing $CLIENT_APP_NAME from Applications..."
+        rm -rf "$CLIENT_MAC_APP_DIR"
+    fi
+
+    echo "$CLIENT_APP_NAME completely removed"
+}
+
+uninstall_client() {
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        mac)
+            uninstall_mac_client
+            ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            return 10
+            ;;
+    esac
+}
+
+install_linux_client_directly() {
     (
         update_global_downloads_and_apps_dir_vars
-        local app_base; app_base="$(basename "$APLA_CLIENT_APPIMAGE_DL_URL")"
-        local app_dl_path; app_dl_path="$DOWNLOADS_DIR/$app_base"
-        local app_inst_path; app_inst_path="$APPS_DIR/$app_base"
+        local app_basename; app_basename="$CLIENT_APPIMAGE_BASENAME"
+        local app_dl_path; app_dl_path="$DOWNLOADS_DIR/$app_basename"
+        local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
 
         if [ ! -f "$app_inst_path" ]; then
             if [ ! -f "$app_dl_path" ]; then
                 create_downloads_dir \
-                    && echo "Downloading Apla Client ..." \
-                    && run_as_orig_user "curl -L -o '$app_dl_path' '$APLA_CLIENT_APPIMAGE_DL_URL'"
+                    && echo "Downloading Client ..." \
+                    && run_as_orig_user "curl -L -o '$app_dl_path' '$CLIENT_APPIMAGE_DL_URL'"
             fi
             create_apps_dir \
                 && mv "$app_dl_path" "$app_inst_path" \
@@ -580,10 +666,6 @@ install_linux_apla_client_directly() {
     )
 }
 
-### Download/install #### end ####
-
-
-### Client ### begin ###
 
 start_mac_clients() {
     local num; num=$1;
@@ -592,15 +674,16 @@ start_mac_clients() {
         && return 200
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+    local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
 
-    install_mac_apla_client_directly
+    install_mac_client_directly
 
     local w_port; local c_port; local run_cmd
     for i in $(seq 1 $num); do
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        run_cmd="open -n /Applications/Apla.app/ --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey"
+        run_cmd="open -n $CLIENT_MAC_APP_DIR --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp"
         eval "$run_cmd"
     done
 }
@@ -612,21 +695,22 @@ start_linux_clients() {
         && return 200
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+    local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
 
-    install_linux_apla_client_directly
+    install_linux_client_directly
 
     (
         update_global_downloads_and_apps_dir_vars
 
-        local app_base; app_base="$(basename "$APLA_CLIENT_APPIMAGE_DL_URL")"
-        local app_inst_path; app_inst_path="$APPS_DIR/$app_base"
+        local app_basename; app_basename="$CLIENT_APPIMAGE_BASENAME"
+        local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
 
         local w_port; local c_port; local run_cmd
         for i in $(seq 1 $num); do
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-            run_cmd="$app_inst_path API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey &"
+            run_cmd="$app_inst_path API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp &"
             run_as_orig_user "$run_cmd"
         done
     )
@@ -653,7 +737,7 @@ stop_mac_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "Apla API_URL")
+        pids=$(pgrep -f "Genesis API_URL")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1
@@ -667,7 +751,7 @@ stop_linux_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "apla API_URL")
+        pids=$(pgrep -f "genesis API_URL")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1
@@ -743,6 +827,10 @@ cont_exec() {
 prep_cont_for_inspect() {
     #cont_exec $1 "bash -c \"apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links\""
     cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links'"
+}
+
+prep_cont_for_inspect_centos7() {
+    cont_exec $1 "bash -c 'dnf install -y tmux telnet net-tools vim nano links'"
 }
 
 cont_bash() {
@@ -839,6 +927,41 @@ start_db_cont() {
 ### DB container #### end ####
 
 
+### CF container ### begin ###
+
+start_cf_cont() {
+    local cfp; cfp=$1
+    [ -z "$cfp" ] && cfp=$CF_PORT
+    check_cont $CF_CONT_NAME > /dev/null
+    case $? in
+        1)  
+            local image_name
+            if [ "$TRY_LOCAL_CF_CONT_NAME_ON_RUN" = "yes" ]; then
+                local loc; loc=$(docker images --format "{{.Repository}}" -f "reference=$CF_CONT_NAME")
+                [ -n "$loc" ] && image_name="$CF_CONT_NAME" \
+                    || image_name="$CF_CONT_IMAGE"
+            else
+                image_name="$CF_CONT_IMAGE"
+            fi
+            echo "Creating a new centrifugo container from image '$image_name' ..."
+            docker run -d --restart always --name $CF_CONT_NAME -p $cfp:$CONT_CF_PORT -t $image_name
+            ;;
+        2)
+            echo "Starting centrifugo container (host port: $cfp) ..."
+            docker start $CF_CONT_NAME &
+            ;;
+        0)
+            echo "Centrifugo container is already running"
+            ;;
+        *)
+            echo "Unknown centrifugo container status"
+            ;;
+    esac
+}
+
+### CF container #### end ####
+
+
 ### BF container ### begin ###
 
 start_bf_cont() {
@@ -865,7 +988,7 @@ start_bf_cont() {
                 image_name="$BF_CONT_IMAGE"
             fi
             echo "Creating a new backend/frontend container from image '$image_name' ..."
-            docker run -d --restart always --name $BF_CONT_NAME $w_ports $c_ports -v apla:/s --link $DB_CONT_NAME:$DB_CONT_NAME -t $image_name
+            docker run -d --restart always --name $BF_CONT_NAME $w_ports $c_ports -v apla:/s --link $DB_CONT_NAME:$DB_CONT_NAME --link $CF_CONT_NAME:$CF_CONT_NAME -t $image_name
             ;;
         2)
             echo "Starting backend/frontend container ..."
@@ -1329,6 +1452,21 @@ wait_cont_http_len() {
     return $result
 }
 
+check_centrifugo_status() {
+    echo "Checking centrifugo ..."
+    check_cont_http_code $CF_CONT_NAME http://127.0.0.1:8000/connection/ 200
+    [ $? -ne 0 ] && echo "centrifugo isn't ready" && exit 200 \
+        || echo "Centrifugo ready"
+}
+
+wait_centrifugo_status() {
+    wait_cont_http_code $CF_CONT_NAME http://127.0.0.1:8000/connection/ 200 15
+    [ $? -ne 0 ] && echo "  centrifugo isn't ready" \
+        && result=1 \
+        || echo "  centrifugo ready"
+}
+
+
 check_backend_apps_status() {
     local num; num=$1
     local app_name; local result; result=0
@@ -1339,7 +1477,7 @@ check_backend_apps_status() {
         # TODO: use CONT_CLIENT_PORT_SHIFT here
         check_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 
     done
-    [ $result -ne 0 ] && echo "go_apla backends arn't ready" && exit 200 \
+    [ $result -ne 0 ] && echo "backends arn't ready" && exit 200 \
         || echo "Backends ready"
 }
 
@@ -1350,11 +1488,11 @@ wait_backend_apps_status() {
         [ $i -eq 1 ] && app_name="go_apla" || app_name="go_apla$i"
         # TODO: use CONT_CLIENT_PORT_SHIFT here
         wait_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 20
-        [ $? -ne 0 ] && echo "  gp_apla backend number $i isn't ready" \
+        [ $? -ne 0 ] && echo "  backend number $i isn't ready" \
             && result=1 \
-            || echo "  gp_apla backend number $i ready"
+            || echo "  backend number $i ready"
     done
-    [ $result -ne 0 ] && echo "go_apla backends arn't ready" && exit 200 \
+    [ $result -ne 0 ] && echo "backends arn't ready" && exit 200 \
         || echo "Backends ready"
 }
 
@@ -1451,6 +1589,7 @@ check_host_side() {
     local wps; [ -z "$2" ] && wps=$WEB_PORT_SHIFT || wps=$2
     local cps; [ -z "$3" ] && cps=$CLIENT_PORT_SHIFT || cps=$3
     local dbp; [ -z "$4" ] && dbp=$DB_PORT || dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: Change to argument
 
     echo "The host system listens on:"
     echo
@@ -1460,6 +1599,13 @@ check_host_side() {
     echo -n "    checking: "
     [ -n "$(get_host_port_proc $dbp)" ] && echo "ok" \
         || (echo "error" && d_result=1)
+    echo
+
+    local cf_result; cf_result=0
+    echo "  Centrifugo port: $cfp" 
+    echo -n "    checking: "
+    [ -n "$(check_http_code "http://127.0.0.1:$cfp/connection/" 200)" ] && echo "ok" \
+        || (echo "error" && cf_result=1)
 
     local w_result; w_result=0
     echo
@@ -1489,6 +1635,7 @@ check_host_side() {
 
     local result; result=0
     [ $d_result -ne 0 ] || [ $w_result -ne 0 ] && result=1
+    [ $cf_result -ne 0 ] || [ $cf_result -ne 0 ] && result=3
     [ $c_result -ne 0 ] && result=2
     echo -n "Total check result: "
     [ $result -ne 0 ] && echo "FAILED" || echo "OK"
@@ -1569,6 +1716,7 @@ clear_install_params() {
 delete_install() {
     stop_clients
     remove_cont $BF_CONT_NAME
+    remove_cont $CF_CONT_NAME
     remove_cont $DB_CONT_NAME
 }
 
@@ -1577,22 +1725,26 @@ start_install() {
     local wps; wps=$2
     local cps; cps=$3
     local dbp; dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: change to argument
+
+    local tot_cont_res; tot_cont_res=0
 
     local db_cont_res; check_cont $DB_CONT_NAME > /dev/null; db_cont_res=$? 
+    [ $db_cont_res -ne 1 ] \
+        && echo "DB container already exists. " \
+        && tot_cont_res=1
+
+    local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
     local bf_cont_res; check_cont $BF_CONT_NAME > /dev/null; bf_cont_res=$? 
-    local tot_cont_res; tot_cont_res=0
-    if [ $db_cont_res -ne 1 ]; then
-        tot_cont_res=1
-        [ $bf_cont_res -ne 1 ] && tot_cont_res=3
-    elif [ $bf_cont_res -ne 1 ]; then
-        tot_cont_res=2
-    fi
+    [ $bf_cont_res -ne 1 ] \
+        && echo "Backend/Frontend container already exists. " \
+        && tot_cont_res=1
+
     if [ $tot_cont_res -ne 0 ]; then
-        case $tot_cont_res in
-            1) echo "DB container already exists. " ;;
-            2) echo "Backend/Frontend container already exists. " ;;
-            3) echo "DB and Backend/Frontend containers already exist. " ;;
-        esac
         echo -n "Do you want to stop all running clients, delete containers and start a new installation? [y/N] "
         local stop; stop=0
         while [ $stop -eq 0 ]; do
@@ -1648,6 +1800,17 @@ start_install() {
         || echo "Backend databases ready"
     echo
 
+    start_cf_cont $cfp
+
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
+    [ $? -ne 0 ] \
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
+    echo
+
+    wait_centrifugo_status || return 21
+    echo
+
     start_bf_cont $num $wps $cps
 
     wait_cont_proc $BF_CONT_NAME supervisord 15
@@ -1683,7 +1846,7 @@ start_install() {
     fi
 
     check_host_side $num $wps $cps $dbp
-    [ $? -ne 2 ] && sleep 2 && start_clients $num $wps $cps
+    [ $? -ne 2 ] && sleep 2 && start_clients $num $wps $cps $cfp
 }
 
 stop_all() {
@@ -1691,6 +1854,9 @@ stop_all() {
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $BF_CONT_NAME ..." && docker stop $BF_CONT_NAME
+    check_cont $CF_CONT_NAME > /dev/null
+    [ $? -eq 0 ] \
+        && echo "Stopping $CF_CONT_NAME ..." && docker stop $CF_CONT_NAME
     check_cont $DB_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $DB_CONT_NAME ..." && docker stop $DB_CONT_NAME
@@ -1701,6 +1867,7 @@ start_all() {
     local wps
     local cps
     local dbp
+    local cfp; cfp=$CF_PORT # FIXME: Change to argument
 
     read_install_params_to_vars || return 1
 
@@ -1728,15 +1895,18 @@ start_all() {
 
     echo
 
-    #create_dbs $num 15
-    #[ $? -ne 0 ] \
-    #    && echo "Backend databases creation failed" && return 14 \
-    #    || echo "Backend databases creation compete"
-
     wait_dbs $num 15
     [ $? -ne 0 ] \
         && echo "Backend databases ant't available" && return 14 \
         || echo "Backend databases ready"
+    echo
+
+    start_cf_cont $cfp
+
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
+    [ $? -ne 0 ] \
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
     echo
 
     start_bf_cont $num $wps $cps
@@ -1752,6 +1922,9 @@ start_all() {
         || echo "Backend's nginx ready"
     echo
 
+    wait_centrifugo_status || return 5
+    echo
+
     wait_backend_apps_status $num || return 2
     echo
 
@@ -1759,7 +1932,7 @@ start_all() {
     echo
 
     check_host_side $num $wps $cps $dbp
-    [ $? -ne 2 ] && start_clients $num $wps $cps
+    [ $? -ne 2 ] && start_clients $num $wps $cps $cfp
 }
 
 show_status() {
@@ -1773,8 +1946,13 @@ show_status() {
     echo
     echo -n "Dababase container status: "
     get_cont_status $DB_CONT_NAME
+    echo -n "Centrifugo container status: "
+    get_cont_status $CF_CONT_NAME
     echo -n "Backends/Frontends container status: "
     get_cont_status $BF_CONT_NAME
+    echo
+
+    check_centrifugo_status
     echo
 
     check_backend_apps_status $num
@@ -1854,6 +2032,9 @@ show_usage_help() {
     echo "  uninstall-docker"
     echo "    Docker unintaller for macOS"
     echo
+    echo "  uninstall-client"
+    echo "    Client unintaller for macOS"
+    echo
     echo "  build"
     echo "    Build all (database and backend/frontend) container images"
     echo
@@ -1929,7 +2110,6 @@ show_usage_help() {
     install-docker)
         check_run_as_root
         install_mac_docker_directly
-        echo "res: $?"
         ;;
 
     check-docker-proc)
@@ -1948,15 +2128,18 @@ show_usage_help() {
         wait_docker_ready_status
         ;;
 
-    download-apla)
-        download_and_check_dmg "$APLA_CLIENT_DMG_DL_URL"
-        echo "res: $?"
+    download-client)
+        download_and_check_dmg "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME"
         ;;
 
-    install-apla)
+    install-client)
         check_run_as_root
-        install_mac_apla_client_directly
-        echo "res: $?"
+        install_mac_client_directly
+        ;;
+
+    uninstall-client)
+        stop_clients
+        uninstall_client
         ;;
 
     start-docker)
@@ -1986,7 +2169,7 @@ show_usage_help() {
     ### Clients ### begin ###
 
     install-client)
-        install_linux_apla_client_directly
+        install_linux_client_directly
         ;;
 
     start-clients)
@@ -2035,7 +2218,7 @@ show_usage_help() {
         check_run_as_root
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 16
-        start_db_cont $num
+        start_db_cont $dbp
         ;;
 
     stop-db-cont)
@@ -2085,6 +2268,47 @@ show_usage_help() {
         ;;
 
     ### BF Container #### end ####
+
+
+    ### CF container ### begin ###
+
+    start-cf-cont)
+        check_run_as_root
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        start_cf_cont
+        ;;
+
+    stop-cf-cont)
+        check_run_as_root
+        docker stop $CF_CONT_NAME
+        ;;
+
+    restart-cf-cont)
+        check_run_as_root
+        docker stop $CF_CONT_NAME
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        start_cf_cont $num $wps $cps
+        ;;
+
+    prep-cf-cont)
+        check_run_as_root
+        prep_cont_for_inspect_centos7 $CF_CONT_NAME
+        ;;
+
+    cf-cont-bash)
+        check_run_as_root
+        cont_bash $CF_CONT_NAME
+        ;;
+
+    build-cf)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
+        ;;
+
+    ### CF Container #### end ####
 
 
     ### Database ### begin ###
@@ -2260,6 +2484,7 @@ show_usage_help() {
         delete_install
         clear_install_params
         docker rmi -f $BF_CONT_IMAGE
+        docker rmi -f $CF_CONT_IMAGE
         docker rmi -f $DB_CONT_IMAGE
         ;;
 
