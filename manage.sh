@@ -34,9 +34,9 @@ DB_CONT_IMAGE="str16071985/genesis-db"
 DB_CONT_BUILD_DIR="genesis-db"
 TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
 
-CF_CONT_NAME="centrifugo"
-CF_CONT_IMAGE="str16071985/centrifugo"
-CF_CONT_BUILD_DIR="centrifugo"
+CF_CONT_NAME="genesis-cf"
+CF_CONT_IMAGE="str16071985/genesis-cf"
+CF_CONT_BUILD_DIR="genesis-cf"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -221,6 +221,7 @@ check_host_ports() {
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
     local d_port; d_port=$4; [ -z "$d_port" ] && d_port=$DB_PORT
+    local cfp; cfp=$CF_PORT # FIXME: Change to argument
 
     local result; result=0
 
@@ -231,6 +232,15 @@ check_host_ports() {
     else
         echo "FREE"
     fi
+
+    echo -n "Checking centrifugo port $cfp: "
+    if [ -n "$(get_host_port_proc $cfp)" ]; then
+        echo "BUSY"
+        result=5
+    else
+        echo "FREE"
+    fi
+
 
     local w_port; local c_port; local run_cmd
     for i in $(seq 1 $num); do
@@ -867,7 +877,7 @@ start_cf_cont() {
                 image_name="$CF_CONT_IMAGE"
             fi
             echo "Creating a new centrifugo container from image '$image_name' ..."
-            docker run -d --restart always --name $CF_CONT_NAME -p $cfgp:$CONT_CF_PORT -t $image_name
+            docker run -d --restart always --name $CF_CONT_NAME -p $cfp:$CONT_CF_PORT -t $image_name
             ;;
         2)
             echo "Starting centrifugo container (host port: $cfp) ..."
@@ -911,7 +921,7 @@ start_bf_cont() {
                 image_name="$BF_CONT_IMAGE"
             fi
             echo "Creating a new backend/frontend container from image '$image_name' ..."
-            docker run -d --restart always --name $BF_CONT_NAME $w_ports $c_ports -v apla:/s --link $DB_CONT_NAME:$DB_CONT_NAME -t $image_name
+            docker run -d --restart always --name $BF_CONT_NAME $w_ports $c_ports -v apla:/s --link $DB_CONT_NAME:$DB_CONT_NAME --link $CF_CONT_NAME:$CF_CONT_NAME -t $image_name
             ;;
         2)
             echo "Starting backend/frontend container ..."
@@ -1375,6 +1385,21 @@ wait_cont_http_len() {
     return $result
 }
 
+check_centrifugo_status() {
+    echo "Checking centrifugo ..."
+    check_cont_http_code $CF_CONT_NAME http://127.0.0.1:8000/connection/ 200
+    [ $? -ne 0 ] && echo "centrifugo isn't ready" && exit 200 \
+        || echo "Centrifugo ready"
+}
+
+wait_centrifugo_status() {
+    wait_cont_http_code $CF_CONT_NAME http://127.0.0.1:8000/connection/ 200 15
+    [ $? -ne 0 ] && echo "  centrifugo isn't ready" \
+        && result=1 \
+        || echo "  centrifugo ready"
+}
+
+
 check_backend_apps_status() {
     local num; num=$1
     local app_name; local result; result=0
@@ -1497,6 +1522,7 @@ check_host_side() {
     local wps; [ -z "$2" ] && wps=$WEB_PORT_SHIFT || wps=$2
     local cps; [ -z "$3" ] && cps=$CLIENT_PORT_SHIFT || cps=$3
     local dbp; [ -z "$4" ] && dbp=$DB_PORT || dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: Change to argument
 
     echo "The host system listens on:"
     echo
@@ -1506,6 +1532,12 @@ check_host_side() {
     echo -n "    checking: "
     [ -n "$(get_host_port_proc $dbp)" ] && echo "ok" \
         || (echo "error" && d_result=1)
+
+    local cf_result; cf_result=0
+    echo "  Centrifugo port: $cfp" 
+    echo -n "    checking: "
+    [ -n "$(check_http_code "http://127.0.0.1:$cfp/connection/" 200)" ] && echo "ok" \
+        || (echo "error" && cf_result=1)
 
     local w_result; w_result=0
     echo
@@ -1535,6 +1567,7 @@ check_host_side() {
 
     local result; result=0
     [ $d_result -ne 0 ] || [ $w_result -ne 0 ] && result=1
+    [ $cf_result -ne 0 ] || [ $cf_result -ne 0 ] && result=3
     [ $c_result -ne 0 ] && result=2
     echo -n "Total check result: "
     [ $result -ne 0 ] && echo "FAILED" || echo "OK"
@@ -1615,6 +1648,7 @@ clear_install_params() {
 delete_install() {
     stop_clients
     remove_cont $BF_CONT_NAME
+    remove_cont $CF_CONT_NAME
     remove_cont $DB_CONT_NAME
 }
 
@@ -1623,22 +1657,26 @@ start_install() {
     local wps; wps=$2
     local cps; cps=$3
     local dbp; dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: change to argument
+
+    local tot_cont_res; tot_cont_res=0
 
     local db_cont_res; check_cont $DB_CONT_NAME > /dev/null; db_cont_res=$? 
+    [ $db_cont_res -ne 1 ] \
+        && echo "DB container already exists. " \
+        && tot_cont_res=1
+
+    local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
     local bf_cont_res; check_cont $BF_CONT_NAME > /dev/null; bf_cont_res=$? 
-    local tot_cont_res; tot_cont_res=0
-    if [ $db_cont_res -ne 1 ]; then
-        tot_cont_res=1
-        [ $bf_cont_res -ne 1 ] && tot_cont_res=3
-    elif [ $bf_cont_res -ne 1 ]; then
-        tot_cont_res=2
-    fi
+    [ $bf_cont_res -ne 1 ] \
+        && echo "Backend/Frontend container already exists. " \
+        && tot_cont_res=1
+
     if [ $tot_cont_res -ne 0 ]; then
-        case $tot_cont_res in
-            1) echo "DB container already exists. " ;;
-            2) echo "Backend/Frontend container already exists. " ;;
-            3) echo "DB and Backend/Frontend containers already exist. " ;;
-        esac
         echo -n "Do you want to stop all running clients, delete containers and start a new installation? [y/N] "
         local stop; stop=0
         while [ $stop -eq 0 ]; do
@@ -1694,17 +1732,15 @@ start_install() {
         || echo "Backend databases ready"
     echo
 
-    start_bf_cont $num $wps $cps
+    start_cf_cont $cfp
 
-    wait_cont_proc $BF_CONT_NAME supervisord 15
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
     [ $? -ne 0 ] \
-        && echo "Backend's supervisord isn't available" && return 21 \
-        || echo "Backend's supervisord ready"
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
+    echo
 
-    wait_cont_proc $BF_CONT_NAME nginx 15
-    [ $? -ne 0 ] \
-        && echo "Frontend's nginx isn't available" && return 22 \
-        || echo "Frontend's nginx ready"
+    wait_centrifugo_status || return 21
     echo
 
     start_be_apps $num $cps
@@ -1737,6 +1773,9 @@ stop_all() {
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $BF_CONT_NAME ..." && docker stop $BF_CONT_NAME
+    check_cont $CF_CONT_NAME > /dev/null
+    [ $? -eq 0 ] \
+        && echo "Stopping $CF_CONT_NAME ..." && docker stop $CF_CONT_NAME
     check_cont $DB_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $DB_CONT_NAME ..." && docker stop $DB_CONT_NAME
@@ -1747,6 +1786,7 @@ start_all() {
     local wps
     local cps
     local dbp
+    local cfp; cfp=$CF_PORT # FIXME: Change to argument
 
     read_install_params_to_vars || return 1
 
@@ -1785,6 +1825,14 @@ start_all() {
         || echo "Backend databases ready"
     echo
 
+    start_cf_cont $cfp
+
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
+    [ $? -ne 0 ] \
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
+    echo
+
     start_bf_cont $num $wps $cps
 
     wait_cont_proc $BF_CONT_NAME supervisord 15
@@ -1796,6 +1844,9 @@ start_all() {
     [ $? -ne 0 ] \
         && echo "Backend's nginx isn't available" && return 22 \
         || echo "Backend's nginx ready"
+    echo
+
+    wait_centrifugo_status || return 5
     echo
 
     wait_backend_apps_status $num || return 2
@@ -1821,6 +1872,9 @@ show_status() {
     get_cont_status $DB_CONT_NAME
     echo -n "Backends/Frontends container status: "
     get_cont_status $BF_CONT_NAME
+    echo
+
+    check_centrifugo_status
     echo
 
     check_backend_apps_status $num
@@ -2081,7 +2135,7 @@ show_usage_help() {
         check_run_as_root
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 16
-        start_db_cont $num
+        start_db_cont $dbp
         ;;
 
     stop-db-cont)
@@ -2130,12 +2184,6 @@ show_usage_help() {
             && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
         ;;
 
-    build-cf)
-        check_run_as_root
-        (cd "$SCRIPT_DIR" \
-            && docker build -t centrifugo -f centrifugo/Dockerfile centrifugo/.)
-        ;;
-
     ### BF Container #### end ####
 
 
@@ -2145,7 +2193,7 @@ show_usage_help() {
         check_run_as_root
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 16
-        start_cf_cont $num $wps $cps
+        start_cf_cont
         ;;
 
     stop-cf-cont)
@@ -2174,7 +2222,7 @@ show_usage_help() {
     build-cf)
         check_run_as_root
         (cd "$SCRIPT_DIR" \
-            && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
+            && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
         ;;
 
     ### CF Container #### end ####
@@ -2353,6 +2401,7 @@ show_usage_help() {
         delete_install
         clear_install_params
         docker rmi -f $BF_CONT_IMAGE
+        docker rmi -f $CF_CONT_IMAGE
         docker rmi -f $DB_CONT_IMAGE
         ;;
 
