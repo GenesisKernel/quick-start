@@ -674,7 +674,8 @@ start_mac_clients() {
         && return 200
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
-    local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
+    #local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
+    local cfp=$CF_PORT # FIXME: change to parameter
 
     install_mac_client_directly
 
@@ -695,7 +696,8 @@ start_linux_clients() {
         && return 200
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
-    local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
+    #local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
+    local cfp=$CF_PORT # FIXME: change to parameter
 
     install_linux_client_directly
 
