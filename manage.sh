@@ -1884,6 +1884,8 @@ show_status() {
     echo
     echo -n "Dababase container status: "
     get_cont_status $DB_CONT_NAME
+    echo -n "Centrifugo container status: "
+    get_cont_status $CF_CONT_NAME
     echo -n "Backends/Frontends container status: "
     get_cont_status $BF_CONT_NAME
     echo
