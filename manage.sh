@@ -19,7 +19,7 @@ APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
-DOCKER_MAC_APP_DIR_SIZE_M=1126 # to update run 'du -sm /Applications/Docker.app'
+DOCKER_MAC_APP_DIR_SIZE_M=1136 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 DOCKER_APP_NAME="Docker"
@@ -51,8 +51,6 @@ TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
-
-echo "CLIENT_DMG_BASENAME: $CLIENT_DMG_BASENAME"
 
 ### Configuration #### end ####
 
@@ -386,8 +384,97 @@ download_and_install_dmg() {
     return $result
 }
 
+### Download/install #### end ####
+
+
+### Docker ### begin ###
+
 install_mac_docker_directly() {
     download_and_install_dmg "$DOCKER_MAC_APP_BIN" "$DOCKER_MAC_APP_DIR" "$DOCKER_DMG_DL_URL" "$DOCKER_DMG_BASENAME" "$DOCKER_APP_NAME" $DOCKER_MAC_APP_DIR_SIZE_M
+}
+
+install_linux_docker() {
+    [ -n "$(command -v docker)" ] && return 0
+
+    local dist; dist="$1"
+
+    case "$dist" in
+        [Ff][Ee][Dd][Oo][Rr][Aa])
+            dnf -y install dnf-plugins-core
+            dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+            dnf -y install docker-ce
+            systemctl start docker && systemctl enable docker
+            ;;
+
+        [Cc][Ee][Nn][Tt][Oo][Ss])
+            ;;
+
+        [Dd][Ee][Bb][Ii][Aa][Nn])
+            apt-get update -y --fix-missing
+            apt-get install -y \
+                apt-transport-https \
+                ca-certificates \
+                curl \
+                gnupg2 \
+                software-properties-common
+            curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | apt-key add -
+            apt-key fingerprint 0EBFCD88
+            add-apt-repository \
+                "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") \
+                $(lsb_release -cs) \
+                stable"
+            apt-get update -y
+            apt-get install docker-ce -y
+            systemctl start docker &&  systemctl enable docker
+            ;;
+
+        [Uu][Bb][Uu][Nn][Tt][Uu])
+            apt-get update -y --fix-missing
+            apt-get install -y \
+                apt-transport-https \
+                ca-certificates \
+                curl \
+                software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+            apt-key fingerprint 0EBFCD88
+            add-apt-repository \
+                "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+                $(lsb_release -cs) \
+                stable"
+            apt-get update -y
+            apt-get install docker-ce -y
+            systemctl start docker &&  systemctl enable docker
+            ;;
+
+        [Mm][Ii][Nn][Tt])
+            apt-get update -y --fix-missing
+            apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 \
+            --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+            apt-add-repository \
+                'deb https://apt.dockerproject.org/repo ubuntu-xenial main'
+            apt-get update -y
+            apt-get install docker.io -y
+            systemctl start docker &&  systemctl enable docker
+            ;;
+    esac
+}
+
+install_docker() {
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        mac)
+            install_mac_docker_directly
+            ;;
+
+        linux)
+            install_linux_docker
+            ;;
+
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            return 10
+            ;;
+    esac
 }
 
 uninstall_mac_docker() {
@@ -498,71 +585,6 @@ start_mac_docker() {
     return 0
 }
 
-install_linux_docker() {
-    [ -n "$(command -v docker)" ] && return 0
-
-    local dist; dist="$1"
-
-    case "$dist" in
-        [Ff][Ee][Dd][Oo][Rr][Aa])
-            dnf -y install dnf-plugins-core
-            dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-            dnf -y install docker-ce
-            systemctl start docker && systemctl enable docker
-            ;;
-
-        [Cc][Ee][Nn][Tt][Oo][Ss])
-            ;;
-
-        [Dd][Ee][Bb][Ii][Aa][Nn])
-            apt-get update -y --fix-missing
-            apt-get install -y \
-                apt-transport-https \
-                ca-certificates \
-                curl \
-                gnupg2 \
-                software-properties-common
-            curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | apt-key add -
-            apt-key fingerprint 0EBFCD88
-            add-apt-repository \
-                "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") \
-                $(lsb_release -cs) \
-                stable"
-            apt-get update -y
-            apt-get install docker-ce -y
-            systemctl start docker &&  systemctl enable docker
-            ;;
-
-        [Uu][Bb][Uu][Nn][Tt][Uu])
-            apt-get update -y --fix-missing
-            apt-get install -y \
-                apt-transport-https \
-                ca-certificates \
-                curl \
-                software-properties-common
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-            apt-key fingerprint 0EBFCD88
-            add-apt-repository \
-                "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-                $(lsb_release -cs) \
-                stable"
-            apt-get update -y
-            apt-get install docker-ce -y
-            systemctl start docker &&  systemctl enable docker
-            ;;
-
-        [Mm][Ii][Nn][Tt])
-            apt-get update -y --fix-missing
-            apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 \
-            --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-            apt-add-repository \
-                'deb https://apt.dockerproject.org/repo ubuntu-xenial main'
-            apt-get update -y
-            apt-get install docker.io -y
-            systemctl start docker &&  systemctl enable docker
-            ;;
-    esac
-}
 
 start_linux_docker() {
     install_linux_docker "$(get_linux_dist)"
@@ -584,6 +606,11 @@ start_docker() {
             ;;
     esac
 }
+
+### Docker #### end ####
+
+
+### Client ### begin ###
 
 install_mac_client_directly() {
     download_and_install_dmg "$CLIENT_MAC_APP_BIN" "$CLIENT_MAC_APP_DIR" "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME" "$CLIENT_APP_NAME" $CLIENT_MAC_APP_DIR_SIZE_M
@@ -636,10 +663,6 @@ install_linux_client_directly() {
     )
 }
 
-### Download/install #### end ####
-
-
-### Client ### begin ###
 
 start_mac_clients() {
     local num; num=$1;
@@ -2112,6 +2135,7 @@ show_usage_help() {
         ;;
 
     uninstall-client)
+        stop_clients
         uninstall_client
         ;;
 
