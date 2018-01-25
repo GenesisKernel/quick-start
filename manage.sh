@@ -3,10 +3,12 @@
 ### Configuration ### begin ###
 
 DB_PORT=15432
+CF_PORT=18100
 WEB_PORT_SHIFT=8300
 CLIENT_PORT_SHIFT=17300
 
 CONT_DB_PORT=5432
+CONT_CF_PORT=8000
 CONT_WEB_PORT_SHIFT=80
 CONT_CLIENT_PORT_SHIFT=7000
 
@@ -31,6 +33,11 @@ DB_CONT_NAME="genesis-db"
 DB_CONT_IMAGE="str16071985/genesis-db"
 DB_CONT_BUILD_DIR="genesis-db"
 TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
+
+CF_CONT_NAME="centrifugo"
+CF_CONT_IMAGE="str16071985/centrifugo"
+CF_CONT_BUILD_DIR="centrifugo"
+TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
@@ -745,6 +752,10 @@ prep_cont_for_inspect() {
     cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links'"
 }
 
+prep_cont_for_inspect_centos7() {
+    cont_exec $1 "bash -c 'dnf install -y tmux telnet net-tools vim nano links'"
+}
+
 cont_bash() {
     cont_exec "$1" bash
 }
@@ -837,6 +848,41 @@ start_db_cont() {
 }
 
 ### DB container #### end ####
+
+
+### CF container ### begin ###
+
+start_cf_cont() {
+    local cfp; cfp=$1
+    [ -z "$cfp" ] && cfp=$CF_PORT
+    check_cont $CF_CONT_NAME > /dev/null
+    case $? in
+        1)  
+            local image_name
+            if [ "$TRY_LOCAL_CF_CONT_NAME_ON_RUN" = "yes" ]; then
+                local loc; loc=$(docker images --format "{{.Repository}}" -f "reference=$CF_CONT_NAME")
+                [ -n "$loc" ] && image_name="$CF_CONT_NAME" \
+                    || image_name="$CF_CONT_IMAGE"
+            else
+                image_name="$CF_CONT_IMAGE"
+            fi
+            echo "Creating a new centrifugo container from image '$image_name' ..."
+            docker run -d --restart always --name $CF_CONT_NAME -p $cfgp:$CONT_CF_PORT -t $image_name
+            ;;
+        2)
+            echo "Starting centrifugo container (host port: $cfp) ..."
+            docker start $CF_CONT_NAME &
+            ;;
+        0)
+            echo "Centrifugo container is already running"
+            ;;
+        *)
+            echo "Unknown centrifugo container status"
+            ;;
+    esac
+}
+
+### CF container #### end ####
 
 
 ### BF container ### begin ###
@@ -2084,7 +2130,54 @@ show_usage_help() {
             && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
         ;;
 
+    build-cf)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t centrifugo -f centrifugo/Dockerfile centrifugo/.)
+        ;;
+
     ### BF Container #### end ####
+
+
+    ### CF container ### begin ###
+
+    start-cf-cont)
+        check_run_as_root
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        start_cf_cont $num $wps $cps
+        ;;
+
+    stop-cf-cont)
+        check_run_as_root
+        docker stop $CF_CONT_NAME
+        ;;
+
+    restart-cf-cont)
+        check_run_as_root
+        docker stop $CF_CONT_NAME
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        start_cf_cont $num $wps $cps
+        ;;
+
+    prep-cf-cont)
+        check_run_as_root
+        prep_cont_for_inspect_centos7 $CF_CONT_NAME
+        ;;
+
+    cf-cont-bash)
+        check_run_as_root
+        cont_bash $CF_CONT_NAME
+        ;;
+
+    build-cf)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
+        ;;
+
+    ### CF Container #### end ####
 
 
     ### Database ### begin ###
