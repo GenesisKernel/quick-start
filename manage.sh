@@ -19,13 +19,20 @@ APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
-DOCKER_APP_DIR_SIZE_M=1126 # to update run 'du -sm /Applications/Docker.app'
+DOCKER_MAC_APP_DIR_SIZE_M=1126 # to update run 'du -sm /Applications/Docker.app'
+DOCKER_MAC_APP_DIR="/Applications/Docker.app"
+DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
+DOCKER_APP_NAME="Docker"
 
-APLA_CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.5/Apla-0.3.5.dmg"
-APLA_CLIENT_DMG_BASENAME="$(basename "$(echo "$APLA_CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
-APLA_CLIENT_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Apla.app'
-APLA_CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.5/apla-0.3.5-x86_64.AppImage"
-APLA_CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$APLA_CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
+CLIENT_DMG_DL_URL="https://www.dropbox.com/s/qksahfyc6ogp6tv/Genesis-0.3.5.dmg?dl=1"
+CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
+CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
+CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
+CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
+
+CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/e9fun3xir0gfpsr/genesis-front-0.3.5-x86_64.AppImage?dl=1"
+CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
+CLIENT_APP_NAME="Genesis"
 
 BF_CONT_NAME="genesis-bf"
 BF_CONT_IMAGE="str16071985/genesis-bf"
@@ -44,6 +51,8 @@ TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
+
+echo "CLIENT_DMG_BASENAME: $CLIENT_DMG_BASENAME"
 
 ### Configuration #### end ####
 
@@ -378,7 +387,7 @@ download_and_install_dmg() {
 }
 
 install_mac_docker_directly() {
-    download_and_install_dmg "/Applications/Docker.app/Contents/MacOS/Docker" "/Applications/Docker.app" "$DOCKER_DMG_DL_URL" "$DOCKER_DMG_BASENAME" "Docker" $DOCKER_APP_DIR_SIZE_M
+    download_and_install_dmg "$DOCKER_MAC_APP_BIN" "$DOCKER_MAC_APP_DIR" "$DOCKER_DMG_DL_URL" "$DOCKER_DMG_BASENAME" "$DOCKER_APP_NAME" $DOCKER_MAC_APP_DIR_SIZE_M
 }
 
 uninstall_mac_docker() {
@@ -387,13 +396,13 @@ uninstall_mac_docker() {
     	return 2
     fi
 
-    if [ -e /Applications/Docker.app/Contents/MacOS/Docker ]; then
-        /Applications/Docker.app/Contents/MacOS/Docker --uninstall
+    if [ -e "$DOCKER_MAC_APP_BIN" ]; then
+        $DOCKER_MAC_APP_BIN --uninstall
     fi
     
     if [ -n "$(command -v  docker-machine)" ]; then
         while true; do
-            read -p "Remove all Docker Machine VMs? (Y/N): " yn
+            read -p "Remove all $DOCKER_APP_NAME Machine VMs? (Y/N): " yn
             case $yn in
                 [Yy]* ) docker-machine rm -f $(docker-machine ls -q); break ;;
                 [Nn]* ) break ;;
@@ -402,11 +411,11 @@ uninstall_mac_docker() {
         done
     fi
     
-    echo "Removing Docker from Applications..."
-    [ -e /Applications/Docker.app ] \
-        && rm -rf /Applications/Docker.app
+    echo "Removing $DOCKER_APP_NAME from Applications..."
+    [ -e "$DOCKER_MAC_APP_DIR" ] \
+        && rm -rf "$DOCKER_MAC_APP_DIR"
     
-    echo "Removing docker binaries..."
+    echo "Removing $DOCKER_APP_NAME binaries..."
     [ -e /usr/local/bin/docker ] \
         && rm -f /usr/local/bin/docker
     [ -e /usr/local/bin/docker-machine ] \
@@ -429,7 +438,7 @@ uninstall_mac_docker() {
     [ -n "$pids" ] && echo "Terminating docker processes ..." \
         && kill $pids
 
-    echo "Docker completely removed"
+    echo "$DOCKER_APP_NAME completely removed"
 }
 
 uninstall_docker() {
@@ -474,7 +483,7 @@ wait_docker_ready_status() {
 
 start_mac_docker() {
     install_mac_docker_directly
-    open -n /Applications/Docker.app
+    open -n "$DOCKER_MAC_APP_DIR"
     wait_proc docker 120
     [ $? -ne 0 ] \
         && echo "No docker process. Please reinstall docker." \
@@ -576,22 +585,49 @@ start_docker() {
     esac
 }
 
-install_mac_apla_client_directly() {
-    download_and_install_dmg "/Applications/Apla.app/Contents/MacOS/Apla" "/Applications/Apla.app" "$APLA_CLIENT_DMG_DL_URL" "$APLA_CLIENT_DMG_BASENAME" "Apla" $APLA_CLIENT_APP_DIR_SIZE_M
+install_mac_client_directly() {
+    download_and_install_dmg "$CLIENT_MAC_APP_BIN" "$CLIENT_MAC_APP_DIR" "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME" "$CLIENT_APP_NAME" $CLIENT_MAC_APP_DIR_SIZE_M
 }
 
-install_linux_apla_client_directly() {
+uninstall_mac_client() {
+    if [ "${USER}" != "root" ]; then
+        echo "Please run this command with sudo or as root"
+    	return 2
+    fi
+
+    if [ -e "$CLIENT_MAC_APP_DIR" ]; then
+        echo "Removing $CLIENT_APP_NAME from Applications..."
+        rm -rf "$CLIENT_MAC_APP_DIR"
+    fi
+
+    echo "$CLIENT_APP_NAME completely removed"
+}
+
+uninstall_client() {
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        mac)
+            uninstall_mac_client
+            ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            return 10
+            ;;
+    esac
+}
+
+install_linux_client_directly() {
     (
         update_global_downloads_and_apps_dir_vars
-        local app_basename; app_basename="$APLA_CLIENT_APPIMAGE_BASENAME"
+        local app_basename; app_basename="$CLIENT_APPIMAGE_BASENAME"
         local app_dl_path; app_dl_path="$DOWNLOADS_DIR/$app_basename"
         local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
 
         if [ ! -f "$app_inst_path" ]; then
             if [ ! -f "$app_dl_path" ]; then
                 create_downloads_dir \
-                    && echo "Downloading Apla Client ..." \
-                    && run_as_orig_user "curl -L -o '$app_dl_path' '$APLA_CLIENT_APPIMAGE_DL_URL'"
+                    && echo "Downloading Client ..." \
+                    && run_as_orig_user "curl -L -o '$app_dl_path' '$CLIENT_APPIMAGE_DL_URL'"
             fi
             create_apps_dir \
                 && mv "$app_dl_path" "$app_inst_path" \
@@ -612,15 +648,16 @@ start_mac_clients() {
         && return 200
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+    local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
 
-    install_mac_apla_client_directly
+    install_mac_client_directly
 
     local w_port; local c_port; local run_cmd
     for i in $(seq 1 $num); do
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        run_cmd="open -n /Applications/Apla.app/ --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey"
+        run_cmd="open -n $CLIENT_MAC_APP_DIR --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp"
         eval "$run_cmd"
     done
 }
@@ -632,13 +669,14 @@ start_linux_clients() {
         && return 200
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+    local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
 
-    install_linux_apla_client_directly
+    install_linux_client_directly
 
     (
         update_global_downloads_and_apps_dir_vars
 
-        local app_basename; app_basename="$APLA_CLIENT_APPIMAGE_BASENAME"
+        local app_basename; app_basename="$CLIENT_APPIMAGE_BASENAME"
         local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
 
         local w_port; local c_port; local run_cmd
@@ -646,7 +684,7 @@ start_linux_clients() {
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-            run_cmd="$app_inst_path API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey &"
+            run_cmd="$app_inst_path API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp &"
             run_as_orig_user "$run_cmd"
         done
     )
@@ -1413,7 +1451,7 @@ check_backend_apps_status() {
         # TODO: use CONT_CLIENT_PORT_SHIFT here
         check_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 
     done
-    [ $result -ne 0 ] && echo "go_apla backends arn't ready" && exit 200 \
+    [ $result -ne 0 ] && echo "backends arn't ready" && exit 200 \
         || echo "Backends ready"
 }
 
@@ -1424,11 +1462,11 @@ wait_backend_apps_status() {
         [ $i -eq 1 ] && app_name="go_apla" || app_name="go_apla$i"
         # TODO: use CONT_CLIENT_PORT_SHIFT here
         wait_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 20
-        [ $? -ne 0 ] && echo "  gp_apla backend number $i isn't ready" \
+        [ $? -ne 0 ] && echo "  backend number $i isn't ready" \
             && result=1 \
-            || echo "  gp_apla backend number $i ready"
+            || echo "  backend number $i ready"
     done
-    [ $result -ne 0 ] && echo "go_apla backends arn't ready" && exit 200 \
+    [ $result -ne 0 ] && echo "backends arn't ready" && exit 200 \
         || echo "Backends ready"
 }
 
@@ -1782,7 +1820,7 @@ start_install() {
     fi
 
     check_host_side $num $wps $cps $dbp
-    [ $? -ne 2 ] && sleep 2 && start_clients $num $wps $cps
+    [ $? -ne 2 ] && sleep 2 && start_clients $num $wps $cps $cfp
 }
 
 stop_all() {
@@ -1868,7 +1906,7 @@ start_all() {
     echo
 
     check_host_side $num $wps $cps $dbp
-    [ $? -ne 2 ] && start_clients $num $wps $cps
+    [ $? -ne 2 ] && start_clients $num $wps $cps $cfp
 }
 
 show_status() {
@@ -1968,6 +2006,9 @@ show_usage_help() {
     echo "  uninstall-docker"
     echo "    Docker unintaller for macOS"
     echo
+    echo "  uninstall-client"
+    echo "    Client unintaller for macOS"
+    echo
     echo "  build"
     echo "    Build all (database and backend/frontend) container images"
     echo
@@ -2043,7 +2084,6 @@ show_usage_help() {
     install-docker)
         check_run_as_root
         install_mac_docker_directly
-        echo "res: $?"
         ;;
 
     check-docker-proc)
@@ -2062,15 +2102,17 @@ show_usage_help() {
         wait_docker_ready_status
         ;;
 
-    download-apla)
-        download_and_check_dmg "$APLA_CLIENT_DMG_DL_URL" "$APLA_CLIENT_DMG_BASENAME"
-        echo "res: $?"
+    download-client)
+        download_and_check_dmg "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME"
         ;;
 
-    install-apla)
+    install-client)
         check_run_as_root
-        install_mac_apla_client_directly
-        echo "res: $?"
+        install_mac_client_directly
+        ;;
+
+    uninstall-client)
+        uninstall_client
         ;;
 
     start-docker)
@@ -2100,7 +2142,7 @@ show_usage_help() {
     ### Clients ### begin ###
 
     install-client)
-        install_linux_apla_client_directly
+        install_linux_client_directly
         ;;
 
     start-clients)
