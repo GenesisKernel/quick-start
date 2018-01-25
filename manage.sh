@@ -1532,6 +1532,7 @@ check_host_side() {
     echo -n "    checking: "
     [ -n "$(get_host_port_proc $dbp)" ] && echo "ok" \
         || (echo "error" && d_result=1)
+    echo
 
     local cf_result; cf_result=0
     echo "  Centrifugo port: $cfp" 
@@ -1741,6 +1742,19 @@ start_install() {
     echo
 
     wait_centrifugo_status || return 21
+    echo
+
+    start_bf_cont $num $wps $cps
+
+    wait_cont_proc $BF_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Backend's supervisord isn't available" && return 21 \
+        || echo "Backend's supervisord ready"
+
+    wait_cont_proc $BF_CONT_NAME nginx 15
+    [ $? -ne 0 ] \
+        && echo "Frontend's nginx isn't available" && return 22 \
+        || echo "Frontend's nginx ready"
     echo
 
     start_be_apps $num $cps
