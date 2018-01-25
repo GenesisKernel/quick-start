@@ -1152,7 +1152,7 @@ wait_cont_http_code() {
     return $result
 }
 
-check_http_len() {
+get_http_len() {
     [ -z "$1" ] && echo "URL isn't set" && return 1
     [ -z "$2" ] && echo "List of OK codes isn't set" \
         && return 2
@@ -1173,8 +1173,14 @@ check_http_len() {
     local len; len="$(echo "$resp" | $SED_E -n 's/^[^C]*Content-Length: ([0-9]+)[^0-9]*.*$/\1/gp')"
     [ -z "$len" ] && echo "No Content-Length in HTTP response" && return 7
     [ $len -lt $3 ] && echo "HTTP Content-Length '$len' is lesser than minimal '$3'" && return 8
+    local data; data="$(echo "$resp" | $SED_E -n 's/^([^\*<>]+).*$/\1/pg' | grep -v '{ \[')"
+    echo "$data"
+}
+
+check_http_len() {
+    local result; local out; out="$(get_http_len $@)"; result=$?
+    [ $result -ne 0 ] && ([ -n "$out" ] && echo "$out" || :) && return $result
     echo "ok"
-    return 0
 }
 
 wait_http_len() {
@@ -1195,6 +1201,73 @@ wait_http_len() {
         check_http_code_len "$url" "$codes" "$min_len"; result=$?
         case $result in
             0|1|2|3|4) stop=1 ;;
+            5|6|7|8) [ $(date +%s) -lt $end_time ] || stop=1 ;;
+        esac
+        cnt=$(expr $cnt + 1)
+    done
+    return $result
+}
+
+# URL template: 'http://127.0.0.1:PORT/keys/PrivateKey'
+get_http_priv_key() {
+    [ -z "$1" ] && echo "URL template isn't set" && return 1
+    [ -z "$2" ] && echo "The index number of backend isn't set" && return 2
+    [ -z "$3" ] && echo "List of OK codes isn't set" \
+        && return 3
+    [ -z "$4" ] && echo "Content-Length minimal size (bytes) isn't set" \
+        && return 4
+    [ -z "$5" ] && wps=$WEB_PORT_SHIFT || wps=$5
+    local port; port=$(expr $wps + $2)
+    local url; url="$(echo "$1" | sed -E "s/:PORT/:$port/g")"
+    local resp; resp="$(curl -vs "$url" --stderr -)"
+    [ -n "$(echo "$resp" | grep "Could not resolve host")" ] \
+        && echo "Could not resolve host" && return 5
+    [ -n "$(echo "$resp" | grep "failed: Connection refused")" ] \
+        && echo "HTTP Connection refused" && return 6
+    local code; code="$(echo "$resp" | $SED_E -n 's/^< HTTP[^ ]* ([0-9]+)[^0-9]+.*$/\1/gp')"
+    local c; local result; result=1; IFS=','
+    for c in $3; do
+        [ "$c" = "$code" ] && result=0 && break
+    done
+    unset IFS;
+    [ $result -ne 0 ] && echo "Bad HTTP Response code '$code' (OK-codes: '$3')" && return 7
+    local len; len="$(echo "$resp" | $SED_E -n 's/^[^C]*Content-Length: ([0-9]+)[^0-9]*.*$/\1/gp')"
+    [ -z "$len" ] && echo "No Content-Length in HTTP response" && return 8
+    [ $len -lt $4 ] && echo "HTTP Content-Length '$len' is lesser than minimal '$3'" && return 9
+    local data; data="$(echo "$resp" | $SED_E -n 's/^([^\*<>\{]+)\* .*$/\1/pg')"
+    local chck; chck="$(echo -n "$data" | $SED_E -n 's/^([a-zA-Z0-9]{64})$/\1/p')"
+    [ -z "$chck" ] \
+        && echo "Data '$data' doesn't match to REGEX /^([a-zA-Z0-9]{64})$/" \
+        && return 10 
+    echo "$data"
+}
+
+check_http_priv_key() {
+    local result; local out; out=$(get_http_priv_key $@) > /dev/null; result=$?
+    [ $result -ne 0 ] && ([ -n "$out" ] && echo "$out" || :) && return $result
+    echo "ok"
+}
+
+wait_http_priv_key() {
+    local url_tpl; url_tpl="$1"
+    local idx; idx="$2"
+    local codes; codes="$3"
+    local min_len; min_len="$4"
+    local timeout_secs; [ -z "$5" ] && timeout_secs=15 || timeout_secs=$5
+    local wps; wps=$6
+    local end_time; end_time=$(( $(date +%s) + timeout_secs ))
+
+    echo "Waiting ($timeout_secs seconds) for PrivateKey from backend number '$idx' ..."
+
+    local cnt; cnt=1
+    local stop; stop=0
+    local result; result=0
+    while [ $stop -eq 0 ]; do
+        [ $cnt -gt 1 ] && sleep 1
+        echo -n "    try $cnt: "
+        check_http_priv_key "$url_tpl" $idx "$codes" $min_len $wps; result=$?
+        case $result in
+            0|1|2|3|4|5|9|10) stop=1 ;;
             5|6|7|8) [ $(date +%s) -lt $end_time ] || stop=1 ;;
         esac
         cnt=$(expr $cnt + 1)
@@ -1394,8 +1467,11 @@ check_host_side() {
     local w_port
     for i in $(seq 1 $num); do
         w_port=$(expr $i + $wps)
-        echo -n "    checking $w_port: "
-        check_http_code http://127.0.0.1:$w_port 200,201 20
+        echo -n "    checking (private key) $w_port: "
+        #echo -n "       getuid: "
+        #check_http_code http://127.0.0.1:$w_port 200,201 20
+        #echo -n "       priv_key: "
+        check_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $i 200 64 $wps
         [ $? -ne 0 ] && w_result=1
     done
 
@@ -1405,7 +1481,7 @@ check_host_side() {
     local c_port
     for i in $(seq 1 $num); do
         c_port=$(expr $i + $cps)
-        echo -n "    checking $c_port: "
+        echo -n "    checking (getuid) $c_port: "
         check_http_len http://127.0.0.1:$c_port/api/v2/getuid 200,201 100
         [ $? -ne 0 ] && c_result=1
     done
@@ -2058,8 +2134,57 @@ show_usage_help() {
 
     be-apps-ctl)
         num=""; wps=""; cps=""; dbp=""
-        read_install_params_to_vars || exit 16
+        read_install_params_to_vars || exit 17
         backend_apps_ctl $num $2
+        ;;
+
+    priv-key)
+        [ -z "$2" ] \
+            && echo "The index number of a backend isn't set" \
+            && exit 30
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 18
+        get_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 $wps
+        ;;
+
+    check-priv-key)
+        [ -z "$2" ] \
+            && echo "The index number of a backend isn't set" \
+            && exit 31
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 19
+        check_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 $wps
+        ;;
+
+    wait-priv-key)
+        [ -z "$2" ] \
+            && echo "The index number of a backend isn't set" \
+            && exit 32
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 20
+        wait_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 20 $wps
+        ;;
+
+    check-uid)
+        [ -z "$2" ] \
+            && echo "The index number of a backend isn't set" \
+            && exit 33
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 21
+        [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+        c_port=$(expr $cps + $2)
+        check_http_len http://127.0.0.1:$c_port/api/v2/getuid 200,201 100
+        ;;
+
+    uid)
+        [ -z "$2" ] \
+            && echo "The index number of a backend isn't set" \
+            && exit 33
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 21
+        [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+        c_port=$(expr $cps + $2)
+        get_http_len http://127.0.0.1:$c_port/api/v2/getuid 200,201 100
         ;;
 
     ### Backend #### end ####
