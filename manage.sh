@@ -2,6 +2,8 @@
 
 ### Configuration ### begin ###
 
+SED_E="sed -E"
+
 DB_PORT=15432
 CF_PORT=18100
 WEB_PORT_SHIFT=8300
@@ -16,13 +18,14 @@ DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
 APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
+DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 DOCKER_APP_DIR_SIZE_M=1126 # to update run 'du -sm /Applications/Docker.app'
 
 APLA_CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.5/Apla-0.3.5.dmg"
+APLA_CLIENT_DMG_BASENAME="$(basename "$(echo "$APLA_CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 APLA_CLIENT_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Apla.app'
 APLA_CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.5/apla-0.3.5-x86_64.AppImage"
-
-SED_E="sed -E"
+APLA_CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$APLA_CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
 BF_CONT_IMAGE="str16071985/genesis-bf"
@@ -297,7 +300,7 @@ get_app_dir_size_m() {
 
 download_and_check_dmg() {
     local dmg_url; dmg_url="$1"
-    local dmg_basename; dmg_basename="$(basename "$dmg_url")"
+    local dmg_basename; dmg_basename="$2"
     (
         update_global_downloads_and_apps_dir_vars
 
@@ -375,7 +378,7 @@ download_and_install_dmg() {
 }
 
 install_mac_docker_directly() {
-    download_and_install_dmg "/Applications/Docker.app/Contents/MacOS/Docker" "/Applications/Docker.app" "$DOCKER_DMG_DL_URL" "$(basename "$DOCKER_DMG_DL_URL")" "Docker" $DOCKER_APP_DIR_SIZE_M
+    download_and_install_dmg "/Applications/Docker.app/Contents/MacOS/Docker" "/Applications/Docker.app" "$DOCKER_DMG_DL_URL" "$DOCKER_DMG_BASENAME" "Docker" $DOCKER_APP_DIR_SIZE_M
 }
 
 uninstall_mac_docker() {
@@ -574,15 +577,15 @@ start_docker() {
 }
 
 install_mac_apla_client_directly() {
-    download_and_install_dmg "/Applications/Apla.app/Contents/MacOS/Apla" "/Applications/Apla.app" "$APLA_CLIENT_DMG_DL_URL" "$(basename "$APLA_CLIENT_DMG_DL_URL")" "Apla" $APLA_CLIENT_APP_DIR_SIZE_M
+    download_and_install_dmg "/Applications/Apla.app/Contents/MacOS/Apla" "/Applications/Apla.app" "$APLA_CLIENT_DMG_DL_URL" "$APLA_CLIENT_DMG_BASENAME" "Apla" $APLA_CLIENT_APP_DIR_SIZE_M
 }
 
 install_linux_apla_client_directly() {
     (
         update_global_downloads_and_apps_dir_vars
-        local app_base; app_base="$(basename "$APLA_CLIENT_APPIMAGE_DL_URL")"
-        local app_dl_path; app_dl_path="$DOWNLOADS_DIR/$app_base"
-        local app_inst_path; app_inst_path="$APPS_DIR/$app_base"
+        local app_basename; app_basename="$APLA_CLIENT_APPIMAGE_BASENAME"
+        local app_dl_path; app_dl_path="$DOWNLOADS_DIR/$app_basename"
+        local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
 
         if [ ! -f "$app_inst_path" ]; then
             if [ ! -f "$app_dl_path" ]; then
@@ -635,8 +638,8 @@ start_linux_clients() {
     (
         update_global_downloads_and_apps_dir_vars
 
-        local app_base; app_base="$(basename "$APLA_CLIENT_APPIMAGE_DL_URL")"
-        local app_inst_path; app_inst_path="$APPS_DIR/$app_base"
+        local app_basename; app_basename="$APLA_CLIENT_APPIMAGE_BASENAME"
+        local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
 
         local w_port; local c_port; local run_cmd
         for i in $(seq 1 $num); do
@@ -1828,11 +1831,6 @@ start_all() {
 
     echo
 
-    #create_dbs $num 15
-    #[ $? -ne 0 ] \
-    #    && echo "Backend databases creation failed" && return 14 \
-    #    || echo "Backend databases creation compete"
-
     wait_dbs $num 15
     [ $? -ne 0 ] \
         && echo "Backend databases ant't available" && return 14 \
@@ -2065,7 +2063,7 @@ show_usage_help() {
         ;;
 
     download-apla)
-        download_and_check_dmg "$APLA_CLIENT_DMG_DL_URL"
+        download_and_check_dmg "$APLA_CLIENT_DMG_DL_URL" "$APLA_CLIENT_DMG_BASENAME"
         echo "res: $?"
         ;;
 
