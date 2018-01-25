@@ -1,4 +1,4 @@
-FROM centos:7
+FROM yarnpkg/node-yarn
 
 ENV CENTRIFUGO_VERSION 1.7.6
 
@@ -8,9 +8,9 @@ ENV CENTRIFUGO_DOWNLOAD https://github.com/centrifugal/centrifugo/releases/downl
 
 RUN curl -sSL "$CENTRIFUGO_DOWNLOAD" -o /tmp/centrifugo.zip && \
     echo "${CENTRIFUGO_SHA256}  /tmp/centrifugo.zip" | sha256sum -c - && \
-    yum install -y unzip && \
+    apt update && apt install -y unzip && \
     unzip -jo /tmp/centrifugo.zip -d /tmp/ && \
-    yum remove -y unzip && \
+    apt remove -y unzip && \
     mv /tmp/centrifugo /usr/bin/centrifugo && \
     rm -f /tmp/centrifugo.zip && \
     echo "centrifugo - nofile 65536" >> /etc/security/limits.d/centrifugo.nofiles.conf
@@ -24,7 +24,7 @@ VOLUME ["/centrifugo", "/var/log/centrifugo"]
 
 WORKDIR /centrifugo
 
-USER centrifugo
+#USER centrifugo
 
 COPY config.json /centrifugo/config.json
 

@@ -47,6 +47,9 @@ TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
 CF_CONT_NAME="genesis-cf"
 CF_CONT_IMAGE="str16071985/genesis-cf"
 CF_CONT_BUILD_DIR="genesis-cf"
+#CF_CONT_NAME="genesis-cf2"
+#CF_CONT_IMAGE="str16071985/genesis-cf2"
+#CF_CONT_BUILD_DIR="genesis-cf2"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -734,7 +737,7 @@ stop_mac_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "Apla API_URL")
+        pids=$(pgrep -f "Genesis API_URL")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1
@@ -748,7 +751,7 @@ stop_linux_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "apla API_URL")
+        pids=$(pgrep -f "genesis API_URL")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1

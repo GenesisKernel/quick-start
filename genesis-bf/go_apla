@@ -1,5 +1,5 @@
 [program:go_aplaINSTANCE]
-command=/bin/bash -c "DO_INIT_DB=$([ -n \"$(psql -h genesis-db -U postgres -d egINSTANCE -c 'select count(*) from block_chain' 2>&1 | tail -n +4 | head -n +1 | sed -E 's/^ +//')\" ] && echo 0 || echo 1); exec /apla/go-apla -workDir=/s/sINSTANCE -tcpPort=701INSTANCE -httpPort=700INSTANCE -dbHost=genesis-db -dbPort=5432 -dbName=egINSTANCE -dbUser=postgres -dbPassword=111111 --configPath /dev/null -initDatabase=$DO_INIT_DB -firstBlockPath=/s/s1/1block -keyID=keyID2 -httpHost=0.0.0.0"
+command=/bin/bash -c "DO_INIT_DB=$([ -n \"$(psql -h genesis-db -U postgres -d egINSTANCE -c 'select count(*) from block_chain' 2>&1 | tail -n +4 | head -n +1 | sed -E 's/^ +//')\" ] && echo 0 || echo 1); exec /apla/go-apla -workDir=/s/sINSTANCE -tcpPort=701INSTANCE -httpPort=700INSTANCE -dbHost=genesis-db -dbPort=5432 -dbName=egINSTANCE -dbUser=postgres -dbPassword=111111 --configPath /dev/null -initDatabase=$DO_INIT_DB -firstBlockPath=/s/s1/1block -keyID=keyID2 -httpHost=0.0.0.0 -centrifugoSecret=4597e75c-4376-42a6-8c1f-7e3fc7eb2114 -centrifugoUrl=http://genesis-cf:8000"
 stdout_events_enabled=true
 stderr_events_enabled=true
 autorestart = true
