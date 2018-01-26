@@ -17,22 +17,21 @@ CONT_CLIENT_PORT_SHIFT=7000
 DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
 APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
+DOCKER_APP_NAME="Docker"
 DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 DOCKER_MAC_APP_DIR_SIZE_M=1136 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
-DOCKER_APP_NAME="Docker"
 
-CLIENT_DMG_DL_URL="https://www.dropbox.com/s/qksahfyc6ogp6tv/Genesis-0.3.5.dmg?dl=1"
+CLIENT_APP_NAME="Genesis"
+CLIENT_DMG_DL_URL="https://www.dropbox.com/s/i4s9uv7zwchce04/Genesis-0.3.5-debug.dmg?dl=1"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-
-CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/e9fun3xir0gfpsr/genesis-front-0.3.5-x86_64.AppImage?dl=1"
+CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/z15ske4oucqour2/genesis-front-debug.AppImage?dl=1"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
-CLIENT_APP_NAME="Genesis"
 
 BF_CONT_NAME="genesis-bf"
 BF_CONT_IMAGE="str16071985/genesis-bf"
@@ -1015,9 +1014,7 @@ check_db_exists() {
         && echo "DB name isn't set" && return 1
     check_cont $DB_CONT_NAME > /dev/null; [ $? -ne 0 ] \
         && echo "DB container isn't available" && return 2
-    #local db; db=$(docker exec -t $DB_CONT_NAME bash -c "sudo -u postgres psql -lqt")
-    #db=$(echo "$db" | $SED_E -n "s/^[^e]*($db_name)[^|]+.*$/\1/gp")
-    local db; db=$(docker exec -t $DB_CONT_NAME bash -c "sudo -u postgres psql -lqt" | $SED_E -n "s/^[^e]*($db_name)[^|]+.*$/\1/gp")
+    local db; db=$(docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres psql -lqt" | $SED_E -n "s/^[^e]*($db_name)[^|]+.*$/\1/gp")
     [ -z "$db" ] && echo "DB '$db_name' doesn't exist" && return 3
     echo "ok"
     return 0
@@ -1103,7 +1100,7 @@ create_dbs() {
                     ;;
                 3)
                     echo "Creating 'eg$i' database ..."
-                    docker exec -t $DB_CONT_NAME bash /db.sh create postgres "eg$i"
+                    docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "eg$i"
                     ;;
                 *) total_result=$result ;;
             esac
@@ -1118,7 +1115,7 @@ run_db_shell() {
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1 \
         || db_name="eg$1"
     check_db_exists "$db_name" || return 3
-    docker exec -t $DB_CONT_NAME bash -c \
+    docker exec -ti $DB_CONT_NAME bash -c \
         "sudo -u postgres psql -U postgres -d $db_name"
 }
 
@@ -1129,7 +1126,7 @@ do_db_query() {
     local query; query="$2"; [ -z "$query" ] \
         && echo "Query string isn't set" && return 2
     check_db_exists "$db_name" || return 3
-    docker exec -t $DB_CONT_NAME bash -c \
+    docker exec -ti $DB_CONT_NAME bash -c \
         "sudo -u postgres psql -U postgres -d $db_name -c '$query'"
 }
 
