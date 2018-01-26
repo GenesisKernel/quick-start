@@ -10,6 +10,6 @@ do
  pubKey2=`cat /s/s$i/PublicKey`
  host1=127.0.0.1
  httpPort1=7001
- python3 /apla-tests/updateKeys.py "$prKey1" "$host1" "$httpPort1" "$keyID2" "$pubKey2" "100000000000000000000"
+ python3 /apla-tests/scripts/updateKeys.py "$prKey1" "$host1" "$httpPort1" "$keyID2" "$pubKey2" "100000000000000000000"
 done
 
