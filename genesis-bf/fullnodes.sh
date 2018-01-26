@@ -21,20 +21,20 @@
 
 if [ $1 == 2 ]
 then
-     cd /apla-tests/scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"]]
+     cd /apla-scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"]]
 fi
 
 if [ $1 == 3 ]
 then
-  cd /apla-tests/scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"],[\"$host:$tcpPort3\",\"$keyID3\",\"$pubKey3\"]]
+  cd /apla-scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"],[\"$host:$tcpPort3\",\"$keyID3\",\"$pubKey3\"]]
 fi
 
 if [ $1 == 4 ]
 then
-  cd /apla-tests/scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"],[\"$host:$tcpPort3\",\"$keyID3\",\"$pubKey3\"],[\"$host:$tcpPort4\",\"$keyID4\",\"$pubKey4\"]]
+  cd /apla-scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"],[\"$host:$tcpPort3\",\"$keyID3\",\"$pubKey3\"],[\"$host:$tcpPort4\",\"$keyID4\",\"$pubKey4\"]]
 fi
 
 if [ $1 == 5 ]
 then
-  cd /apla-tests/scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"],[\"$host:$tcpPort3\",\"$keyID3\",\"$pubKey3\"],[\"$host:$tcpPort4\",\"$keyID4\",\"$pubKey4\"],[\"$host:$tcpPort5\",\"$keyID5\",\"$pubKey5\"]]
+  cd /apla-scripts && python3 newValToFullNodes.py "$prKey1" "$host" "$httpPort1" [[\"$host\",\"$keyID1\",\"$pubKey1\"],[\"$host:$tcpPort2\",\"$keyID2\",\"$pubKey2\"],[\"$host:$tcpPort3\",\"$keyID3\",\"$pubKey3\"],[\"$host:$tcpPort4\",\"$keyID4\",\"$pubKey4\"],[\"$host:$tcpPort5\",\"$keyID5\",\"$pubKey5\"]]
 fi

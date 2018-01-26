@@ -7,9 +7,11 @@ ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr
 RUN go get -d github.com/AplaProject/go-apla && cd /go/src/github.com/AplaProject/go-apla && git checkout release && go get github.com/AplaProject/go-apla && mkdir /apla && mkdir -p /s/s1 && mv $GOPATH/bin/go-apla /apla && rm -rf /go
 RUN git clone https://github.com/AplaProject/apla-front.git && cd /apla-front && yarn install && yarn build && find /apla-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY settings.json /apla-front/build/
-RUN git clone https://github.com/AplaProject/apla-tests.git /apla-tests
-RUN apt-get update -y && apt-get -y install python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN pip3 install -r /apla-tests/requirements.txt
+#RUN git clone https://github.com/AplaProject/apla-tests.git /apla-tests
+COPY apla-scripts /apla-scripts
+#RUN apt-get update -y && apt-get -y install python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN pip3 install -r /apla-scripts/requirements.txt
 COPY supervisord.d /etc/supervisord.d
 COPY supervisor.conf /etc/
 COPY nginx/default /etc/nginx/sites-available/default

@@ -1845,7 +1845,8 @@ start_install() {
     fi
 
     check_host_side $num $wps $cps $dbp
-    [ $? -ne 2 ] && sleep 2 && start_clients $num $wps $cps
+    #[ $? -ne 2 ] && sleep 2 && start_clients $num $wps $cps
+    [ $? -ne 2 ] && start_clients $num $wps $cps
     # FIXME: add cfp
 }
 
