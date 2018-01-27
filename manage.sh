@@ -1641,6 +1641,21 @@ check_host_side() {
     return $result
 }
 
+tail_be_log() {
+    local log_basename
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    [ "$1" = "1" ] && log_basename="go_apla.log" || log_basename="go_apla$1.log"
+
+    local log_dirname; log_dirname="/var/log/go-apla"
+    docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
+    [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 2
+
+    local log_path; log_path="$log_dirname/$log_basename"
+    docker exec -t $BF_CONT_NAME bash -c "[ -e '$log_path' ]"
+    [ $? -ne 0 ] && echo "No log file '$log_path'" && return 3
+
+    docker exec -ti $BF_CONT_NAME bash -c "tail -f $log_path"
+}
 
 ### Backends services #### end ####
 
@@ -2411,6 +2426,11 @@ show_usage_help() {
         c_port=$(expr $cps + $2)
         get_http_len http://127.0.0.1:$c_port/api/v2/getuid 200,201 100
         ;;
+
+    tail-be-log)
+        tail_be_log $2
+        ;;
+
 
     ### Backend #### end ####
 
