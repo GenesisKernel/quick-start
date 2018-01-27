@@ -1766,34 +1766,34 @@ start_install() {
     
     start_db_cont $dbp
 
-    wait_cont_proc $DB_CONT_NAME postgres 15
+    wait_cont_proc $DB_CONT_NAME postgres 25
     [ $? -ne 0 ] \
         && echo "Postgres process isn't available" && return 10 \
         || echo "Postgres ready"
 
-    wait_db_exists postgres 15
+    wait_db_exists postgres 25
     [ $? -ne 0 ] \
         && echo "postgres database isn't available" && return 11 \
         || echo "postgres database ready"
 
-    wait_db_exists template0 15
+    wait_db_exists template0 25
     [ $? -ne 0 ] \
         && echo "template0 database isn't available" && return 12 \
         || echo "template0 database ready"
 
-    wait_db_exists template1 15
+    wait_db_exists template1 25
     [ $? -ne 0 ] \
         && echo "template1 database isn't available" && return 13 \
         || echo "template1 database ready"
 
     echo
 
-    create_dbs $num 15
+    create_dbs $num 25
     [ $? -ne 0 ] \
         && echo "Backend databases creation failed" && return 14 \
         || echo "Backend databases creation compete"
 
-    wait_dbs $num 15
+    wait_dbs $num 25
     [ $? -ne 0 ] \
         && echo "Backend databases ant't available" && return 14 \
         || echo "Backend databases ready"
