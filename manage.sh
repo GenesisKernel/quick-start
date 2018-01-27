@@ -1123,11 +1123,14 @@ do_db_query() {
     local db_name
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1 \
         || db_name="eg$1"
-    local query; query="$2"; [ -z "$query" ] \
+    shift 1
+    [ -z "$1" ] \
         && echo "Query string isn't set" && return 2
+    local query; query="$@";
     check_db_exists "$db_name" || return 3
+    local query_esc; query_esc="$(echo "$query" | $SED_E "s#\\\\[*]#*#g")"
     docker exec -ti $DB_CONT_NAME bash -c \
-        "sudo -u postgres psql -U postgres -d $db_name -c '$query'"
+        "sudo -u postgres psql -U postgres -d $db_name -c '$query_esc'"
 }
 
 block_chain_count() {
@@ -2347,6 +2350,11 @@ show_usage_help() {
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 16
         block_chain_count $num
+        ;;
+
+    keys)
+        [ -z "$2" ] && echo "Backend number isn't set" && exit 58
+        do_db_query $2 "select \* from \"1_keys\";"
         ;;
 
     ### Database #### end ####
