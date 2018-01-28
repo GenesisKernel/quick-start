@@ -1162,10 +1162,34 @@ cmp_keys() {
     for i in $(seq 1 $num); do
         prev="$out"
         out="$(do_db_query t-md5 $i "select id, pub from \"1_keys\" order by id;")"
-        [ $i -gt 1 ] && [ "$prev" != "$out" ] && echo "NOT EQUAL" && result=1
+        [ $i -gt 1 ] && [ "$prev" != "$out" ] && result=1
     done
-    [ $result -ne 0 ] && echo "ERROR: keys differ" && return 2
-    echo "OK: keys are the same" 
+    [ $result -ne 0 ] && echo "keys differ" && return 2
+    echo "keys are the same" 
+}
+
+wait_keys_sync() {
+    local num;
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1 || num=$1
+    local timeout_secs; [ -z "$2" ] && timeout_secs=25 || timeout_secs="$2"
+    local end_time; end_time=$(( $(date +%s) + timeout_secs ))
+    local cnt; cnt=1
+    local stop; stop=0;
+    local result; result=0;
+    local out
+    echo "Waiting ($timeout_secs seconds) for keys synchronization to complete ..."
+    while [ $stop -eq 0 ]; do
+        [ $cnt -gt 1 ] && sleep 1
+        echo -n "    try $cnt: "
+        cmp_keys "$1"; result=$?
+        case $result in
+            1|0) stop=1 ;;
+            2) [ $(date +%s) -lt $end_time ] || stop=1 ;;
+        esac
+        cnt=$(expr $cnt + 1)
+    done
+    [ $result -eq 0 ] && echo "OK: keys are synchronized"
+    return $result
 }
 
 ### Database #### end ####
@@ -1890,8 +1914,8 @@ start_install() {
     fi
     echo
 
-    echo "Comparing backends 1_keys ..."
-    cmp_keys $num
+    #echo "Comparing backends 1_keys ..."
+    wait_keys_sync $num 25 || return 25
     echo
 
     check_host_side $num $wps $cps $dbp
@@ -2392,6 +2416,12 @@ show_usage_help() {
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 16
         cmp_keys $num
+        ;;
+
+    wait-keys)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        wait_keys_sync $num
         ;;
 
     ### Database #### end ####
