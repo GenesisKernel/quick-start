@@ -1016,7 +1016,6 @@ check_db_exists() {
         && echo "DB container isn't available" && return 2
     local db; db=$(docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres psql -lqt" | $SED_E -n "s/^[^e]*($db_name)[^|]+.*$/\1/gp")
     [ -z "$db" ] && echo "DB '$db_name' doesn't exist" && return 3
-    echo "ok"
     return 0
 }
 
@@ -1040,6 +1039,7 @@ wait_db_exists() {
         esac
         cnt=$(expr $cnt + 1)
     done
+    [ $result -eq 0 ] && echo "ok"
     return $result
 }
 
@@ -1120,17 +1120,29 @@ run_db_shell() {
 }
 
 do_db_query() {
+    local out_mode; 
+    [ -z "$1" ] && echo "Output mode isn't set" && return 1 \
+        || out_mode="$1"
     local db_name
-    [ -z "$1" ] && echo "Backend's number isn't set" && return 1 \
-        || db_name="eg$1"
-    shift 1
+    [ -z "$2" ] && echo "Backend's number isn't set" && return 1 \
+        || db_name="eg$2"
+    shift 2
     [ -z "$1" ] \
         && echo "Query string isn't set" && return 2
     local query; query="$@";
     check_db_exists "$db_name" || return 3
     local query_esc; query_esc="$(echo "$query" | $SED_E "s#\\\\[*]#*#g")"
-    docker exec -ti $DB_CONT_NAME bash -c \
-        "sudo -u postgres psql -U postgres -d $db_name -c '$query_esc'"
+    case $out_mode in
+        t-md5) docker exec -ti $DB_CONT_NAME bash -c \
+                "sudo -u postgres psql -U postgres -d $db_name -t -c '$query_esc' | md5sum | sed -E -n 's/^([0-9a-zA-Z]{32}).*$/\1/p'"
+            ;;
+        t) docker exec -ti $DB_CONT_NAME bash -c \
+            "sudo -u postgres psql -U postgres -d $db_name -t -c '$query_esc'"
+            ;;
+        comn|*) docker exec -ti $DB_CONT_NAME bash -c \
+            "sudo -u postgres psql -U postgres -d $db_name -c '$query_esc'"
+            ;;
+    esac
 }
 
 block_chain_count() {
@@ -1138,8 +1150,22 @@ block_chain_count() {
     for i in $(seq 1 $num); do
         query='SELECT COUNT(*) FROM block_chain'
         echo -n "eg$i: $query: "
-        do_db_query "$i" "$query" | tail -n +4 | head -n +1 | $SED_E 's/^ +//'
+        do_db_query comn "$i" "$query" | tail -n +4 | head -n +1 | $SED_E 's/^ +//'
     done
+}
+
+cmp_keys() {
+    local num;
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1 || num=$1
+    [ $num -eq 1 ] && echo "The backend is single" && return 0
+    local prev; local result; result=0
+    for i in $(seq 1 $num); do
+        prev="$out"
+        out="$(do_db_query t-md5 $i "select id, pub from \"1_keys\" order by id;")"
+        [ $i -gt 1 ] && [ "$prev" != "$out" ] && echo "NOT EQUAL" && result=1
+    done
+    [ $result -ne 0 ] && echo "ERROR: keys differ" && return 2
+    echo "OK: keys are the same" 
 }
 
 ### Database #### end ####
@@ -1855,15 +1881,20 @@ start_install() {
 
     echo "Starting 'fullnodes' ..."
     docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
+    echo
 
     docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
     if [ $? -eq 0 ]; then
         echo "Starting 'upkeys' ..."
         docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
     fi
+    echo
+
+    echo "Comparing backends 1_keys ..."
+    cmp_keys $num
+    echo
 
     check_host_side $num $wps $cps $dbp
-    #[ $? -ne 2 ] && sleep 2 && start_clients $num $wps $cps
     [ $? -ne 2 ] && start_clients $num $wps $cps
     # FIXME: add cfp
 }
@@ -2343,7 +2374,7 @@ show_usage_help() {
         ;;
 
     db-query)
-        do_db_query $2 $3
+        do_db_query comn $2 $3
         ;;
 
     block-chain-count)
@@ -2354,7 +2385,13 @@ show_usage_help() {
 
     keys)
         [ -z "$2" ] && echo "Backend number isn't set" && exit 58
-        do_db_query $2 "select \* from \"1_keys\";"
+        do_db_query comn $2 "select \* from \"1_keys\" order by id;"
+        ;;
+
+    cmp-keys)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        cmp_keys $num
         ;;
 
     ### Database #### end ####
