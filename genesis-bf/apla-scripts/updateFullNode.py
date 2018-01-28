@@ -41,7 +41,7 @@ if __name__ == "__main__":
 		dataCont.update(sign_resCall)
 		respCall = requests.post(baseUrl + '/contract/UpdateSysParam', data=dataCont, headers={"Authorization": jvtToken})
 		resultCallContract = respCall.json()
-		#time.sleep(10)
+		time.sleep(10)
 		statusCall = requests.get(baseUrl + '/txstatus/' + resultCallContract["hash"], headers={"Authorization": jvtToken})
 		statusCallJ = statusCall.json()
 		if len(statusCallJ["blockid"]) > 0:

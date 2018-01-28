@@ -41,7 +41,7 @@ if __name__ == "__main__":
 		respCall = requests.post(baseUrl + '/contract/UpdateSysParam', data=dataCont, headers={"Authorization": jvtToken})
 		resultCallContract = respCall.json()
 		print(resultCallContract)
-		#time.sleep(20)
+		time.sleep(20)
 		statusCall = requests.get(baseUrl + '/txstatus/' + resultCallContract["hash"], headers={"Authorization": jvtToken})
 		statusCallJ = statusCall.json()
 		print(statusCallJ)
