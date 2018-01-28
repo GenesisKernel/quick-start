@@ -5,7 +5,7 @@ ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 #RUN go get github.com/AplaProject/go-apla && mkdir /apla && mkdir -p /s/s1 && mv $GOPATH/bin/go-apla /apla
 RUN go get -d github.com/AplaProject/go-apla && cd /go/src/github.com/AplaProject/go-apla && git checkout release && go get github.com/AplaProject/go-apla && mkdir /apla && mkdir -p /s/s1 && mv $GOPATH/bin/go-apla /apla && rm -rf /go
-RUN git clone https://github.com/AplaProject/apla-front.git && cd /apla-front && yarn install && yarn build && find /apla-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
+RUN git clone https://github.com/AplaProject/apla-front.git && cd /apla-front && git checkout tags/v0.3.6 && yarn install && yarn build && find /apla-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY settings.json /apla-front/build/
 #RUN git clone https://github.com/AplaProject/apla-tests.git /apla-tests
 COPY apla-scripts /apla-scripts

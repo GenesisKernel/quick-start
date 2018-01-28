@@ -1915,7 +1915,7 @@ start_install() {
     echo
 
     #echo "Comparing backends 1_keys ..."
-    wait_keys_sync $num 25 || return 25
+    wait_keys_sync $num 10 || return 25
     echo
 
     check_host_side $num $wps $cps $dbp
