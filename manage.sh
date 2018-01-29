@@ -2,6 +2,7 @@
 
 ### Configuration ### begin ###
 
+VERSION="0.1.0"
 SED_E="sed -E"
 
 DB_PORT=15432
@@ -25,12 +26,12 @@ DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://www.dropbox.com/s/i4s9uv7zwchce04/Genesis-0.3.5-debug.dmg?dl=1"
+CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.6/Genesis-0.3.6.dmg"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/z15ske4oucqour2/genesis-front-debug.AppImage?dl=1"
+CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.3.6/genesis-front-0.3.6-x86_64.AppImage"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
@@ -1972,8 +1973,13 @@ start_install() {
     fi
     echo
 
-    #echo "Comparing backends 1_keys ..."
-    wait_keys_sync $num 10 || return 25
+    echo "Comparing backends 1_keys ..."
+    cmp_keys_sync $num || return 25
+    #wait_keys_sync $num 10 || return 25
+    echo
+
+    echo "Comparing backends first blocks ..."
+    cmp_first_blocks $num || return 26
     echo
 
     check_host_side $num $wps $cps $dbp
@@ -2657,6 +2663,10 @@ show_usage_help() {
         docker rmi -f $BF_CONT_IMAGE
         docker rmi -f $CF_CONT_IMAGE
         docker rmi -f $DB_CONT_IMAGE
+        ;;
+
+    version)
+        echo "$VERSION"
         ;;
 
     *)
