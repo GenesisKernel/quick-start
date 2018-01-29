@@ -1829,7 +1829,25 @@ delete_install() {
     remove_cont $DB_CONT_NAME
 }
 
-upkeys() {
+start_fullnodes() {
+    local num; num=$1
+    ([ -z "$num" ] || [ $num -lt 1 ]) \
+        && echo "The number of backends is not set or wrong: '$num'" \
+        && return 1
+    docker exec -t $BF_CONT_NAME bash -c '[ -e /fullnodes.sh ]'
+    [ $? -ne 0 ] \
+        && echo "/fullnodes.sh doesn't exist @ container '$BF_CONT_NAME'" \
+        && return 2
+
+    echo "Starting 'fullnodes' ..."
+    docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
+    [ $? -ne 0 ] \
+        && echo "Fullnodes isn't compelete" && return 3
+    echo "Fullnodes compelete"
+    return 0
+}
+
+start_upkeys() {
     local num; num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
@@ -1843,6 +1861,7 @@ upkeys() {
     docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
     [ $? -ne 0 ] \
         && echo "Upkeys isn't compelete" && return 3
+    echo "Upkeys compelete"
     return 0
 }
 
@@ -1962,24 +1981,26 @@ start_install() {
         || echo "Fronend applications ready"
     echo
 
-    echo "Starting 'fullnodes' ..."
-    docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
+    #echo "Starting 'fullnodes' ..."
+    #docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
+    start_fullnodes $num || return 25
     echo
 
-    docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
-    if [ $? -eq 0 ]; then
-        echo "Starting 'upkeys' ..."
-        docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
-    fi
+    #docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
+    #if [ $? -eq 0 ]; then
+    #    echo "Starting 'upkeys' ..."
+    #    docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
+    #fi
+    start_upkeys $num || return 26
     echo
 
     echo "Comparing backends 1_keys ..."
-    cmp_keys_sync $num || return 25
+    cmp_keys $num || return 27
     #wait_keys_sync $num 10 || return 25
     echo
 
     echo "Comparing backends first blocks ..."
-    cmp_first_blocks $num || return 26
+    cmp_first_blocks $num || return 28
     echo
 
     check_host_side $num $wps $cps $dbp
@@ -2582,10 +2603,16 @@ show_usage_help() {
         tail_be_log $2
         ;;
 
+    fullnodes)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 21
+        start_fullnodes $num
+        ;;
+
     upkeys)
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 21
-        upkeys $num
+        start_upkeys $num
         ;;
 
     ### Backend #### end ####
