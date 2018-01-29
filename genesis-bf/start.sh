@@ -19,7 +19,7 @@ for i in $(seq 2 $1); do
     if [ $1 == 1 ]; then
         echo "1 started"
     else
-        cd /apla && ./go-apla -workDir=/s/s$i -tcpPort=701$1 -httpPort=700$i -dbHost=genesis-db -dbPort=5432 -dbName=eg$i -dbUser=postgres -dbPassword=111111 --configPath /dev/null -initDatabase=1 -generateFirstBlock=1 -noStart=1 && echo "go-apla in noStart mode finished"
+        cd /apla && ./go-apla -workDir=/s/s$i -tcpPort=701$1 -httpPort=700$i -dbHost=genesis-db -dbPort=5432 -dbName=eg$i -dbUser=postgres -dbPassword=111111 --configPath /dev/null -initDatabase=1 -generateFirstBlock=1 -noStart=1 && echo "go-apla backend number $i in noStart mode finished" && echo
 
         keyID2=`cat /s/s$i/KeyID`
     fi

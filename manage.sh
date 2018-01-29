@@ -331,7 +331,7 @@ download_and_install_dmg() {
     local app_name; app_name="$5"
     local exp_size_m; exp_size_m=$6
 
-    local timeout_secs; timeout_secs="180"
+    local timeout_secs; timeout_secs="380"
 
     local result; result=0
 
@@ -348,15 +348,25 @@ download_and_install_dmg() {
             else
                 open "$dmg_path"
             fi
+            echo "inner return code: $?"
         )
-        while [ ! -f "$app_bin" ]; do
-            echo "Please move $app_name to Applications"
-            sleep 1
-        done
-
-        echo "$app_name is copying to Applications. Please wait (timeout: $timeout_secs seconds) ..."
+        echo "return code: $?"
         local end_time; end_time=$(( $(date +%s) + timeout_secs ))
         local stop; stop=0
+        local cnt; cnt=0
+        while [ $stop -eq 0 ]; do
+            echo "Please move $app_name to Applications"
+            [ -f "$app_bin" ] && stop=1
+            [ $(date +%s) -lt $end_time ] || stop=2
+            [ $cnt -gt 1 ] && sleep 1
+        done
+        case $stop in 
+            2) echo "Waiting time for $app_name is out" && return 11
+        esac
+
+        echo "$app_name is copying to Applications. Please wait (timeout: $timeout_secs seconds) ..."
+        end_time=$(( $(date +%s) + timeout_secs ))
+        stop=0
         while [ $stop -eq 0 ]; do
             [ $(get_app_dir_size_m "$app_dir") -ge $exp_size_m ] \
                 && stop=1
@@ -375,11 +385,11 @@ download_and_install_dmg() {
                 ;;
             2)
                 echo "$app_name probably installed (you skipped waiting)"
-                result=11
+                result=21
                 ;;
             3)
                 echo "$app_name probably installed (there was a timeout)"
-                result=12
+                result=22
                 ;;
         esac
     fi
@@ -572,6 +582,8 @@ wait_docker_ready_status() {
 
 start_mac_docker() {
     install_mac_docker_directly
+    [ $? -ne 0 ] \
+        && echo "Can't download docker" && return 1
     open -n "$DOCKER_MAC_APP_DIR"
     wait_proc docker 120
     [ $? -ne 0 ] \
@@ -670,13 +682,15 @@ start_mac_clients() {
     local num; num=$1;
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of clients is not set" \
-        && return 200
+        && return 100
     local wps; wps=$2; [ -z "$wps" ] && wps=$WEB_PORT_SHIFT
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
     #local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
     local cfp; cfp=$CF_PORT # FIXME: change to parameter
 
     install_mac_client_directly
+    [ $? -ne 0 ] \
+        && echo "Can't download client" && return 101
 
     local w_port; local c_port; local run_cmd
     for i in $(seq 1 $num); do
@@ -989,7 +1003,8 @@ start_bf_cont() {
                 image_name="$BF_CONT_IMAGE"
             fi
             echo "Creating a new backend/frontend container from image '$image_name' ..."
-            docker run -d --restart always --name $BF_CONT_NAME $w_ports $c_ports -v apla:/s --link $DB_CONT_NAME:$DB_CONT_NAME --link $CF_CONT_NAME:$CF_CONT_NAME -t $image_name
+            #docker run -d --restart always --name $BF_CONT_NAME $w_ports $c_ports -v apla:/s --link $DB_CONT_NAME:$DB_CONT_NAME --link $CF_CONT_NAME:$CF_CONT_NAME -t $image_name
+            docker run -d --restart always --name $BF_CONT_NAME $w_ports $c_ports --link $DB_CONT_NAME:$DB_CONT_NAME --link $CF_CONT_NAME:$CF_CONT_NAME -t $image_name
             ;;
         2)
             echo "Starting backend/frontend container ..."
@@ -1154,8 +1169,34 @@ block_chain_count() {
     done
 }
 
+get_first_blocks() {
+    local num
+    [ -z "$1" ] && echo "The number of backends isn't set" && return 1 || num=$1
+    local query; local out; local prev; local res; res=0
+    for i in $(seq 1 $num); do
+        query='SELECT key_id FROM block_chain WHERE id=1'
+        echo -n "eg$i: $query: "
+        do_db_query t "$i" "$query" | $SED_E -e 's/^[^0-9]+//' -e '/^\s*$/d'
+    done
+}
+
+cmp_first_blocks() {
+    local num
+    [ -z "$1" ] && echo "the number of backends isn't set" && return 1 || num=$1
+    [ $num -eq 1 ] && echo "The backend is single" && return 0
+    local query; local out; local prev; local res; result=0
+    for i in $(seq 1 $num); do
+        prev="$out"
+        query='SELECT key_id FROM block_chain WHERE id=1'
+        out="$(do_db_query t "$i" "$query" | $SED_E -e 's/^[^0-9]+//' -e '/^\s*$/d')"
+        [ $i -gt 1 ] && [ "$prev" != "$out" ] && result=1
+    done
+    [ $result -ne 0 ] && echo "first blocks differ" && return 2
+    echo "first blocks are the same: $out" 
+}
+
 cmp_keys() {
-    local num;
+    local num
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1 || num=$1
     [ $num -eq 1 ] && echo "The backend is single" && return 0
     local prev; local result; result=0
@@ -1787,6 +1828,23 @@ delete_install() {
     remove_cont $DB_CONT_NAME
 }
 
+upkeys() {
+    local num; num=$1
+    ([ -z "$num" ] || [ $num -lt 1 ]) \
+        && echo "The number of backends is not set or wrong: '$num'" \
+        && return 1
+    docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
+    [ $? -ne 0 ] \
+        && echo "/upkeys.sh doesn't exist @ container '$BF_CONT_NAME'" \
+        && return 2
+
+    echo "Starting 'upkeys' ..."
+    docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
+    [ $? -ne 0 ] \
+        && echo "Upkeys isn't compelete" && return 3
+    return 0
+}
+
 start_install() {
     local num; num=$1
     local wps; wps=$2
@@ -2407,6 +2465,18 @@ show_usage_help() {
         block_chain_count $num
         ;;
 
+    first-blocks)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        get_first_blocks $num
+        ;;
+        
+    cmp-first-blocks)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 16
+        cmp_first_blocks $num
+        ;;
+
     keys)
         [ -z "$2" ] && echo "Backend number isn't set" && exit 58
         do_db_query comn $2 "select \* from \"1_keys\" order by id;"
@@ -2506,6 +2576,11 @@ show_usage_help() {
         tail_be_log $2
         ;;
 
+    upkeys)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 21
+        upkeys $num
+        ;;
 
     ### Backend #### end ####
 
