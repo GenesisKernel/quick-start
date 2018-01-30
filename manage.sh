@@ -321,9 +321,8 @@ download_and_check_dmg() {
             && mv "$dmg_path" "$dmg_path.bak.$(date "+%Y%m%d%H%M%S")"
         create_downloads_dir \
             && echo "Downloading $app_name ..." \
-            && curl -L -o "$dmg_path" "$dmg_url" && echo "dmg_path"
+            && curl -L -o "$dmg_path" "$dmg_url" && echo "$dmg_path"
     ); result=$?
-    echo "2 dmg_path: $dmg_path"
     case $result in
         77)
             echo
@@ -334,7 +333,7 @@ download_and_check_dmg() {
             echo
             return $result
             ;;
-        0) echo "3 dmg_path: $dmg_path" ;;
+        0) echo "$dmg_path" ;;
         *) return $result ;;
     esac
 }
