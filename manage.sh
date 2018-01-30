@@ -311,17 +311,32 @@ get_app_dir_size_m() {
 download_and_check_dmg() {
     local dmg_url; dmg_url="$1"
     local dmg_basename; dmg_basename="$2"
+    local result
     (
         update_global_downloads_and_apps_dir_vars
 
         local dmg_path; dmg_path="$DOWNLOADS_DIR/$dmg_basename"
-        echo "dmg_path: $dmg_path"
+        echo "1 dmg_path: $dmg_path"
         [ -f "$dmg_path" ] \
             && mv "$dmg_path" "$dmg_path.bak.$(date "+%Y%m%d%H%M%S")"
         create_downloads_dir \
             && echo "Downloading $app_name ..." \
-            && curl -L -o "$dmg_path" "$dmg_url"
-    )
+            && curl -L -o "$dmg_path" "$dmg_url" && echo "dmg_path"
+    ); result=$?
+    echo "2 dmg_path: $dmg_path"
+    case $result in
+        77)
+            echo
+            echo "To fix this error you need to update CA certificate file."
+            echo "Please read ISSUES.md 'curl: (77) SSL: can't load CA certificate file' section"
+            echo "See also https://curl.haxx.se/docs/sslcerts.html for details."
+            echo "See also https://curl.haxx.se/docs/caextract.html for download URLs."
+            echo
+            return $result
+            ;;
+        0) echo "3 dmg_path: $dmg_path" ;;
+        *) return $result ;;
+    esac
 }
 
 download_and_install_dmg() {
@@ -344,14 +359,25 @@ download_and_install_dmg() {
             if [ ! -f "$dmg_path" ]; then
                 create_downloads_dir \
                     && echo "Downloading $app_name ..." \
-                    && curl -L -o "$dmg_path" "$dmg_url" && open "$dmg_path" \
-                    || result=1
+                    && curl -L -o "$dmg_path" "$dmg_url" && open "$dmg_path"
             else
                 open "$dmg_path"
             fi
-            echo "inner return code: $?"
-        )
-        echo "return code: $?"
+        ); result=$?
+        case $result in
+            77)
+                echo
+                echo "To fix this error you need to update CA certificate file."
+                echo "Please read ISSUES.md 'curl: (77) SSL: can't load CA certificate file' section"
+                echo "See also https://curl.haxx.se/docs/sslcerts.html for details."
+                echo "See also https://curl.haxx.se/docs/caextract.html for download URLs."
+                echo
+                return $result
+                ;;
+            0) : ;;
+            *) return $result ;;
+        esac
+        exit
         local end_time; end_time=$(( $(date +%s) + timeout_secs ))
         local stop; stop=0
         local cnt; cnt=0
@@ -2289,6 +2315,7 @@ show_usage_help() {
 
     download-client)
         download_and_check_dmg "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME"
+        echo "res: $?"
         ;;
 
     install-client)
