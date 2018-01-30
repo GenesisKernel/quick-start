@@ -35,7 +35,7 @@ CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/downl
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
-BF_CONT_IMAGE="str16071985/genesis-bf"
+BF_CONT_IMAGE="str16071985/genesis-bf:$VERSION"
 BF_CONT_BUILD_DIR="genesis-bf"
 TRY_LOCAL_BF_CONT_NAME_ON_RUN="yes"
 
