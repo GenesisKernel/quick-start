@@ -321,7 +321,7 @@ download_and_check_dmg() {
             && mv "$dmg_path" "$dmg_path.bak.$(date "+%Y%m%d%H%M%S")"
         create_downloads_dir \
             && echo "Downloading $app_name ..." \
-            && curl -L -o "$dmg_path" "$dmg_url" && echo "$dmg_path"
+            && curl -L -o "$dmg_path" "$dmg_url"
     ); result=$?
     case $result in
         77)
@@ -376,7 +376,6 @@ download_and_install_dmg() {
             0) : ;;
             *) return $result ;;
         esac
-        exit
         local end_time; end_time=$(( $(date +%s) + timeout_secs ))
         local stop; stop=0
         local cnt; cnt=0
