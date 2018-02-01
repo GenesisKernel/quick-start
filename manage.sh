@@ -1826,7 +1826,7 @@ show_install_params() {
         elif [ -e "$HOME/.apla_quick_start" ]; then
             cat "$HOME/.apla_quick_start"
         else
-            echo "No install params saved"
+            echo "No install parameters found."
         fi
     )
 }
@@ -1839,7 +1839,7 @@ read_install_params() {
         elif [ -e "$HOME/.apla_quick_start" ]; then
             cat "$HOME/.apla_quick_start"
         else
-            echo "No install params saved"
+            echo "No install parameters found."
         fi
     )
 }
@@ -1875,6 +1875,7 @@ clear_install_params() {
     (
         update_global_home_var
         [ -e "$HOME/.apla_quick_start" ] && rm "$HOME/.apla_quick_start"
+        [ -e "$HOME/.genesis_quick_start" ] && rm "$HOME/.genesis_quick_start"
     )
 }
 
@@ -2757,9 +2758,14 @@ show_usage_help() {
         ;;
 
     set-params)
-        echo "Settings params ..."
+        echo "Saving install parameters ..."
         check_num_param $2
         save_install_params $2 $3 $4 $5
+        ;;
+
+    del-params)
+        echo "Removing install parameters ..."
+        clear_install_params
         ;;
 
     params)
