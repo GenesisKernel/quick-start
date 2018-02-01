@@ -722,7 +722,7 @@ start_mac_clients() {
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        run_cmd="open -n $CLIENT_MAC_APP_DIR --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp"
+        run_cmd="open -n $CLIENT_MAC_APP_DIR --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp --nosave"
         eval "$run_cmd"
     done
 }
@@ -750,7 +750,7 @@ start_linux_clients() {
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-            run_cmd="$app_inst_path API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp &"
+            run_cmd="$app_inst_path API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp --nosave &"
             run_as_orig_user "$run_cmd"
         done
     )
