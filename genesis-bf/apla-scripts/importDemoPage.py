@@ -69,7 +69,7 @@ if __name__ == "__main__":
            
         dataCont = {}
         print("-------------------------------")
-        resPrepareCall = requests.post(baseUrl +'/prepare/MemberAutoreg', data=dataCont, headers={'Authorization': jvtToken})
+        resPrepareCall = requests.post(baseUrl +'/prepare/MembersAutoreg', data=dataCont, headers={'Authorization': jvtToken})
         jsPrepareCall = resPrepareCall.json()
         
         print("-------------------------------")
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         
         sign_resCall = {"time": jsPrepareCall['time'], "signature": resultSignTestPCall['signature']}
         dataCont.update(sign_resCall)
-        respCall = requests.post(baseUrl + '/contract/MemberAutoreg', data=dataCont, headers={"Authorization": jvtToken})
+        respCall = requests.post(baseUrl + '/contract/MembersAutoreg', data=dataCont, headers={"Authorization": jvtToken})
         resultCallContract = respCall.json()
         print(resultCallContract)
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         statusCallJ = statusCall.json()
         print(statusCallJ)
         if len(statusCallJ["blockid"]) > 0:
-            print("MemberAutoreg OK")
+            print("MembersAutoreg OK")
         else:
-            print("MemberAutoreg Error")
+            print("MembersAutoreg Error")
             exit(2)
