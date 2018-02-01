@@ -1813,14 +1813,17 @@ check_num_param() {
 save_install_params() {
     (
         update_global_home_var
-        run_as_orig_user "echo \"$@\" > \"$HOME/.apla_quick_start\""
+        run_as_orig_user "[ -e \"$HOME/.apla_quick_start\" ] && rm \"$HOME/.apla_quick_start\""
+        run_as_orig_user "echo \"$@\" > \"$HOME/.genesis_quick_start\""
     )
 }
 
 show_install_params() {
     (
         update_global_home_var
-        if [ -e "$HOME/.apla_quick_start" ]; then
+        if [ -e "$HOME/.genesis_quick_start" ]; then
+            cat "$HOME/.genesis_quick_start"
+        elif [ -e "$HOME/.apla_quick_start" ]; then
             cat "$HOME/.apla_quick_start"
         else
             echo "No install params saved"
@@ -1831,7 +1834,13 @@ show_install_params() {
 read_install_params() {
     (
         update_global_home_var
-        [ -e "$HOME/.apla_quick_start" ] && cat "$HOME/.apla_quick_start"
+        if [ -e "$HOME/.genesis_quick_start" ]; then
+            cat "$HOME/.genesis_quick_start"
+        elif [ -e "$HOME/.apla_quick_start" ]; then
+            cat "$HOME/.apla_quick_start"
+        else
+            echo "No install params saved"
+        fi
     )
 }
 
