@@ -1483,6 +1483,29 @@ get_http_priv_key() {
     echo "$data"
 }
 
+get_priv_key() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    local priv_key_path; priv_key_path="/s/s$idx/PrivateKey"; local result
+    cont_exec $BF_CONT_NAME "bash -c '[ -e \"$priv_key_path\" ] && cat \"$priv_key_path\"'"
+    result=$?
+    [ $result -ne 0 ] && echo "File '$priv_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
+    echo
+}
+
+get_priv_keys() {
+    if [ -n "$1" ]; then 
+        get_priv_key $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp
+    read_install_params_to_vars || return 10
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && priv_key_path=\"/s/s\$i/PrivateKey\" && [ -e \"\$priv_key_path\" ]  && cat \"\$priv_key_path\" && echo; done'"
+}
+
 check_http_priv_key() {
     local result; local out; out=$(get_http_priv_key $@) > /dev/null; result=$?
     [ $result -ne 0 ] && ([ -n "$out" ] && echo "$out" || :) && return $result
@@ -2627,7 +2650,7 @@ show_usage_help() {
         backend_apps_ctl $num $2
         ;;
 
-    priv-key)
+    http-priv-key)
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
             && exit 30
@@ -2636,10 +2659,18 @@ show_usage_help() {
         get_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 $wps
         ;;
 
+    priv-key)
+        get_priv_key $2
+        ;;
+
+    priv-keys)
+        get_priv_keys $2
+        ;;
+
     check-priv-key)
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
-            && exit 31
+            && exit 32
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 19
         check_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 $wps
@@ -2648,7 +2679,7 @@ show_usage_help() {
     wait-priv-key)
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
-            && exit 32
+            && exit 33
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 20
         wait_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 20 $wps
