@@ -26,12 +26,12 @@ DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.4.1-c/Genesis-0.4.1-c.dmg"
+CLIENT_DMG_DL_URL="https://www.dropbox.com/s/kd68z0h72i21jtc/Genesis-0.4.2.dmg?dl=1"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.4.1-c/genesis-front-0.4.1-c-x86_64.AppImage"
+CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/cbrfljhdrw6ub8j/genesis-front-0.4.2-x86_64.AppImage?dl=1"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
@@ -383,7 +383,7 @@ download_and_install_dmg() {
             echo "Please move $app_name to Applications"
             [ -f "$app_bin" ] && stop=1
             [ $(date +%s) -lt $end_time ] || stop=2
-            [ $cnt -gt 1 ] && sleep 1
+            [ $cnt -ge 0 ] && sleep 1
         done
         case $stop in 
             2) echo "Waiting time for $app_name is out" && return 11
@@ -714,16 +714,21 @@ start_mac_clients() {
     local cfp; cfp=$CF_PORT # FIXME: change to parameter
 
     install_mac_client_directly
-    [ $? -ne 0 ] \
-        && echo "Can't download client" && return 101
+    case $? in
+        21|22|0) : ;;
+        *) echo "Can't download/install client" && return 101 ;;
+    esac
 
     local w_port; local c_port; local run_cmd
+    local offset_x; offset_x=0; local offset_y; offset_y=0
     for i in $(seq 1 $num); do
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        run_cmd="open -n $CLIENT_MAC_APP_DIR --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp --nosave"
+        run_cmd="open -n $CLIENT_MAC_APP_DIR --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp --nosave --offsetX $offset_x --offsetY $offset_y"
         eval "$run_cmd"
+        offset_x=$(expr $offset_x + 50) 
+        offset_y=$(expr $offset_y + 50) 
     done
 }
 
