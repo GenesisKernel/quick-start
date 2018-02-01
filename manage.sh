@@ -2,7 +2,7 @@
 
 ### Configuration ### begin ###
 
-VERSION="0.1.0"
+VERSION="0.1.1"
 SED_E="sed -E"
 
 DB_PORT=15432
@@ -40,12 +40,12 @@ BF_CONT_BUILD_DIR="genesis-bf"
 TRY_LOCAL_BF_CONT_NAME_ON_RUN="yes"
 
 DB_CONT_NAME="genesis-db"
-DB_CONT_IMAGE="str16071985/genesis-db"
+DB_CONT_IMAGE="str16071985/genesis-db:$VERSION"
 DB_CONT_BUILD_DIR="genesis-db"
 TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
 
 CF_CONT_NAME="genesis-cf"
-CF_CONT_IMAGE="str16071985/genesis-cf"
+CF_CONT_IMAGE="str16071985/genesis-cf:$VERSION"
 CF_CONT_BUILD_DIR="genesis-cf"
 #CF_CONT_NAME="genesis-cf2"
 #CF_CONT_IMAGE="str16071985/genesis-cf2"
@@ -1867,7 +1867,7 @@ start_fullnodes() {
     docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
     [ $? -ne 0 ] \
         && echo "Fullnodes isn't compelete" && return 3
-    echo "Fullnodes compelete"
+    echo "Fullnodes is complete"
     return 0
 }
 
@@ -1885,7 +1885,31 @@ start_upkeys() {
     docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
     [ $? -ne 0 ] \
         && echo "Upkeys isn't compelete" && return 3
-    echo "Upkeys compelete"
+    echo "Upkeys is complete"
+    return 0
+}
+
+start_import_demo_page() {
+    docker exec -t $BF_CONT_NAME bash -c '[ -e /apla-scripts/importDemoPage.py ]' 
+    if [ $? -ne 0 ]; then
+        docker cp $SCRIPT_DIR/genesis-bf/apla-scripts/importDemoPage.py $BF_CONT_NAME:/apla-scripts/
+    fi
+
+    docker exec -t $BF_CONT_NAME bash -c '[ -e /apla-scripts/demo_page.json ]' 
+    if [ $? -ne 0 ]; then
+        docker cp $SCRIPT_DIR/genesis-bf/apla-scripts/demo_page.json $BF_CONT_NAME:/apla-scripts/
+    fi
+
+    docker exec -t $BF_CONT_NAME bash -c '[ -e /import_demo_page.sh ]' 
+    if [ $? -ne 0 ]; then
+        docker cp $SCRIPT_DIR/genesis-bf/import_demo_page.sh $BF_CONT_NAME:/
+    fi
+
+    echo "Starting 'import demo page' ..."
+    docker exec -t $BF_CONT_NAME bash /import_demo_page.sh
+    [ $? -ne 0 ] \
+        && echo "The importing of a demo page isn't compelete" && return 3
+    echo "The importing of a demo page is complete"
     return 0
 }
 
@@ -2005,26 +2029,21 @@ start_install() {
         || echo "Fronend applications ready"
     echo
 
-    #echo "Starting 'fullnodes' ..."
-    #docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
     start_fullnodes $num || return 25
     echo
 
-    #docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
-    #if [ $? -eq 0 ]; then
-    #    echo "Starting 'upkeys' ..."
-    #    docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
-    #fi
     start_upkeys $num || return 26
     echo
 
+    start_import_demo_page || return 27
+    echo
+
     echo "Comparing backends 1_keys ..."
-    cmp_keys $num || return 27
-    #wait_keys_sync $num 10 || return 25
+    cmp_keys $num || return 28
     echo
 
     echo "Comparing backends first blocks ..."
-    cmp_first_blocks $num || return 28
+    cmp_first_blocks $num || return 29
     echo
 
     check_host_side $num $wps $cps $dbp
@@ -2410,6 +2429,17 @@ show_usage_help() {
         docker stop $DB_CONT_NAME
         ;;
 
+    delete-db-cont)
+        check_run_as_root
+        remove_cont $DB_CONT_NAME
+        ;;
+        
+    delete-db-image)
+        check_run_as_root
+        remove_cont $DB_CONT_NAME
+        docker rmi -f $DB_CONT_IMAGE
+        ;;
+
     ### DB Container #### end ####
 
 
@@ -2451,6 +2481,17 @@ show_usage_help() {
             && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
         ;;
 
+    delete-bf-cont)
+        check_run_as_root
+        remove_cont $BF_CONT_NAME
+        ;;
+        
+    delete-bf-image)
+        check_run_as_root
+        remove_cont $BF_CONT_NAME
+        docker rmi -f $BF_CONT_IMAGE
+        ;;
+
     ### BF Container #### end ####
 
 
@@ -2490,6 +2531,17 @@ show_usage_help() {
         check_run_as_root
         (cd "$SCRIPT_DIR" \
             && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
+        ;;
+
+    delete-cf-cont)
+        check_run_as_root
+        remove_cont $CF_CONT_NAME
+        ;;
+        
+    delete-cf-image)
+        check_run_as_root
+        remove_cont $CF_CONT_NAME
+        docker rmi -f $CF_CONT_IMAGE
         ;;
 
     ### CF Container #### end ####
@@ -2640,6 +2692,12 @@ show_usage_help() {
         start_upkeys $num
         ;;
 
+    import-demo)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 21
+        start_import_demo_page $num
+        ;;
+
     ### Backend #### end ####
 
 
@@ -2712,6 +2770,7 @@ show_usage_help() {
         stop_clients
         delete_install
         clear_install_params
+        #docker rmi -f ${BF_CONT_IMAGE%%:*}
         docker rmi -f $BF_CONT_IMAGE
         docker rmi -f $CF_CONT_IMAGE
         docker rmi -f $DB_CONT_IMAGE
