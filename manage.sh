@@ -26,7 +26,7 @@ DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://www.dropbox.com/s/y9yvi3zk8ovpbh5/Genesis-0.4.1.dmg?dl=1"
+CLIENT_DMG_DL_URL="https://www.dropbox.com/s/90xjg5qc40srx6r/Genesis-0.4.1-b.dmg?dl=1"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=248 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
