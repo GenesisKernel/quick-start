@@ -2172,7 +2172,8 @@ start_all() {
     echo
 
     check_host_side $num $wps $cps $dbp
-    [ $? -ne 2 ] && start_clients $num $wps $cps $cfp
+    [ $? -ne 2 ] && start_clients $num $wps $cps
+    # FIXME: Add $cfp param
 }
 
 show_status() {
