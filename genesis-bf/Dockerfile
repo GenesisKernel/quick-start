@@ -7,6 +7,7 @@ RUN go get -d github.com/AplaProject/go-apla && cd /go/src/github.com/AplaProjec
 RUN git clone https://github.com/AplaProject/apla-front.git && cd /apla-front && git checkout tags/v0.4.1c && yarn install && yarn build && find /apla-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY settings.json /apla-front/build/
 COPY apla-scripts /apla-scripts
+ADD https://raw.githubusercontent.com/GenesisKernel/apps/0.1.2/demo_page.json /apla-scripts
 RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN pip3 install -r /apla-scripts/requirements.txt
 COPY supervisord.d /etc/supervisord.d
