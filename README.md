@@ -77,6 +77,11 @@ To reinstall (delete all Genesis-related containers and run installation again w
 ./manage.exe install 5
 ```
 
+Client Application
+==================
+
+A password is required to confirm transactions. The default password is 'genesis'.
+
 Exposed ports
 =============
 
