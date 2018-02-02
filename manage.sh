@@ -2,7 +2,7 @@
 
 ### Configuration ### begin ###
 
-VERSION="0.1.3"
+VERSION="0.1.4"
 SED_E="sed -E"
 
 DB_PORT=15432
@@ -31,7 +31,7 @@ CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*
 CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/cbrfljhdrw6ub8j/genesis-front-0.4.2-x86_64.AppImage?dl=1"
+CLIENT_APPIMAGE_DL_URL="https://www.dropbox.com/s/fec2w5fkbo5pc90/genesis-front-0.4.3-x86_64.AppImage?dl=0"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
