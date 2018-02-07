@@ -2,7 +2,7 @@
 
 ### Configuration ### begin ###
 
-VERSION="0.1.4"
+VERSION="0.1.5"
 SED_E="sed -E"
 
 DB_PORT=15432
