@@ -1901,8 +1901,8 @@ start_fullnodes() {
     echo "Starting 'fullnodes' ..."
     docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
     [ $? -ne 0 ] \
-        && echo "Fullnodes isn't compelete" && return 3
-    echo "Fullnodes is complete"
+        && echo "Fullnodes isn't compeleted" && return 3
+    echo "Fullnodes is completed"
     return 0
 }
 
@@ -1919,8 +1919,8 @@ start_upkeys() {
     echo "Starting 'upkeys' ..."
     docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
     [ $? -ne 0 ] \
-        && echo "Upkeys isn't compelete" && return 3
-    echo "Upkeys is complete"
+        && echo "Upkeys isn't compeleted" && return 3
+    echo "Upkeys is completed"
     return 0
 }
 
@@ -1932,6 +1932,7 @@ get_demo_page_url_from_dockerfile() {
 }
 
 start_import_demo_page() {
+    echo "Preparing 'import demo page' ..."
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
@@ -1979,8 +1980,8 @@ start_import_demo_page() {
     echo "Starting 'import demo page' with data from '$dp_url' ..."
     docker exec -t $BF_CONT_NAME bash /import_demo_page.sh
     [ $? -ne 0 ] \
-        && echo "The importing of a demo page isn't compelete" && return 3
-    echo "The importing of a demo page is complete"
+        && echo "Demo page importing isn't compeleted" && return 3
+    echo "Demo page importing is completed"
     return 0
 }
 
