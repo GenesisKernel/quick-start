@@ -11,7 +11,7 @@ RUN git clone https://github.com/GenesisKernel/genesis-front apla-front && cd /a
 COPY settings.json /apla-front/build/
 COPY apla-scripts /apla-scripts
 
-RUN echo "$GENESIS_APPS_DEMO_PAGE_URL" > /apla-scripts/demo_page.url
+RUN echo -n "$GENESIS_APPS_DEMO_PAGE_URL" > /apla-scripts/demo_page.url
 ADD $GENESIS_APPS_DEMO_PAGE_URL /apla-scripts
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
