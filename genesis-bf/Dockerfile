@@ -3,7 +3,7 @@ FROM yarnpkg/node-yarn
 ENV GENESIS_APPS_DEMO_PAGE_URL https://raw.githubusercontent.com/GenesisKernel/apps/0.9/demo_page.json
 
 RUN apt-get update -y && apt-get install nginx git wget supervisor postgresql-client-9.4 -y && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN curl -L -o /go1.9.3.linux-amd64.tar.gz https://dl.google.com/go/go1.9.3.linux-amd64.tar.gz && tar xvf /go1.9.3.linux-amd64.tar.gz && mv /go /usr/local/ && find /go1.9.3.linux-amd64.tar.gz -delete
+RUN curl -L -o /go1.9.4.linux-amd64.tar.gz https://dl.google.com/go/go1.9.4.linux-amd64.tar.gz && tar xvf /go1.9.4.linux-amd64.tar.gz && mv /go /usr/local/ && find /go1.9.4.linux-amd64.tar.gz -delete
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 RUN go get -d github.com/GenesisKernel/go-genesis && cd /go/src/github.com/GenesisKernel/go-genesis && git checkout release && go get github.com/GenesisKernel/go-genesis && mkdir /apla && mkdir -p /s/s1 && mv $GOPATH/bin/go-genesis /apla/go-apla && rm -rf /go
