@@ -2,7 +2,7 @@
 
 ### Configuration ### begin ###
 
-VERSION="0.1.5"
+VERSION="0.2.0"
 SED_E="sed -E"
 
 DB_PORT=15432
@@ -1952,16 +1952,11 @@ start_import_demo_page() {
     local dp_url; dp_url="$(get_demo_page_url_from_dockerfile)"; result=$?
     [ $result -ne 0 ] && echo "$dp_url" && return 2
 
-    echo "HERE1 dp_url: $dp_url"
-
     local up_dp; up_dp=1
     docker exec -t $BF_CONT_NAME bash -c "[ -e $dpu_path ]" 
     if [ $? -eq 0 ]; then
-        echo "$dpu_path exists"
         local dp_url_c; dp_url_c="$(docker exec -t $BF_CONT_NAME bash -c "head -n 1 $dpu_path")" 
         dp_url_c="${dp_url_c%\\n}"
-        echo "dp_url_c: '$dp_url_c'"
-        echo "dp_url: '$dp_url'"
         [ "$dp_url" != "$dp_url_c" ] \
             && echo "Demo page URL '$dp_url_c' from '$dpu_path' @ container '$BF_CONT_NAME' isn't equal to '$dp_url'. Update required ..." \
             && up_dp=0
