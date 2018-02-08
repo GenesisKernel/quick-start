@@ -1924,15 +1924,20 @@ start_upkeys() {
     return 0
 }
 
+get_demo_page_url_from_dockerfile() {
+    local df_path; df_path="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
+    [ ! -e "$df_path" ] && return 1
+    local url; url="$($SED_E -n 's/^ENV GENESIS_APPS_DEMO_PAGE_URL (.*)$/\1/p' "$df_path" | tail -n 1)"
+    [ -n "$url" ] && echo "$url" || return 2
+}
+
 start_import_demo_page() {
+    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
+        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
+
     docker exec -t $BF_CONT_NAME bash -c '[ -e /apla-scripts/importDemoPage.py ]' 
     if [ $? -ne 0 ]; then
         docker cp $SCRIPT_DIR/genesis-bf/apla-scripts/importDemoPage.py $BF_CONT_NAME:/apla-scripts/
-    fi
-
-    docker exec -t $BF_CONT_NAME bash -c '[ -e /apla-scripts/demo_page.json ]' 
-    if [ $? -ne 0 ]; then
-        docker cp $SCRIPT_DIR/genesis-bf/apla-scripts/demo_page.json $BF_CONT_NAME:/apla-scripts/
     fi
 
     docker exec -t $BF_CONT_NAME bash -c '[ -e /import_demo_page.sh ]' 
@@ -1940,7 +1945,43 @@ start_import_demo_page() {
         docker cp $SCRIPT_DIR/genesis-bf/import_demo_page.sh $BF_CONT_NAME:/
     fi
 
-    echo "Starting 'import demo page' ..."
+    local dp_path; dp_path="/apla-scripts/demo_page.json"
+    local dpu_path; dpu_path="/apla-scripts/demo_page.url"
+
+    local result
+    local dp_url; dp_url="$(get_demo_page_url_from_dockerfile)"; result=$?
+    [ $result -ne 0 ] && echo "$dp_url" && return 2
+
+    echo "HERE1 dp_url: $dp_url"
+
+    local up_dp; up_dp=1
+    docker exec -t $BF_CONT_NAME bash -c "[ -e $dpu_path ]" 
+    if [ $? -eq 0 ]; then
+        echo "$dpu_path exists"
+        local dp_url_c; dp_url_c="$(docker exec -t $BF_CONT_NAME bash -c "head -n 1 $dpu_path")" 
+        dp_url_c="${dp_url_c%\\n}"
+        echo "dp_url_c: '$dp_url_c'"
+        echo "dp_url: '$dp_url'"
+        [ "$dp_url" != "$dp_url_c" ] \
+            && echo "Demo page URL '$dp_url_c' from '$dpu_path' @ container '$BF_CONT_NAME' isn't equal to '$dp_url'. Update required ..." \
+            && up_dp=0
+    else
+        echo "'$dpu_path' not found @ container '$BF_CONT_NAME'"
+        up_dp=0
+    fi
+    
+    if [ $up_dp -eq 0 ]; then
+        echo "Updating '$dp_path' @ container '$BF_CONT_NAME' by data from '$dp_url' ..."
+        docker exec -t "$BF_CONT_NAME" bash -c "curl -L -o $dp_path $dp_url"; result=$?
+        [ $result -ne 0 ] && echo "Can't download '$dp_url' to '$dp_path' @ container '$BF_CONT_NAME'" && return 3
+        echo "Updating '$dpu_path' @ container '$BF_CONT_NAME' by URL '$dp_url' ..."
+        docker exec -t "$BF_CONT_NAME" bash -c "echo -n '$dp_url' > '$dpu_path'"; result=$?
+        [ $result -ne 0 ] && echo "Can't update $dpu_path' @ container '$BF_CONT_NAME'" && return 4
+    else
+        echo "'$dp_path' is up to date"
+    fi
+
+    echo "Starting 'import demo page' with data from '$dp_url' ..."
     docker exec -t $BF_CONT_NAME bash /import_demo_page.sh
     [ $? -ne 0 ] \
         && echo "The importing of a demo page isn't compelete" && return 3
@@ -2734,6 +2775,10 @@ show_usage_help() {
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 21
         start_upkeys $num
+        ;;
+
+    demo-page-url)
+        get_demo_page_url_from_dockerfile
         ;;
 
     import-demo)
