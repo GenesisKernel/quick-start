@@ -2,6 +2,7 @@
 
 ### Configuration ### begin ###
 
+PREV_VERSION="0.2.0"
 VERSION="0.3.0"
 SED_E="sed -E"
 
@@ -36,16 +37,19 @@ CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E 
 
 BF_CONT_NAME="genesis-bf"
 BF_CONT_IMAGE="str16071985/genesis-bf:$VERSION"
+BF_CONT_PREV_IMAGE="str16071985/genesis-bf:$PREV_VERSION"
 BF_CONT_BUILD_DIR="genesis-bf"
 TRY_LOCAL_BF_CONT_NAME_ON_RUN="yes"
 
 DB_CONT_NAME="genesis-db"
 DB_CONT_IMAGE="str16071985/genesis-db:$VERSION"
+DB_CONT_PREV_IMAGE="str16071985/genesis-db:$PREV_VERSION"
 DB_CONT_BUILD_DIR="genesis-db"
 TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
 
 CF_CONT_NAME="genesis-cf"
 CF_CONT_IMAGE="str16071985/genesis-cf:$VERSION"
+CF_CONT_PREV_IMAGE="str16071985/genesis-cf:$PREV_VERSION"
 CF_CONT_BUILD_DIR="genesis-cf"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
@@ -2245,6 +2249,32 @@ show_status() {
     check_host_side $num $wps $cps $dbp
 }
 
+### Docker Images ### begin ###
+
+show_all_docker_images() {
+    local img_name
+    for img_name in ${BF_CONT_IMAGE%%:*} ${DB_CONT_IMAGE%%:*} ${CF_CONT_IMAGE%%:*}; do
+        docker images -f reference="$img_name:*" --format '{{.ID}} {{.Repository}} {{.Tag}}'
+    done
+}
+
+show_docker_images() {
+    local img_name
+    for img_name in ${BF_CONT_IMAGE} ${DB_CONT_IMAGE} ${CF_CONT_IMAGE}; do
+        docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
+    done
+}
+
+show_prev_docker_images() {
+    local img_name
+    for img_name in ${BF_CONT_PREV_IMAGE} ${DB_CONT_PREV_IMAGE} ${CF_CONT_PREV_IMAGE}; do
+        docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
+    done
+}
+
+### Docker Images #### end ####
+
+
 show_usage_help() {
     echo
     echo "Usage: $(basename "$0") <command> <parameter>"
@@ -2513,13 +2543,55 @@ show_usage_help() {
         remove_cont $DB_CONT_NAME
         ;;
         
+    ### DB Container #### end ####
+
+
+    ### DB Image ### begin ###
+
     delete-db-image)
         check_run_as_root
-        remove_cont $DB_CONT_NAME
         docker rmi -f $DB_CONT_IMAGE
         ;;
 
-    ### DB Container #### end ####
+    delete-prev-db-image)
+        check_run_as_root
+        docker rmi -f $DB_CONT_PREV_IMAGE
+        ;;
+
+    pull-db-image)
+        check_run_as_root
+        docker pull $DB_CONT_IMAGE
+        ;;
+        
+    pull-prev-db-image)
+        check_run_as_root
+        docker pull $DB_CONT_PREV_IMAGE
+        ;;
+
+    tag-prev-db-image)
+        check_run_as_root
+        docker tag $DB_CONT_PREV_IMAGE $DB_CONT_IMAGE
+        ;;
+
+    push-db-image)
+        check_run_as_root
+        docker push $DB_CONT_IMAGE
+        ;;
+
+    up-prev-db-image)
+        check_run_as_root
+        docker pull $DB_CONT_PREV_IMAGE
+        docker tag $DB_CONT_PREV_IMAGE $DB_CONT_IMAGE
+        echo
+        echo "Are you sure to push '$DB_CONT_IMAGE' image to docker hub?"
+        read -n 1 answ
+        case $answ in
+            y|Y) docker push $DB_CONT_IMAGE ;;
+            *) echo; echo "OK, skipping the pushing ..." ;;
+        esac
+        ;;
+
+    ### DB Image #### end ####
 
 
     ### BF container ### begin ###
@@ -2565,13 +2637,55 @@ show_usage_help() {
         remove_cont $BF_CONT_NAME
         ;;
         
+    ### BF Container #### end ####
+
+
+    ### BF Image ### begin ###
+
     delete-bf-image)
         check_run_as_root
-        remove_cont $BF_CONT_NAME
         docker rmi -f $BF_CONT_IMAGE
         ;;
 
-    ### BF Container #### end ####
+    delete-prev-bf-image)
+        check_run_as_root
+        docker rmi -f $BF_CONT_PREV_IMAGE
+        ;;
+
+    pull-bf-image)
+        check_run_as_root
+        docker pull $BF_CONT_IMAGE
+        ;;
+        
+    pull-prev-bf-image)
+        check_run_as_root
+        docker pull $BF_CONT_PREV_IMAGE
+        ;;
+
+    tag-prev-bf-image)
+        check_run_as_root
+        docker tag $BF_CONT_PREV_IMAGE $BF_CONT_IMAGE
+        ;;
+
+    push-bf-image)
+        check_run_as_root
+        docker push $BF_CONT_IMAGE
+        ;;
+
+    up-prev-cf-image)
+        check_run_as_root
+        docker pull $BF_CONT_PREV_IMAGE
+        docker tag $BF_CONT_PREV_IMAGE $CF_CONT_IMAGE
+        echo
+        echo "Are you sure to push '$BF_CONT_IMAGE' image to docker hub?"
+        read -n 1 answ
+        case $answ in
+            y|Y) docker push $BF_CONT_IMAGE ;;
+            *) echo; echo "OK, skipping the pushing ..." ;;
+        esac
+        ;;
+
+    ### BF Image #### end ####
 
 
     ### CF container ### begin ###
@@ -2617,13 +2731,55 @@ show_usage_help() {
         remove_cont $CF_CONT_NAME
         ;;
         
+    ### CF Container #### end ####
+
+
+    ### CF Image ### begin ###
+
     delete-cf-image)
         check_run_as_root
-        remove_cont $CF_CONT_NAME
         docker rmi -f $CF_CONT_IMAGE
         ;;
 
-    ### CF Container #### end ####
+    delete-prev-cf-image)
+        check_run_as_root
+        docker rmi -f $CF_CONT_PREV_IMAGE
+        ;;
+
+    pull-cf-image)
+        check_run_as_root
+        docker pull $CF_CONT_IMAGE
+        ;;
+        
+    pull-prev-cf-image)
+        check_run_as_root
+        docker pull $CF_CONT_PREV_IMAGE
+        ;;
+
+    tag-prev-cf-image)
+        check_run_as_root
+        docker tag $CF_CONT_PREV_IMAGE $CF_CONT_IMAGE
+        ;;
+
+    push-cf-image)
+        check_run_as_root
+        docker push $CF_CONT_IMAGE
+        ;;
+
+    up-prev-cf-image)
+        check_run_as_root
+        docker pull $CF_CONT_PREV_IMAGE
+        docker tag $CF_CONT_PREV_IMAGE $CF_CONT_IMAGE
+        echo
+        echo "Are you sure to push '$CF_CONT_IMAGE' image to docker hub?"
+        read -n 1 answ
+        case $answ in
+            y|Y) docker push $CF_CONT_IMAGE ;;
+            *) echo; echo "OK, skipping the pushing ..." ;;
+        esac
+        ;;
+
+    ### CF Image #### end ####
 
 
     ### Database ### begin ###
@@ -2861,15 +3017,32 @@ show_usage_help() {
         clear_install_params
         ;;
 
+    images)
+        show_docker_images
+        ;;
+
+    prev-images)
+        show_prev_docker_images
+        ;;
+
+    all-images)
+
+        show_all_docker_images
+        ;;
+
+
     delete-all)
         check_run_as_root
         stop_clients
         delete_install
         clear_install_params
-        #docker rmi -f ${BF_CONT_IMAGE%%:*}
-        docker rmi -f $BF_CONT_IMAGE
-        docker rmi -f $CF_CONT_IMAGE
-        docker rmi -f $DB_CONT_IMAGE
+        show_all_docker_images | while read line; do
+            image_id="$(echo "$line" | awk '{print $1}')"
+            docker rmi -f $image_id
+        done
+        #docker rmi -f $BF_CONT_IMAGE
+        #docker rmi -f $CF_CONT_IMAGE
+        #docker rmi -f $DB_CONT_IMAGE
         ;;
 
     version)
