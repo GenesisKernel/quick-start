@@ -15,7 +15,7 @@ COPY settings.json /apla-front/build/
 COPY apla-scripts /apla-scripts
 
 RUN echo -n "$GENESIS_APPS_DEMO_PAGE_URL" > /apla-scripts/demo_page.url
-ADD $GENESIS_APPS_DEMO_PAGE_URL /apla-scripts
+ADD $GENESIS_APPS_DEMO_PAGE_URL /apla-scripts/demo_page.json
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN pip3 install -r /apla-scripts/requirements.txt
