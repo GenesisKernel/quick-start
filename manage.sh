@@ -1946,14 +1946,20 @@ start_import_demo_page() {
         docker cp $SCRIPT_DIR/genesis-bf/import_demo_page.sh $BF_CONT_NAME:/
     fi
 
+    local up_dp; up_dp=1
+
     local dp_path; dp_path="/apla-scripts/demo_page.json"
+    docker exec -t $BF_CONT_NAME bash -c "[ -e $dp_path ]" 
+    if [ $? -ne 0 ]; then
+        up_dp=0
+    fi
+
     local dpu_path; dpu_path="/apla-scripts/demo_page.url"
 
     local result
     local dp_url; dp_url="$(get_demo_page_url_from_dockerfile)"; result=$?
     [ $result -ne 0 ] && echo "$dp_url" && return 2
 
-    local up_dp; up_dp=1
     docker exec -t $BF_CONT_NAME bash -c "[ -e $dpu_path ]" 
     if [ $? -eq 0 ]; then
         local dp_url_c; dp_url_c="$(docker exec -t $BF_CONT_NAME bash -c "head -n 1 $dpu_path")" 
