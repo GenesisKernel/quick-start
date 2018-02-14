@@ -1,6 +1,10 @@
 import requests
 import time
 import sys
+import json
+from pprint import pprint
+
+from genesis_api_client import wait_txstatus
 
 if __name__ == "__main__":
 	if len (sys.argv) < 9:
@@ -28,10 +32,10 @@ if __name__ == "__main__":
 		resultLogin = respLogin.json()
 		address = resultLogin["address"]
 		timeToken = resultLogin["refresh"]
-		jvtToken = 'Bearer ' + resultLogin["token"]
+		jwtToken = 'Bearer ' + resultLogin["token"]
 
 		dataCont = {"Name": "full_nodes", "Value" : newVal}
-		resPrepareCall = requests.post(baseUrl +'/prepare/UpdateSysParam', data=dataCont, headers={'Authorization': jvtToken})
+		resPrepareCall = requests.post(baseUrl +'/prepare/UpdateSysParam', data=dataCont, headers={'Authorization': jwtToken})
 		jsPrepareCall = resPrepareCall.json()
 
 		respSignTestPCall = requests.post(baseUrl + '/signtest/', params={'forsign': jsPrepareCall['forsign'], 'private': prKey1})
@@ -39,12 +43,16 @@ if __name__ == "__main__":
 
 		sign_resCall = {"time": jsPrepareCall['time'], "signature": resultSignTestPCall['signature']}
 		dataCont.update(sign_resCall)
-		respCall = requests.post(baseUrl + '/contract/UpdateSysParam', data=dataCont, headers={"Authorization": jvtToken})
+		respCall = requests.post(baseUrl + '/contract/UpdateSysParam', data=dataCont, headers={"Authorization": jwtToken})
 		resultCallContract = respCall.json()
-		time.sleep(10)
-		statusCall = requests.get(baseUrl + '/txstatus/' + resultCallContract["hash"], headers={"Authorization": jvtToken})
-		statusCallJ = statusCall.json()
-		if len(statusCallJ["blockid"]) > 0:
-			print("OK")
-		else:
-			print("Error: fullNodes is not updated")
+
+		#time.sleep(10)
+                wait_txstatus(baseUrl, resultCallContract["hash"], jwtToken,
+                      "Import", 100)
+
+		#statusCall = requests.get(baseUrl + '/txstatus/' + resultCallContract["hash"], headers={"Authorization": jwtToken})
+		#statusCallJ = statusCall.json()
+		#if len(statusCallJ["blockid"]) > 0:
+		#	print("OK")
+		#else:
+		#	print("Error: fullNodes is not updated")

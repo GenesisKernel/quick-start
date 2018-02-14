@@ -1897,6 +1897,8 @@ start_fullnodes() {
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
+    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
+    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/newValToFullNodes.py" $BF_CONT_NAME:/apla-scripts
     docker exec -t $BF_CONT_NAME bash -c '[ -e /fullnodes.sh ]'
     [ $? -ne 0 ] \
         && echo "/fullnodes.sh doesn't exist @ container '$BF_CONT_NAME'" \
@@ -1915,6 +1917,8 @@ start_upkeys() {
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
+    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
+    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/updateKeys.py" $BF_CONT_NAME:/apla-scripts
     docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
     [ $? -ne 0 ] \
         && echo "/upkeys.sh doesn't exist @ container '$BF_CONT_NAME'" \
@@ -1940,10 +1944,13 @@ start_import_demo_page() {
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
-    docker exec -t $BF_CONT_NAME bash -c '[ -e /apla-scripts/importDemoPage.py ]' 
-    if [ $? -ne 0 ]; then
-        docker cp $SCRIPT_DIR/genesis-bf/apla-scripts/importDemoPage.py $BF_CONT_NAME:/apla-scripts/
-    fi
+    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
+    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/importDemoPage.py" $BF_CONT_NAME:/apla-scripts
+
+    #docker exec -t $BF_CONT_NAME bash -c '[ -e /apla-scripts/importDemoPage.py ]' 
+    #if [ $? -ne 0 ]; then
+    #    docker cp $SCRIPT_DIR/genesis-bf/apla-scripts/importDemoPage.py $BF_CONT_NAME:/apla-scripts/
+    #fi
 
     docker exec -t $BF_CONT_NAME bash -c '[ -e /import_demo_page.sh ]' 
     if [ $? -ne 0 ]; then
@@ -1988,7 +1995,7 @@ start_import_demo_page() {
     fi
 
     echo "Starting 'import demo page' with data from '$dp_url' ..."
-    docker exec -t $BF_CONT_NAME bash /import_demo_page.sh
+    docker exec -ti $BF_CONT_NAME bash /import_demo_page.sh
     [ $? -ne 0 ] \
         && echo "Demo page importing isn't compeleted" && return 3
     echo "Demo page importing is completed"
