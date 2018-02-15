@@ -27,12 +27,12 @@ DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.5.2/Genesis-0.5.2.dmg"
+CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.6.0/Genesis-0.6.0.dmg"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.5.2/genesis-front-0.5.2-x86_64.AppImage"
+CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.6.0/genesis-front-0.6.0-x86_64.AppImage"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
@@ -2575,6 +2575,11 @@ show_usage_help() {
         docker pull $DB_CONT_PREV_IMAGE
         ;;
 
+    tag-local-db-image)
+        check_run_as_root
+        docker tag $DB_CONT_NAME $DB_CONT_IMAGE
+        ;;
+
     tag-prev-db-image)
         check_run_as_root
         docker tag $DB_CONT_PREV_IMAGE $DB_CONT_IMAGE
@@ -2667,6 +2672,11 @@ show_usage_help() {
     pull-prev-bf-image)
         check_run_as_root
         docker pull $BF_CONT_PREV_IMAGE
+        ;;
+
+    tag-local-bf-image)
+        check_run_as_root
+        docker tag $BF_CONT_NAME $BF_CONT_IMAGE
         ;;
 
     tag-prev-bf-image)
@@ -2763,6 +2773,11 @@ show_usage_help() {
         docker pull $CF_CONT_PREV_IMAGE
         ;;
 
+    tag-local-cf-image)
+        check_run_as_root
+        docker tag $CF_CONT_NAME $CF_CONT_IMAGE
+        ;;
+
     tag-prev-cf-image)
         check_run_as_root
         docker tag $CF_CONT_PREV_IMAGE $CF_CONT_IMAGE
@@ -2787,6 +2802,25 @@ show_usage_help() {
         ;;
 
     ### CF Image #### end ####
+
+    
+    ### Common Image ### begin ###
+
+    pull-images)
+        check_run_as_root
+        docker pull $DB_CONT_IMAGE
+        docker pull $CF_CONT_IMAGE
+        docker pull $CF_CONT_IMAGE
+        ;;
+
+    pull-prev-images)
+        check_run_as_root
+        docker pull $DB_CONT_PREV_IMAGE
+        docker pull $CF_CONT_PREV_IMAGE
+        docker pull $CF_CONT_PREV_IMAGE
+        ;;
+
+    ### Common Image #### end ####
 
 
     ### Database ### begin ###
