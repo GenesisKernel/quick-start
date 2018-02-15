@@ -224,7 +224,7 @@ get_mac_fs_type_by_path() {
 ### Host ports ### begin ###
 
 get_host_port_proc() {
-    lsof -i :$1 | awk '{print $1}' | tail -n +2
+    lsof -i :$1 | grep LISTEN | awk '{print $1}' | tail -n +2
 }
 
 check_host_ports() {
