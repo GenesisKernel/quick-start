@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.2.0"
-VERSION="0.3.0"
+PREV_VERSION="0.3.0"
+VERSION="0.4.0"
 SED_E="sed -E"
 
 DB_PORT=15432
@@ -27,12 +27,12 @@ DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.5.1/Genesis-0.5.1.dmg"
+CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.5.2/Genesis-0.5.2.dmg"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=227 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.5.1/genesis-front-0.5.1-x86_64.AppImage"
+CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.5.2/genesis-front-0.5.2-x86_64.AppImage"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
@@ -2679,7 +2679,7 @@ show_usage_help() {
         docker push $BF_CONT_IMAGE
         ;;
 
-    up-prev-cf-image)
+    up-prev-bf-image)
         check_run_as_root
         docker pull $BF_CONT_PREV_IMAGE
         docker tag $BF_CONT_PREV_IMAGE $CF_CONT_IMAGE
