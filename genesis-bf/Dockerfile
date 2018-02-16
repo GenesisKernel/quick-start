@@ -1,7 +1,7 @@
 FROM yarnpkg/node-yarn
 
 ENV GOLANG_VER 1.9.4
-ENV GENESIS_FRONT_BRANCH tags/v0.6.0
+ENV GENESIS_FRONT_BRANCH tags/v0.6.1
 ENV GENESIS_BACKEND_BRANCH release
 ENV GENESIS_APPS_DEMO_PAGE_URL https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_09/demo_apps.json
 

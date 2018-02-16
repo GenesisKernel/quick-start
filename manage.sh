@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.3.0"
-VERSION="0.4.0"
+PREV_VERSION="0.4.0"
+VERSION="0.4.1"
 SED_E="sed -E"
 
 DB_PORT=15432
