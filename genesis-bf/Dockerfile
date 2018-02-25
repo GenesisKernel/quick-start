@@ -26,7 +26,7 @@ COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY start.sh /
 COPY start2.sh /
 COPY start3.sh /
-COPY import_demo_page.sh /
+COPY import_demo_apps.sh /
 COPY go_apla /
 COPY fullnodes.sh /
 COPY upkeys.sh /
