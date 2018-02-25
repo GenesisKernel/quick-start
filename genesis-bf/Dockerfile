@@ -3,7 +3,7 @@ FROM yarnpkg/node-yarn
 ENV GOLANG_VER 1.10
 ENV GENESIS_FRONT_BRANCH tags/v0.6.1
 ENV GENESIS_BACKEND_BRANCH release
-ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/some-shit/01/02/03/demo_apps.json
+ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_10/demo_apps.json
 
 RUN apt-get update -y && apt-get install nginx git wget supervisor postgresql-client-9.4 -y && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN curl -L -o /go$GOLANG_VER.linux-amd64.tar.gz https://dl.google.com/go/go$GOLANG_VER.linux-amd64.tar.gz && tar xvf /go$GOLANG_VER.linux-amd64.tar.gz && mv /go /usr/local/ && find /go$GOLANG_VER.linux-amd64.tar.gz -delete

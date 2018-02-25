@@ -2371,13 +2371,13 @@ update_bf_dockerfile() {
     eval "$sed_cmd"
 
     local be_br_esc; be_br_esc="$(echo "$GENESIS_BACKEND_BRANCH" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+GENESIS_BACKEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)$/\1$be_br_esc/' $df"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+GENESIS_BACKEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$be_br_esc/' $df"
     #echo "sed_cmd: $sed_cmd"
     eval "$sed_cmd"
 
     local demo_apps_url_esc; demo_apps_url_esc="$(echo "$GENESIS_DEMO_APPS_URL" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd 's/(ENV[ ]+GENESIS_DEMO_APPS_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)$/\1$demo_apps_url_esc/' $df"
-    #echo "sed_cmd: $sed_cmd"
+    sed_cmd="$sed_i_cmd 's/(ENV[ ]+GENESIS_DEMO_APPS_URL[ ]+)([^ ]+)[ ]*$/\1$demo_apps_url_esc/' $df"
+    echo "sed_cmd: $sed_cmd"
     eval "$sed_cmd"
 }
 
