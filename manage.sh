@@ -1963,7 +1963,6 @@ copy_import_demo_apps_scripts() {
     local do_copy
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
-        echo "${srcs[$i]} ${dsts[$i]}"
         do_copy="no"
         docker exec -t $BF_CONT_NAME bash -c "[ -e '$dsts[$i]' ]" 
         if [ $? -ne 0 ]; then
@@ -1972,8 +1971,7 @@ copy_import_demo_apps_scripts() {
         if [ "$do_copy" = "yes" ] \
             || [ "$FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS" = "yes" ]; then
 
-            if [ -e "${srcs[$i]}" ] \
-                && [ "$FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS" = "yes" ]; then
+            if [ -e "${srcs[$i]}" ]; then
                 echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
                 docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
             else
@@ -1997,7 +1995,6 @@ copy_import_demo_apps_data_files() {
     local do_copy
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
-        echo "${srcs[$i]} ${dsts[$i]}"
         do_copy="no"
         docker exec -t $BF_CONT_NAME bash -c "[ -e '$dsts[$i]' ]" 
         if [ $? -ne 0 ]; then
@@ -2006,8 +2003,7 @@ copy_import_demo_apps_data_files() {
         if [ "$do_copy" = "yes" ] \
             || [ "$FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES" = "yes" ]; then
 
-            if [ -e "${srcs[$i]}" ] \
-                && [ "$FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES" = "yes" ]; then
+            if [ -e "${srcs[$i]}" ]; then
                 echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
                 docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
             else
