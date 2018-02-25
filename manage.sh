@@ -853,8 +853,9 @@ check_cont() {
 }
 
 get_cont_status() {
-    local id; id=$(check_cont "$1")
-    case $? in
+    local result; result=0
+    local id; id=$(check_cont "$1"); result=$?
+    case $result in
         1)  
             echo "absent"
             ;;
@@ -868,6 +869,7 @@ get_cont_status() {
             echo "unknown"
             ;;
     esac
+    return $result
 }
 
 cont_exec() {
@@ -1657,7 +1659,12 @@ backend_apps_ctl() {
     local cmd; [ -z "$2" ] && echo "Command isn't set" \
         && echo "Available commands: status, stop, start, restart" \
         && return 2 || cmd="$2"
-    check_cont $BF_CONT_NAME > /dev/null || return 3
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 3
+
     local app_name; local result; result=0; local rcmd
     for i in $(seq 1 $num); do
         [ $i -eq 1 ] && app_name="go_apla" || app_name="go_apla$i"
@@ -1802,18 +1809,43 @@ tail_be_log() {
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1
     [ "$1" = "1" ] && log_basename="go_apla.log" || log_basename="go_apla$1.log"
 
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
     local log_dirname; log_dirname="/var/log/go-apla"
     docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
-    [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 2
+    [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
 
     local log_path; log_path="$log_dirname/$log_basename"
     docker exec -t $BF_CONT_NAME bash -c "[ -e '$log_path' ]"
-    [ $? -ne 0 ] && echo "No log file '$log_path'" && return 3
+    [ $? -ne 0 ] && echo "No log file '$log_path'" && return 4
 
     docker exec -ti $BF_CONT_NAME bash -c "tail -f $log_path"
 }
 
 ### Backends services #### end ####
+
+
+### Backend ### begin ###
+
+build_be() {
+    local num; [ -z "$1" ] && echo "Number of backends isnt' set" && return 1 \
+        || num=$1
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 1
+
+    local GOPATH; GOPATH=/go
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d github.com/GenesisKernel/go-genesis && cd /go/src/github.com/GenesisKernel/go-genesis && git checkout $GENESIS_BACKEND_BRANCH && go get github.com/GenesisKernel/go-genesis && ( [ ! -e /apla ] && mkdir /apla || : ) && git checkout | sed -E -n -e \"s/^([^']+)'([^']+)'/\2/p\" | sed -E -n \"s/origin\/([^.]+)\./\1/p\" > /apla/go-apla.git_branch && git log --pretty=format:'%h' -n 1 > /apla/go-apla.git_commit && ( [ ! -e /s/s1 ] && mkdir -p /s/s1 || : ) && mv $GOPATH/bin/go-genesis /apla/go-apla"
+
+    backend_apps_ctl $num restart
+}
+
+### Backend #### end ####
 
 
 ### Misc ### begin ###
@@ -2297,14 +2329,20 @@ show_status() {
 
     read_install_params_to_vars || return 1
 
+
+    local cont_status; cont_status=0
     echo
     echo -n "Dababase container status: "
-    get_cont_status $DB_CONT_NAME
+    get_cont_status $DB_CONT_NAME; cont_status=$?
     echo -n "Centrifugo container status: "
-    get_cont_status $CF_CONT_NAME
+    get_cont_status $CF_CONT_NAME; cont_status=$?
     echo -n "Backends/Frontends container status: "
-    get_cont_status $BF_CONT_NAME
+    get_cont_status $BF_CONT_NAME; cont_status=$?
     echo
+
+    [ $cont_status -ne 0 ] \
+        && echo "Containers status: FAILED" \
+        && return 2
 
     check_centrifugo_status
     echo
@@ -2373,7 +2411,7 @@ update_bf_dockerfile() {
 
     local demo_apps_url_esc; demo_apps_url_esc="$(echo "$GENESIS_DEMO_APPS_URL" | $SED_E 's/\//\\\//g')"
     sed_cmd="$sed_i_cmd 's/(ENV[ ]+GENESIS_DEMO_APPS_URL[ ]+)([^ ]+)[ ]*$/\1$demo_apps_url_esc/' $df"
-    echo "sed_cmd: $sed_cmd"
+    #echo "sed_cmd: $sed_cmd"
     eval "$sed_cmd"
 }
 
@@ -2763,6 +2801,7 @@ show_usage_help() {
 
     build-bf-image)
         check_run_as_root
+        update_bf_dockerfile || exit 41
         (cd "$script_dir" \
             && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
         ;;
@@ -3116,6 +3155,12 @@ show_usage_help() {
         read_install_params_to_vars || exit 21
         copy_import_demo_apps_scripts
         copy_import_demo_apps_data_files
+        ;;
+
+    build-be)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 21
+        build_be $num || exit 61
         ;;
 
     ### Backend #### end ####
