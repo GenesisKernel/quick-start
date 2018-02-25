@@ -1964,7 +1964,7 @@ copy_import_demo_apps_scripts() {
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
-        docker exec -t $BF_CONT_NAME bash -c "[ -e '$dsts[$i]' ]" 
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
         if [ $? -ne 0 ]; then
             do_copy="yes"
         fi
@@ -1996,7 +1996,7 @@ copy_import_demo_apps_data_files() {
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
-        docker exec -t $BF_CONT_NAME bash -c "[ -e '$dsts[$i]' ]" 
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
         if [ $? -ne 0 ]; then
             do_copy="yes"
         fi
