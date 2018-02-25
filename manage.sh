@@ -2,9 +2,14 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.4.1"
-VERSION="0.4.2"
+PREV_VERSION="0.4.2"
+VERSION="0.5.0"
 SED_E="sed -E"
+
+GOLANG_VER="1.10"
+GENESIS_BACKEND_BRANCH="release"
+GENESIS_FRONT_BRANCH="tags/v0.6.1"
+GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_10/demo_apps.json"
 
 DB_PORT=15432
 CF_PORT=18100
@@ -52,6 +57,9 @@ CF_CONT_IMAGE="str16071985/genesis-cf:$VERSION"
 CF_CONT_PREV_IMAGE="str16071985/genesis-cf:$PREV_VERSION"
 CF_CONT_BUILD_DIR="genesis-cf"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
+
+FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
+FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
@@ -1465,7 +1473,7 @@ get_http_priv_key() {
         && return 4
     [ -z "$5" ] && wps=$WEB_PORT_SHIFT || wps=$5
     local port; port=$(expr $wps + $2)
-    local url; url="$(echo "$1" | sed -E "s/:PORT/:$port/g")"
+    local url; url="$(echo "$1" | $SED_E "s/:PORT/:$port/g")"
     local resp; resp="$(curl -vs "$url" --stderr -)"
     [ -n "$(echo "$resp" | grep "Could not resolve host")" ] \
         && echo "Could not resolve host" && return 5
@@ -1932,73 +1940,131 @@ start_upkeys() {
     return 0
 }
 
-get_demo_page_url_from_dockerfile() {
+get_demo_apps_url_from_dockerfile() {
     local df_path; df_path="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
     [ ! -e "$df_path" ] && return 1
-    local url; url="$($SED_E -n 's/^ENV GENESIS_APPS_DEMO_PAGE_URL (.*)$/\1/p' "$df_path" | tail -n 1)"
+    local url; url="$($SED_E -n 's/^ENV GENESIS_DEMO_APPS_URL (.*)$/\1/p' "$df_path" | tail -n 1)"
     [ -n "$url" ] && echo "$url" || return 2
 }
 
-start_import_demo_page() {
-    echo "Preparing 'import demo page' ..."
+copy_import_demo_apps_scripts() {
+
+    local srcs; local dsts;
+
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py"
+    dsts[0]="/apla-scripts/genesis_api_client.py"
+
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/import_demo_apps.py"
+    dsts[1]="/apla-scripts/import_demo_apps.py"
+
+    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/import_demo_apps.sh"
+    dsts[2]="/import_demo_apps.sh"
+
+    local do_copy
+
+    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
+        echo "${srcs[$i]} ${dsts[$i]}"
+        do_copy="no"
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '$dsts[$i]' ]" 
+        if [ $? -ne 0 ]; then
+            do_copy="yes"
+        fi
+        if [ "$do_copy" = "yes" ] \
+            || [ "$FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS" = "yes" ]; then
+
+            if [ -e "${srcs[$i]}" ] \
+                && [ "$FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS" = "yes" ]; then
+                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
+                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
+            else
+                echo "No '${srcs[$i]}' @ host system. Please create it first." \
+                    && return 1
+            fi
+        fi
+    done
+}
+
+copy_import_demo_apps_data_files() {
+
+    local srcs; local dsts;
+    
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/demo_apps.json"
+    dsts[0]="/apla-scripts/demo_apps.json"
+
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/demo_apps.url"
+    dsts[1]="/apla-scripts/demo_apps.url"
+
+    local do_copy
+
+    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
+        echo "${srcs[$i]} ${dsts[$i]}"
+        do_copy="no"
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '$dsts[$i]' ]" 
+        if [ $? -ne 0 ]; then
+            do_copy="yes"
+        fi
+        if [ "$do_copy" = "yes" ] \
+            || [ "$FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES" = "yes" ]; then
+
+            if [ -e "${srcs[$i]}" ] \
+                && [ "$FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES" = "yes" ]; then
+                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
+                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
+            else
+                echo "No '${srcs[$i]}' @ host system. Skipping it ..."
+            fi
+        fi
+    done
+}
+
+start_import_demo_apps() {
+    echo "Preparing for importing of demo apps ..."
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
-    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
-    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/importDemoPage.py" $BF_CONT_NAME:/apla-scripts
+    copy_import_demo_apps_scripts|| return 2
+    copy_import_demo_apps_data_files || return 3
 
-    #docker exec -t $BF_CONT_NAME bash -c '[ -e /apla-scripts/importDemoPage.py ]' 
-    #if [ $? -ne 0 ]; then
-    #    docker cp $SCRIPT_DIR/genesis-bf/apla-scripts/importDemoPage.py $BF_CONT_NAME:/apla-scripts/
-    #fi
+    local up_da; up_da=1
 
-    docker exec -t $BF_CONT_NAME bash -c '[ -e /import_demo_page.sh ]' 
+    local da_path; da_path="/apla-scripts/demo_apps.json"
+    docker exec -t $BF_CONT_NAME bash -c "[ -e $da_path ]" 
     if [ $? -ne 0 ]; then
-        docker cp $SCRIPT_DIR/genesis-bf/import_demo_page.sh $BF_CONT_NAME:/
+        up_da=0
     fi
-
-    local up_dp; up_dp=1
-
-    local dp_path; dp_path="/apla-scripts/demo_page.json"
-    docker exec -t $BF_CONT_NAME bash -c "[ -e $dp_path ]" 
-    if [ $? -ne 0 ]; then
-        up_dp=0
-    fi
-
-    local dpu_path; dpu_path="/apla-scripts/demo_page.url"
 
     local result
-    local dp_url; dp_url="$(get_demo_page_url_from_dockerfile)"; result=$?
-    [ $result -ne 0 ] && echo "$dp_url" && return 2
+    local da_url; da_url="$GENESIS_DEMO_APPS_URL"
+    local dau_path; dau_path="/apla-scripts/demo_apps.url"
 
-    docker exec -t $BF_CONT_NAME bash -c "[ -e $dpu_path ]" 
+    docker exec -t $BF_CONT_NAME bash -c "[ -e $dau_path ]" 
     if [ $? -eq 0 ]; then
-        local dp_url_c; dp_url_c="$(docker exec -t $BF_CONT_NAME bash -c "head -n 1 $dpu_path")" 
-        dp_url_c="${dp_url_c%\\n}"
-        [ "$dp_url" != "$dp_url_c" ] \
-            && echo "Demo page URL '$dp_url_c' from '$dpu_path' @ container '$BF_CONT_NAME' isn't equal to '$dp_url'. Update required ..." \
-            && up_dp=0
+        local da_url_c; da_url_c="$(docker exec -t $BF_CONT_NAME bash -c "head -n 1 $dau_path")" 
+        da_url_c="${da_url_c%\\n}"
+        [ "$da_url" != "$da_url_c" ] \
+            && echo "Demo apps URL '$da_url_c' from '$dau_path' @ container '$BF_CONT_NAME' isn't equal to '$da_url'. Update required ..." \
+            && up_da=0
     else
-        echo "'$dpu_path' not found @ container '$BF_CONT_NAME'"
-        up_dp=0
+        echo "'$dau_path' not found @ container '$BF_CONT_NAME'"
+        up_da=0
     fi
     
-    if [ $up_dp -eq 0 ]; then
-        echo "Updating '$dp_path' @ container '$BF_CONT_NAME' by data from '$dp_url' ..."
-        docker exec -t "$BF_CONT_NAME" bash -c "curl -L -o $dp_path $dp_url"; result=$?
-        [ $result -ne 0 ] && echo "Can't download '$dp_url' to '$dp_path' @ container '$BF_CONT_NAME'" && return 3
-        echo "Updating '$dpu_path' @ container '$BF_CONT_NAME' by URL '$dp_url' ..."
-        docker exec -t "$BF_CONT_NAME" bash -c "echo -n '$dp_url' > '$dpu_path'"; result=$?
-        [ $result -ne 0 ] && echo "Can't update $dpu_path' @ container '$BF_CONT_NAME'" && return 4
+    if [ $up_da -eq 0 ]; then
+        echo "Updating '$da_path' @ container '$BF_CONT_NAME' by data from '$da_url' ..."
+        docker exec -t "$BF_CONT_NAME" bash -c "curl -L -o $da_path $da_url"; result=$?
+        [ $result -ne 0 ] && echo "Can't download '$da_url' to '$da_path' @ container '$BF_CONT_NAME'" && return 3
+        echo "Updating '$dau_path' @ container '$BF_CONT_NAME' by URL '$da_url' ..."
+        docker exec -t "$BF_CONT_NAME" bash -c "echo -n '$da_url' > '$dau_path'"; result=$?
+        [ $result -ne 0 ] && echo "Can't update $dau_path' @ container '$BF_CONT_NAME'" && return 4
     else
-        echo "'$dp_path' is up to date"
+        echo "'$da_path' is up to date"
     fi
 
-    echo "Starting 'import demo page' with data from '$dp_url' ..."
-    docker exec -ti $BF_CONT_NAME bash /import_demo_page.sh
+    echo "Starting importing of demo apps with a data from '$da_url' ..."
+    docker exec -ti $BF_CONT_NAME bash /import_demo_apps.sh
     [ $? -ne 0 ] \
-        && echo "Demo page importing isn't compeleted" && return 3
-    echo "Demo page importing is completed"
+        && echo "Demo apps importing isn't compeleted" && return 3
+    echo "Demo apps importing is completed"
     return 0
 }
 
@@ -2124,7 +2190,7 @@ start_install() {
     start_upkeys $num || return 26
     echo
 
-    start_import_demo_page || return 27
+    start_import_demo_apps || return 27
     echo
 
     echo "Comparing backends 1_keys ..."
@@ -2282,6 +2348,44 @@ show_prev_docker_images() {
 ### Docker Images #### end ####
 
 
+### Dockerfile ### begin ###
+
+update_bf_dockerfile() {
+    local df; df="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
+    [ ! -e "$df" ] \
+           && echo "No '$df' file. Please create it first" && return 1
+
+    local sed_i_cmd
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        linux) sed_i_cmd="$SED_E -i" ;;
+        mac) sed_i_cmd="$SED_E -i .bak" ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            exit 23
+            ;;
+    esac
+
+    sed_cmd="$sed_i_cmd 's/(ENV[ ]+GOLANG_VER[ ]+)([0-9a-zA-Z\.\-]+)$/\1$GOLANG_VER/' $df"
+    #echo "sed_cmd: $sed_cmd"
+    eval "$sed_cmd"
+
+    local be_br_esc; be_br_esc="$(echo "$GENESIS_BACKEND_BRANCH" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+GENESIS_BACKEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)$/\1$be_br_esc/' $df"
+    #echo "sed_cmd: $sed_cmd"
+    eval "$sed_cmd"
+
+    local demo_apps_url_esc; demo_apps_url_esc="$(echo "$GENESIS_DEMO_APPS_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd 's/(ENV[ ]+GENESIS_DEMO_APPS_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)$/\1$demo_apps_url_esc/' $df"
+    #echo "sed_cmd: $sed_cmd"
+    eval "$sed_cmd"
+}
+
+### Dockerfile #### end ####
+
+
+### Help ### begin ###
+
 show_usage_help() {
     echo
     echo "Usage: $(basename "$0") <command> <parameter>"
@@ -2353,18 +2457,21 @@ show_usage_help() {
     echo "  uninstall-client"
     echo "    Client unintaller for macOS"
     echo
-    echo "  build"
+    echo "  build-images"
     echo "    Build all (database and backend/frontend) container images"
     echo
-    echo "  build-bf"
+    echo "  build-bf-image"
     echo "    Build backend/frontend container image"
     echo
-    echo "  build-db"
+    echo "  build-db-image"
     echo "    Build database container image"
+    echo
+    echo "  build-cf-image"
+    echo "    Build centrifugo container image"
     echo
 }
 
-### Misc #### end ####
+### Help #### end ####
 
 
 ### Run ### begin ###
@@ -2522,15 +2629,9 @@ show_usage_help() {
         prep_cont_for_inspect $DB_CONT_NAME
         ;;
 
-    db-cont-bash)
+    db-cont-bash|db-cont-sh|db-cont-shell)
         check_run_as_root
         cont_bash $DB_CONT_NAME
-        ;;
-
-    build-db)
-        check_run_as_root
-        (cd "$SCRIPT_DIR" \
-            && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         ;;
 
     start-db-cont)
@@ -2554,6 +2655,13 @@ show_usage_help() {
 
 
     ### DB Image ### begin ###
+
+    build-db-image)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
+        ;;
+
 
     delete-db-image)
         check_run_as_root
@@ -2633,15 +2741,9 @@ show_usage_help() {
         prep_cont_for_inspect $BF_CONT_NAME
         ;;
 
-    bf-cont-bash)
+    bf-cont-bash|bf-cont-sh|bf-cont-shell)
         check_run_as_root
         cont_bash $BF_CONT_NAME
-        ;;
-
-    build-bf)
-        check_run_as_root
-        (cd "$SCRIPT_DIR" \
-            && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
         ;;
 
     delete-bf-cont)
@@ -2651,8 +2753,23 @@ show_usage_help() {
         
     ### BF Container #### end ####
 
+    
+    ### BF Dockerfile ### begin ###
+
+    up-bf-dockerfile)
+        update_bf_dockerfile || exit 41
+        ;;
+
+    ### BF Dockerfile #### end ####
+
 
     ### BF Image ### begin ###
+
+    build-bf-image)
+        check_run_as_root
+        (cd "$script_dir" \
+            && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
+        ;;
 
     delete-bf-image)
         check_run_as_root
@@ -2732,15 +2849,9 @@ show_usage_help() {
         prep_cont_for_inspect_centos7 $CF_CONT_NAME
         ;;
 
-    cf-cont-bash)
+    cf-cont-bash|cf-cont-sh|cf-cont-shell)
         check_run_as_root
         cont_bash $CF_CONT_NAME
-        ;;
-
-    build-cf)
-        check_run_as_root
-        (cd "$SCRIPT_DIR" \
-            && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
         ;;
 
     delete-cf-cont)
@@ -2752,6 +2863,12 @@ show_usage_help() {
 
 
     ### CF Image ### begin ###
+
+    build-cf-image)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
+        ;;
 
     delete-cf-image)
         check_run_as_root
@@ -2903,6 +3020,18 @@ show_usage_help() {
         backend_apps_ctl $num $2
         ;;
 
+    be-build)
+        docker exec -ti $BF_CONT_NAME bash -c "go get -d github.com/GenesisKernel/go-genesis && cd /go/src/github.com/GenesisKernel/go-genesis && git checkout $GENESIS_BACKEND_BRANCH"
+        ;;
+
+    be-ver|be-version)
+        docker exec -ti $BF_CONT_NAME bash -c "/apla/go-apla -noStart 2>&1 | sed -E -n 's/^.*version\W+([0-9a-zA-Z\.\-]+)\W+.*/\1/pg'"
+        ;;
+
+    be-git-ver|be-git-version)
+        docker exec -ti $BF_CONT_NAME bash -c '[ -e /apla/go-apla.git_branch ] && echo -n "Git branch: " && cat /apla/go-apla.git_branch; [ -e /apla/go-apla.git_commit ] && echo -n "Git commit: " && cat /apla/go-apla.git_commit && echo'
+        ;;
+
     http-priv-key)
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
@@ -2980,10 +3109,17 @@ show_usage_help() {
         get_demo_page_url_from_dockerfile
         ;;
 
-    import-demo)
+    import-demo-apps)
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 21
-        start_import_demo_page $num
+        start_import_demo_apps
+        ;;
+
+    cpid)
+        num=""; wps=""; cps=""; dbp=""
+        read_install_params_to_vars || exit 21
+        copy_import_demo_apps_scripts
+        copy_import_demo_apps_data_files
         ;;
 
     ### Backend #### end ####
@@ -3044,12 +3180,14 @@ show_usage_help() {
         show_status
         ;;
 
-    build)
+    build-images)
         check_run_as_root
         (cd "$SCRIPT_DIR" \
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
-            && docker build -t $BF_CONT_NAME -f $BF_CONT_BUILD_DIR/Dockerfile $BF_CONT_BUILD_DIR/.)
+            && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         ;;
 
     delete)
