@@ -9,7 +9,7 @@ SED_E="sed -E"
 GOLANG_VER="1.10"
 GENESIS_BACKEND_BRANCH="release"
 GENESIS_FRONT_BRANCH="tags/v0.6.1"
-GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_10/demo_apps.json"
+GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_11/demo_apps.json"
 
 DB_PORT=15432
 CF_PORT=18100
