@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.4.2"
-VERSION="0.5.0"
+PREV_VERSION="0.5.0"
+VERSION="0.5.1"
 SED_E="sed -E"
 
 GOLANG_VER="1.10"
@@ -1845,7 +1845,65 @@ build_be() {
     backend_apps_ctl $num restart
 }
 
+clean_be_build() {
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 1
+    docker exec -ti $BF_CONT_NAME bash -c "rm -rf /go"
+}
+
+get_be_ver() {
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" && return 1
+    docker exec -ti $BF_CONT_NAME bash -c "/apla/go-apla -noStart 2>&1 | sed -E -n 's/^.*version\W+([0-9a-zA-Z\.\-]+)\W+.*/\1/pg'"
+}
+
+get_be_git_ver() {
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" && return 1
+    docker exec -ti $BF_CONT_NAME bash -c '[ -e /apla/go-apla.git_branch ] && echo -n "Git branch: " && cat /apla/go-apla.git_branch; [ -e /apla/go-apla.git_commit ] && echo -n "Git commit: " && cat /apla/go-apla.git_commit && echo'
+}
+
 ### Backend #### end ####
+
+
+### Frontend ### begin ###
+
+build_fe() {
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 1
+
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && ([ -e /apla-front ] && rm -rf /apla-front || : ) && git clone --recursive https://github.com/GenesisKernel/genesis-front apla-front && cd /apla-front && git checkout $GENESIS_FRONT_BRANCH && git pull origin $GENESIS_FRONT_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > /apla-front.git_branch && git log --pretty=format:'%h' -n 1 > /apla-front.git_commit && yarn install && yarn build"
+}
+
+clean_fe_build() {
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 1
+    docker exec -ti $BF_CONT_NAME bash -c \
+        "find /apla-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;"
+}
+
+get_fe_ver() {
+    echo "$GENESIS_FRONT_BRANCH"
+}
+
+get_fe_git_ver() {
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 1
+
+    docker exec -ti $BF_CONT_NAME bash -c '[ -e /apla-front.git_branch ] && echo -n "Git branch: " && cat /apla-front.git_branch; [ -e /apla-front.git_commit ] && echo -n "Git commit: " && cat /apla-front.git_commit && echo'
+}
+
+### Frontend #### end ####
 
 
 ### Misc ### begin ###
@@ -2094,6 +2152,17 @@ start_import_demo_apps() {
         && echo "Demo apps importing isn't compeleted" && return 3
     echo "Demo apps importing is completed"
     return 0
+}
+
+get_demo_apps_ver() {
+    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
+        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
+
+    local dau_path; dau_path="/apla-scripts/demo_apps.url"
+    docker exec -t $BF_CONT_NAME bash -c \
+        "[ -f '$dau_path' ] && cat '$dau_path'"
+    [ $? -ne 0 ] \
+        && echo "No or inaccessible '$dau_path' @ $BF_CONT_NAME" && return 2
 }
 
 start_install() {
@@ -2737,7 +2806,7 @@ show_usage_help() {
         docker pull $DB_CONT_PREV_IMAGE
         docker tag $DB_CONT_PREV_IMAGE $DB_CONT_IMAGE
         echo
-        echo "Are you sure to push '$DB_CONT_IMAGE' image to docker hub?"
+        echo -n "Are you sure to push '$DB_CONT_IMAGE' image to docker hub [y/n]? "
         read -n 1 answ
         case $answ in
             y|Y) docker push $DB_CONT_IMAGE ;;
@@ -2846,7 +2915,7 @@ show_usage_help() {
         docker pull $BF_CONT_PREV_IMAGE
         docker tag $BF_CONT_PREV_IMAGE $CF_CONT_IMAGE
         echo
-        echo "Are you sure to push '$BF_CONT_IMAGE' image to docker hub?"
+        echo -n "Are you sure to push '$BF_CONT_IMAGE' image to docker hub [y/n]? "
         read -n 1 answ
         case $answ in
             y|Y) docker push $BF_CONT_IMAGE ;;
@@ -2945,7 +3014,7 @@ show_usage_help() {
         docker pull $CF_CONT_PREV_IMAGE
         docker tag $CF_CONT_PREV_IMAGE $CF_CONT_IMAGE
         echo
-        echo "Are you sure to push '$CF_CONT_IMAGE' image to docker hub?"
+        echo -n "Are you sure to push '$CF_CONT_IMAGE' image to docker hub? [y/n] "
         read -n 1 answ
         case $answ in
             y|Y) docker push $CF_CONT_IMAGE ;;
@@ -3055,18 +3124,6 @@ show_usage_help() {
         backend_apps_ctl $num $2
         ;;
 
-    be-build)
-        docker exec -ti $BF_CONT_NAME bash -c "go get -d github.com/GenesisKernel/go-genesis && cd /go/src/github.com/GenesisKernel/go-genesis && git checkout $GENESIS_BACKEND_BRANCH"
-        ;;
-
-    be-ver|be-version)
-        docker exec -ti $BF_CONT_NAME bash -c "/apla/go-apla -noStart 2>&1 | sed -E -n 's/^.*version\W+([0-9a-zA-Z\.\-]+)\W+.*/\1/pg'"
-        ;;
-
-    be-git-ver|be-git-version)
-        docker exec -ti $BF_CONT_NAME bash -c '[ -e /apla/go-apla.git_branch ] && echo -n "Git branch: " && cat /apla/go-apla.git_branch; [ -e /apla/go-apla.git_commit ] && echo -n "Git commit: " && cat /apla/go-apla.git_commit && echo'
-        ;;
-
     http-priv-key)
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
@@ -3150,11 +3207,8 @@ show_usage_help() {
         start_import_demo_apps
         ;;
 
-    cpid)
-        num=""; wps=""; cps=""; dbp=""
-        read_install_params_to_vars || exit 21
-        copy_import_demo_apps_scripts
-        copy_import_demo_apps_data_files
+    demo-apps-ver)
+        get_demo_apps_ver || exit 63
         ;;
 
     build-be)
@@ -3163,7 +3217,40 @@ show_usage_help() {
         build_be $num || exit 61
         ;;
 
+    clean-be-build)
+        clean_be_build || exit 61
+        ;;
+
+    be-ver|be-version)
+        get_be_ver || exit 61
+        ;;
+
+    be-git-ver|be-git-version)
+        get_be_git_ver || exit 61
+        ;;
+
     ### Backend #### end ####
+
+
+    ### Frontend ### begin ###
+
+    build-fe)
+        build_fe || exit 62
+        ;;
+
+    clean-fe-build)
+        clean_fe_build || exit 62
+        ;;
+
+    fe-ver|fe-version)
+        get_fe_ver || exit 63
+        ;;
+
+    fe-git-ver|fe-git-version)
+        get_fe_git_ver || exit 63
+        ;;
+
+    ### Frontend #### end ####
 
 
     ### Main #### begin ###

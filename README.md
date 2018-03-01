@@ -73,9 +73,7 @@ To reinstall (delete all Genesis-related containers and run installation again w
 ```
 ### Windows
 
-```shell
-./manage.exe install 5
-```
+Please see [Genesis Quick Start for Windows](https://github.com/GenesisKernel/quick-start-win)
 
 Client Application
 ==================
@@ -112,3 +110,15 @@ So running this command:
 ```
 
 will start 4 backends and 4 clients, and fronend ports will be exposed to system port: 9001, 9002, 9003, 9004, clients ports will be exposed to system ports: 19001, 19002, 19003, 19004, and database port will be exposed to system port 6000
+
+### Useful links
+
+* [Genesis Quick Start for Windows](https://github.com/GenesisKernel/quick-start-win)
+
+* [Genesis Applications](https://genesiskernel.github.io/apps/)
+
+* [Genesis Blockchain](https://github.com/GenesisKernel/go-genesis)
+
+* [Genesis Frontend](https://github.com/GenesisKernel/genesis-front)
+
+* [Genesis Frontend](https://github.com/GenesisKernel/genesis-front)
