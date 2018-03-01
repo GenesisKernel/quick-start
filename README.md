@@ -1,5 +1,5 @@
 About Genesis
-==========
+=============
 
 Genesis is an open source blockchain platform which implemented as blockchain network consisting of nodes communicating each other. Each node is backend service having own database and can be interacted by the end user with a client or web ui.
 
@@ -111,14 +111,13 @@ So running this command:
 
 will start 4 backends and 4 clients, and fronend ports will be exposed to system port: 9001, 9002, 9003, 9004, clients ports will be exposed to system ports: 19001, 19002, 19003, 19004, and database port will be exposed to system port 6000
 
-### Useful links
+Useful Links
+============
 
 * [Genesis Quick Start for Windows](https://github.com/GenesisKernel/quick-start-win)
 
 * [Genesis Applications](https://genesiskernel.github.io/apps/)
 
 * [Genesis Blockchain](https://github.com/GenesisKernel/go-genesis)
-
-* [Genesis Frontend](https://github.com/GenesisKernel/genesis-front)
 
 * [Genesis Frontend](https://github.com/GenesisKernel/genesis-front)
