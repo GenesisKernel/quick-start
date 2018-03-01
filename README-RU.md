@@ -70,9 +70,8 @@ Genesis - блокчейн-платформа с открытым исходны
 
 ### Windows
 
-```shell
-./manage.exe install 5
-```
+Используйте отдельную версию [Genesis Quick Start for Windows](https://github.com/GenesisKernel/quick-start-win)
+
 
 Клиентское приложение
 =====================
@@ -110,3 +109,14 @@ Genesis - блокчейн-платформа с открытым исходны
 приведет к запуску 4-х узлов и 4-х клиентов, веб-порты будут проброшены в хост-систему как: 9001, 9002, 9003, 9004, клиент-порты будут проброшены в хост-систему как: 19001, 19002, 19003, 19004, порт базы данных будет проброшен в хост-систему как 6000.
 
 
+### Полезные ссылки
+
+* [Genesis Quick Start for Windows](https://github.com/GenesisKernel/quick-start-win)
+
+* [Genesis Applications](https://genesiskernel.github.io/apps/)
+
+* [Genesis Blockchain](https://github.com/GenesisKernel/go-genesis)
+
+* [Genesis Frontend](https://github.com/GenesisKernel/genesis-front)
+
+* [Genesis Frontend](https://github.com/GenesisKernel/genesis-front)
