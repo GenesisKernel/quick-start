@@ -314,10 +314,11 @@ create_apps_dir() {
 }
 
 get_app_dir_size_m() {
-    [ ! -d "$1" ] || du -sm "$1" | awk '{print $1}'
+    [  -d "$1" ] &&  du -sm "$1" | awk '{print $1}' || echo 0
 }
 
 download_and_check_dmg() {
+    check_curl_avail
     local dmg_url; dmg_url="$1"
     local dmg_basename; dmg_basename="$2"
     local result
@@ -348,6 +349,7 @@ download_and_check_dmg() {
 }
 
 download_and_install_dmg() {
+    check_curl_avail
     local app_bin; app_bin="$1"
     local app_dir; app_dir="$2"
     local dmg_url; dmg_url="$3"
@@ -655,10 +657,42 @@ start_docker() {
     esac
 }
 
+check_docker_avail() {
+    [ -n "$(command -v docker)" ] && return 0
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        linux)
+            start_linux_docker
+            ;;
+        mac)
+            start_mac_docker
+            ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            exit 30
+            ;;
+    esac
+}
+
 ### Docker #### end ####
 
 
 ### Client ### begin ###
+
+check_curl_avail() {
+    [ -n "$(command -v curl)" ] && return 0
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        linux|mac)
+            echo "Please install curl first"
+            exit 31
+            ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            exit 30
+            ;;
+    esac
+}
 
 install_mac_client_directly() {
     download_and_install_dmg "$CLIENT_MAC_APP_BIN" "$CLIENT_MAC_APP_DIR" "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME" "$CLIENT_APP_NAME" $CLIENT_MAC_APP_DIR_SIZE_M
@@ -692,6 +726,7 @@ uninstall_client() {
 }
 
 install_linux_client_directly() {
+    check_curl_avail
     (
         update_global_downloads_and_apps_dir_vars
         local app_basename; app_basename="$CLIENT_APPIMAGE_BASENAME"
@@ -836,10 +871,12 @@ stop_clients() {
 ### Common containers ### begin ###
 
 get_cont_id() {
+    check_docker_avail
     docker ps -a -f name="$1" --format '{{.ID}}'
 }
 
 get_running_cont_id() {
+    check_docker_avail
     docker ps -f name="$1" -f status=running --format '{{.ID}}'
 }
 
