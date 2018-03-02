@@ -2619,7 +2619,11 @@ show_usage_help() {
 
 ### Run ### begin ###
 
-[ "$0" = "$BASH_SOURCE" ] && case $1 in
+pre_command() {
+    check_requirements
+}
+
+[ "$0" = "$BASH_SOURCE" ] && pre_command && case $1 in
 
     ### OS ### begin ###
 
@@ -3297,7 +3301,6 @@ show_usage_help() {
 
     install)
         check_run_as_root
-        check_requirements
         check_num_param $2
         start_docker
         check_host_ports $2 $3 $4 $5
@@ -3326,7 +3329,6 @@ show_usage_help() {
 
     reinstall)
         check_run_as_root
-        check_requirements
         params="$(read_install_params)"
         [ -z "$params" ] \
             && echo "No install parameters found. Please start install first" \
@@ -3337,25 +3339,21 @@ show_usage_help() {
 
     stop)
         check_run_as_root
-        check_requirements
         stop_all
         ;;
 
     start)
         check_run_as_root
-        check_requirements
         start_all
         ;;
 
     status)
         check_run_as_root
-        check_requirements
         show_status
         ;;
 
     build-images)
         check_run_as_root
-        check_requirements
         (cd "$SCRIPT_DIR" \
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
