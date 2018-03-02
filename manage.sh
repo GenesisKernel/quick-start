@@ -139,6 +139,7 @@ check_run_as_root() {
 }
 
 run_as_orig_user() {
+    local cmd
     is_root;
     if [ $? -eq 0 ]; then
         local who_user; who_user="$(who -m | awk '{print $1}')"
