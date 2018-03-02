@@ -184,6 +184,11 @@ check_min_req() {
     esac
 }
 
+check_requirements() {
+    check_curl_avail
+    check_docker_avail
+}
+
 check_proc() {
     [ -z "$1" ] && echo "Process name isn't set" && return 2
     [ -z "$(pgrep "$1")" ] \
@@ -871,12 +876,10 @@ stop_clients() {
 ### Common containers ### begin ###
 
 get_cont_id() {
-    check_docker_avail
     docker ps -a -f name="$1" --format '{{.ID}}'
 }
 
 get_running_cont_id() {
-    check_docker_avail
     docker ps -f name="$1" -f status=running --format '{{.ID}}'
 }
 
@@ -3294,6 +3297,7 @@ show_usage_help() {
 
     install)
         check_run_as_root
+        check_requirements
         check_num_param $2
         start_docker
         check_host_ports $2 $3 $4 $5
@@ -3322,6 +3326,7 @@ show_usage_help() {
 
     reinstall)
         check_run_as_root
+        check_requirements
         params="$(read_install_params)"
         [ -z "$params" ] \
             && echo "No install parameters found. Please start install first" \
@@ -3332,21 +3337,25 @@ show_usage_help() {
 
     stop)
         check_run_as_root
+        check_requirements
         stop_all
         ;;
 
     start)
         check_run_as_root
+        check_requirements
         start_all
         ;;
 
     status)
         check_run_as_root
+        check_requirements
         show_status
         ;;
 
     build-images)
         check_run_as_root
+        check_requirements
         (cd "$SCRIPT_DIR" \
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
