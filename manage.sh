@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.5.0"
-VERSION="0.5.1"
+PREV_VERSION="0.5.1"
+VERSION="0.5.2"
 SED_E="sed -E"
 
 GOLANG_VER="1.10"
@@ -2036,8 +2036,8 @@ start_fullnodes() {
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
-    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
-    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/newValToFullNodes.py" $BF_CONT_NAME:/apla-scripts
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/newValToFullNodes.py" $BF_CONT_NAME:/apla-scripts
     docker exec -t $BF_CONT_NAME bash -c '[ -e /fullnodes.sh ]'
     [ $? -ne 0 ] \
         && echo "/fullnodes.sh doesn't exist @ container '$BF_CONT_NAME'" \
@@ -2056,8 +2056,8 @@ start_upkeys() {
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
-    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
-    docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/updateKeys.py" $BF_CONT_NAME:/apla-scripts
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/updateKeys.py" $BF_CONT_NAME:/apla-scripts
     docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
     [ $? -ne 0 ] \
         && echo "/upkeys.sh doesn't exist @ container '$BF_CONT_NAME'" \
