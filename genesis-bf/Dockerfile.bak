@@ -2,7 +2,7 @@ FROM yarnpkg/node-yarn
 
 ENV GOLANG_VER 1.10
 ENV GENESIS_FRONT_BRANCH tags/v0.6.1
-ENV GENESIS_BACKEND_BRANCH release
+ENV GENESIS_BACKEND_BRANCH develop_without_config
 ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_11/demo_apps.json
 
 RUN apt-get update -y && apt-get install nginx git wget supervisor postgresql-client-9.4 -y && apt-get clean && rm -rf /var/lib/apt/lists/*

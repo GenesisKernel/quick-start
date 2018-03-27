@@ -2,12 +2,12 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.5.1"
-VERSION="0.5.2"
+PREV_VERSION="0.5.2"
+VERSION="0.5.3"
 SED_E="sed -E"
 
 GOLANG_VER="1.10"
-GENESIS_BACKEND_BRANCH="release"
+GENESIS_BACKEND_BRANCH="develop_without_config"
 GENESIS_FRONT_BRANCH="tags/v0.6.1"
 GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_11/demo_apps.json"
 
@@ -3083,7 +3083,7 @@ pre_command() {
         check_run_as_root
         docker pull $DB_CONT_PREV_IMAGE
         docker pull $CF_CONT_PREV_IMAGE
-        docker pull $CF_CONT_PREV_IMAGE
+        docker pull $BF_CONT_PREV_IMAGE
         ;;
 
     ### Common Image #### end ####
