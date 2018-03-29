@@ -3076,7 +3076,7 @@ pre_command() {
         check_run_as_root
         docker pull $DB_CONT_IMAGE
         docker pull $CF_CONT_IMAGE
-        docker pull $CF_CONT_IMAGE
+        docker pull $BF_CONT_IMAGE
         ;;
 
     pull-prev-images)
