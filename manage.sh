@@ -2046,7 +2046,7 @@ start_fullnodes() {
     echo "Starting 'fullnodes' ..."
     docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
     [ $? -ne 0 ] \
-        && echo "Fullnodes isn't compeleted" && return 3
+        && echo "Fullnodes isn't completed" && return 3
     echo "Fullnodes is completed"
     return 0
 }
@@ -2066,7 +2066,7 @@ start_upkeys() {
     echo "Starting 'upkeys' ..."
     docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
     [ $? -ne 0 ] \
-        && echo "Upkeys isn't compeleted" && return 3
+        && echo "Upkeys isn't completed" && return 3
     echo "Upkeys is completed"
     return 0
 }
@@ -2190,7 +2190,7 @@ start_import_demo_apps() {
     echo "Starting importing of demo apps with a data from '$da_url' ..."
     docker exec -ti $BF_CONT_NAME bash /import_demo_apps.sh
     [ $? -ne 0 ] \
-        && echo "Demo apps importing isn't compeleted" && return 3
+        && echo "Demo apps importing isn't completed" && return 3
     echo "Demo apps importing is completed"
     return 0
 }
