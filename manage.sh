@@ -2,14 +2,14 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.5.3"
-VERSION="0.5.4"
+PREV_VERSION="0.5.4"
+VERSION="0.5.5"
 SED_E="sed -E"
 
-GOLANG_VER="1.10"
+GOLANG_VER="1.10.1"
 GENESIS_BACKEND_BRANCH="develop_without_config"
 GENESIS_FRONT_BRANCH="tags/v0.6.1"
-GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_12/demo_apps.json"
+GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_13/demo_apps.json"
 
 DB_PORT=15432
 CF_PORT=18100
