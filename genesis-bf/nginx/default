@@ -3,13 +3,13 @@ server {
     server_name _;
     access_log /access.log;
     error_log /errors.log;
-    root /apla-front/build;
+    root /genesis-front/build;
     index index.html; 
     location /  {
        try_files $uri /index.html;
     }
 
     location ^~ /keys {
-       alias /s/s1;
+       alias /genesis-back/data/node1;
     }
 }
