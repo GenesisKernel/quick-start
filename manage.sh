@@ -86,6 +86,7 @@ TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
+FORCE_COPY_MBS_SCRIPT="no"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
@@ -1790,16 +1791,10 @@ wait_frontend_apps_status() {
 
 ### Update ### 20180405 ### 08fad ### begin ###
 
-FORCE_COPY_MBS_SCRIPT="yes"
-
 check_update_mbs_script() {
     local srcs dsts do_copy
     srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
     dsts[0]="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/upkeys.sh"
-    dsts[1]="$GENESIS_SCRIPTS_DIR/upkeys.sh"
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/fullnodes.sh"
-    dsts[2]="$GENESIS_SCRIPTS_DIR/fullnodes.sh"
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
