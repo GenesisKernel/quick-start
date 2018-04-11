@@ -1575,7 +1575,7 @@ get_priv_key() {
     local num; local wps; local cps; local dbp; local cfp
     read_install_params_to_vars || return 2
     [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
-    local priv_key_path; priv_key_path="/s/s$idx/PrivateKey"; local result
+    local priv_key_path; priv_key_path="$GENESIS_BE_ROOT_DATA_DIR/node$1/PrivateKey"; local result
     cont_exec $BF_CONT_NAME "bash -c '[ -e \"$priv_key_path\" ] && cat \"$priv_key_path\"'"
     result=$?
     [ $result -ne 0 ] && echo "File '$priv_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
