@@ -1933,15 +1933,14 @@ check_host_side() {
 tail_be_log() {
     local log_basename
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1
-    [ "$1" = "1" ] && log_basename="$GENESIS_BE_BIN_BASENAME.log" \
-        || log_basename="$GENESIS_BE_BIN_BASENAME$1.log"
+    log_basename="node$1.log"
 
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -ne 0 ] \
         && echo "Backend/frontend container isn't ready" \
         && return 2
 
-    local log_dirname; log_dirname="$GENESIS_BE_ROOT_LOG_DIR"
+    local log_dirname; log_dirname="$GENESIS_BE_ROOT_DATA_DIR/node$1"
     docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
     [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
 
