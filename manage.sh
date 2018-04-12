@@ -3586,6 +3586,21 @@ pre_command() {
         echo "$VERSION"
         ;;
 
+    versions)
+        echo "Quick Start version: $VERSION"
+        echo
+        echo "Backend version: "
+        get_be_git_ver
+        echo
+        echo "Frontend version: "
+        get_fe_git_ver
+        echo
+        echo "Golang version: $GOLANG_VER"
+        echo
+        echo "Demo apps URL: $GENESIS_DEMO_APPS_URL"
+        echo
+        ;;
+
     *)
         show_usage_help
         ;;
