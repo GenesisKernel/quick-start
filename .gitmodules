@@ -1,0 +1,3 @@
+[submodule "genesis-bf/genesis-scripts"]
+	path = genesis-bf/genesis-scripts
+	url = git@blitzstern5.github.com:blitzstern5/genesis-scripts.git

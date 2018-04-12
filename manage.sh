@@ -86,7 +86,7 @@ TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
-FORCE_COPY_MBS_SCRIPT="no"
+FORCE_COPY_MBS_SCRIPT="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
@@ -1855,13 +1855,25 @@ stop_be_apps() {
     done
 }
 
-start_fe_apps() {
-    local num cps
+setup_fe_apps() {
+    local num cps rmt_path
     [ -z "$1" ] && echo "The number of frontends isn't set"  && return 1
     num="$1"; cps="$2"
     check_update_mbs_script || return $?
     rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-    docker exec -ti $BF_CONT_NAME bash $rmt_path setup-frontends $num $cps
+    docker exec -ti $BF_CONT_NAME bash -c "$rmt_path setup-frontends $num $cps"
+}
+
+start_fe_apps() {
+    local num cps stat rmt_path
+    [ -z "$1" ] && echo "The number of frontends isn't set"  && return 1
+    num="$1"; cps="$2"
+    rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
+    stat="$(docker exec -ti $BF_CONT_NAME \
+        sh -c 'supervisorctl status nginx' | awk '{print $2}')"
+    if [ "$stat" != "RUNNING" ]; then
+        docker exec -ti $BF_CONT_NAME sh -c 'supervisorctl start nginx'
+    fi
     wait_frontend_apps_status $num || return $?
 }
 
@@ -2427,6 +2439,12 @@ start_install() {
     [ $? -ne 0 ] \
         && echo "Backend applications arn't available" && return 23 \
         || echo "Backend applications ready"
+    echo
+
+    setup_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications setup isn't completed" && return 24 \
+        || echo "Fronend applications setup completed"
     echo
 
     start_fe_apps $num $cps
@@ -3433,6 +3451,11 @@ pre_command() {
 
 
     ### Frontend ### begin ###
+
+    setup-fe-apps)
+        shift 1
+        setup_fe_apps $@
+        ;;
 
     start-fe-apps)
         shift 1
