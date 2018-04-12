@@ -1858,7 +1858,8 @@ stop_be_apps() {
 setup_fe_apps() {
     local num cps rmt_path
     [ -z "$1" ] && echo "The number of frontends isn't set"  && return 1
-    num="$1"; cps="$2"
+    num="$1"
+    [ -z "$2" ] && cps="$CLIENT_PORT_SHIFT" || cps="$2"
     check_update_mbs_script || return $?
     rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
     docker exec -ti $BF_CONT_NAME bash -c "$rmt_path setup-frontends $num $cps"
@@ -1867,7 +1868,8 @@ setup_fe_apps() {
 start_fe_apps() {
     local num cps stat rmt_path
     [ -z "$1" ] && echo "The number of frontends isn't set"  && return 1
-    num="$1"; cps="$2"
+    num="$1"
+    [ -z "$2" ] && cps="$CLIENT_PORT_SHIFT" || cps="$2"
     rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
     stat="$(docker exec -ti $BF_CONT_NAME \
         sh -c 'supervisorctl status nginx' | awk '{print $2}')"
