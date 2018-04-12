@@ -1777,6 +1777,8 @@ stop_be_apps() {
 }
 
 start_fe_apps() {
+    local num; ([ -z "$1" ] || [ $1 -eq 0 ]) && return 1 || num=$1
+    local cps; [ -z "$2" ] && cps=$CLIENT_PORT_SHIFT || cps=$2
     docker exec -t $BF_CONT_NAME /start3.sh $num $cps
     wait_frontend_apps_status $num || return 3
 }
