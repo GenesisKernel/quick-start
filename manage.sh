@@ -2427,10 +2427,10 @@ start_install() {
 
     ### Update ### 20180405 ### 08fad ### begin ###
 
-    setup_be_apps $num
+    setup_be_apps $num $cps
     [ $? -ne 0 ] \
         && echo "Backend applications setup isn't completed" && return 23 \
-        || echo "Backend applications setup completed"
+        || echo "Backend applications setup is completed"
     echo
 
     ### Update ### 20180405 ### 08fad #### end ####
@@ -2444,13 +2444,13 @@ start_install() {
     setup_fe_apps $num $cps
     [ $? -ne 0 ] \
         && echo "Fronend applications setup isn't completed" && return 24 \
-        || echo "Fronend applications setup completed"
+        || echo "Fronend applications setup is completed"
     echo
 
     start_fe_apps $num $cps
     [ $? -ne 0 ] \
         && echo "Fronend applications arn't available" && return 24 \
-        || echo "Fronend applications ready"
+        || echo "Fronend applications are ready"
     echo
 
     start_update_keys $num || return 26
