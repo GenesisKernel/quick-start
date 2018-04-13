@@ -39,3 +39,5 @@ nosetests.xml
 local
 include
 *.sqlite
+
+genesis-bf/genesis-scripts
