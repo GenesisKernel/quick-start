@@ -7,7 +7,7 @@ VERSION="0.6.1"
 SED_E="sed -E"
 
 GOLANG_VER="1.10.1"
-GENESIS_BACKEND_BRANCH="develop"
+GENESIS_BACKEND_BRANCH="db60e9a"
 GENESIS_FRONT_BRANCH="tags/v0.6.1"
 GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_13/demo_apps.json"
 
@@ -2153,7 +2153,7 @@ start_update_full_nodes() {
     rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
 
     echo "Starting 'update full nodes' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-nodes $num
+    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-nodes-v1 $num
     [ $? -ne 0 ] \
         && echo "Full nodes updating isn't completed" && return 3
     echo "Full nodes updating is completed"

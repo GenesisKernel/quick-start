@@ -3,7 +3,7 @@ FROM debian:stretch
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV GOLANG_VER 1.10.1
-ENV GENESIS_BACKEND_BRANCH develop
+ENV GENESIS_BACKEND_BRANCH db60e9a
 ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_13/demo_apps.json
 ENV GENESIS_FRONT_BRANCH tags/v0.6.1
 
