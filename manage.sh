@@ -2,28 +2,14 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.0"
-VERSION="0.6.1"
+PREV_VERSION="0.5.6"
+VERSION="0.5.7"
 SED_E="sed -E"
 
 GOLANG_VER="1.10.1"
-GENESIS_BACKEND_BRANCH="develop"
+GENESIS_BACKEND_BRANCH="develop_without_config"
 GENESIS_FRONT_BRANCH="tags/v0.6.1"
 GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_13/demo_apps.json"
-
-GENESIS_DB_NAME_PREFIX="genesis"
-
-GENESIS_BE_ROOT="/genesis-back"
-GENESIS_BE_ROOT_LOG_DIR="/var/log/go-genesis"
-GENESIS_BE_ROOT_DATA_DIR="$GENESIS_BE_ROOT/data"
-GENESIS_BE_BIN_DIR="$GENESIS_BE_ROOT/bin"
-GENESIS_BE_BIN_BASENAME="go-genesis"
-GENESIS_BE_BIN_PATH="$GENESIS_BE_BIN_DIR/$GENESIS_BE_BIN_BASENAME"
-
-GENESIS_FE_SRC_DIR="/genesis-front"
-
-GENESIS_SCRIPTS_DIR="/genesis-scripts"
-GENESIS_APPS_DIR="/genesis-apps"
 
 DB_PORT=15432
 CF_PORT=18100
@@ -72,21 +58,8 @@ CF_CONT_PREV_IMAGE="str16071985/genesis-cf:$PREV_VERSION"
 CF_CONT_BUILD_DIR="genesis-cf"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
-BE_CONT_NAME="genesis-be"
-BE_CONT_IMAGE="str16071985/genesis-be:$VERSION"
-BE_CONT_PREV_IMAGE="str16071985/genesis-be:$PREV_VERSION"
-BE_CONT_BUILD_DIR="genesis-be"
-TRY_LOCAL_BE_CONT_NAME_ON_RUN="yes"
-
-FE_CONT_NAME="genesis-fe"
-FE_CONT_IMAGE="str16071985/genesis-fe:$VERSION"
-FE_CONT_PREV_IMAGE="str16071985/genesis-fe:$PREV_VERSION"
-FE_CONT_BUILD_DIR="genesis-fe"
-TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
-
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
-FORCE_COPY_MBS_SCRIPT="no"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
@@ -295,6 +268,7 @@ check_host_ports() {
     else
         echo "FREE"
     fi
+
 
     local w_port; local c_port; local run_cmd
     for i in $(seq 1 $num); do
@@ -948,8 +922,8 @@ cont_exec() {
 }
 
 prep_cont_for_inspect() {
-    #cont_exec $1 "bash -c \"apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links procps\""
-    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links screen procps'"
+    #cont_exec $1 "bash -c \"apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links\""
+    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links'"
 }
 
 prep_cont_for_inspect_centos7() {
@@ -1166,17 +1140,13 @@ wait_db_exists() {
     return $result
 }
 
-### Update ### 20180405 ### 08fad ### begin ###
-
 check_dbs() {
     local num; num=$1
     echo "Checking databases for $num backends ..."
     local total_result; total_result=0; local result
-    local db_name
     for i in $(seq 1 $num); do
-        db_name="$GENESIS_DB_NAME_PREFIX$i"
         echo -n "  checking database for backend $i: "
-        check_db_exists "$db_name"; result=$?
+        check_db_exists "eg$i"; result=$?
         [ $result -ne 0 ] && total_result=$result || echo "ok"
     done
     return $total_result
@@ -1186,11 +1156,10 @@ wait_dbs() {
     local num; num=$1
     local timeout_secs; [ -z "$2" ] && timeout_secs=15 || timeout_secs="$2"
     echo "Waiting ($timeout_secs seconds for each) databases for $num backends ..."
-    local total_result; total_result=0; local result db_name
+    local total_result; total_result=0; local result
     for i in $(seq 1 $num); do
-        db_name="$GENESIS_DB_NAME_PREFIX$i"
         echo "  checking database for backend $i: "
-        wait_db_exists "$db_name" $timeout_secs; result=$?
+        wait_db_exists "eg$i" $timeout_secs; result=$?
         [ $result -ne 0 ] && total_result=$result || echo "ok"
     done
     return $total_result
@@ -1202,27 +1171,33 @@ create_dbs() {
     local max_tries; [ -z "$3" ] && max_tries=5 || max_tries=$3
 
     echo "Creating/checking databases for $num backends ..."
-    local total_result; total_result=0; local result db_name
+    local total_result; total_result=0; local result
     local cnt; local stop
     for i in $(seq 1 $num); do
-        db_name="$GENESIS_DB_NAME_PREFIX$i"
         cnt=1; stop=0
         while [ $stop -eq 0 ]; do
             if [ $cnt -gt 1 ]; then
-                wait_db_exists "$db_name" $timeout_secs; result=$?
+                #sleep 1
+                #if [ $cnt -gt 4 ]; then
+                #    wait_db_exists "eg$i" $timeout_secs; result=$?
+                #else
+                #    wait_db_exists "eg$i" $(expr $cnt \* 2); result=$?
+                #fi
+
+                wait_db_exists "eg$i" $timeout_secs; result=$?
             else
-                echo "Quick checking database '$db_name' existence ..."
-                check_db_exists "$db_name"; result=$?
+                echo "Quick checking database 'eg$i' existence ..."
+                check_db_exists "eg$i"; result=$?
             fi
             case $result in
                 0)
-                    [ $cnt -gt 1 ] && echo "Database '$db_name' exists" \
-                        || echo "Database '$db_name' already exists"
+                    [ $cnt -gt 1 ] && echo "Database 'eg$i' exists" \
+                        || echo "Database 'eg$i' already exists"
                     stop=1
                     ;;
                 3)
-                    echo "Creating '$db_name' database ..."
-                    docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
+                    echo "Creating 'eg$i' database ..."
+                    docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "eg$i"
                     ;;
                 *) total_result=$result ;;
             esac
@@ -1232,11 +1207,10 @@ create_dbs() {
     done
 }
 
-
 run_db_shell() {
     local db_name
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1 \
-        || db_name="$GENESIS_DB_NAME_PREFIX$1"
+        || db_name="eg$1"
     check_db_exists "$db_name" || return 3
     docker exec -ti $DB_CONT_NAME bash -c \
         "sudo -u postgres psql -U postgres -d $db_name"
@@ -1248,7 +1222,7 @@ do_db_query() {
         || out_mode="$1"
     local db_name
     [ -z "$2" ] && echo "Backend's number isn't set" && return 1 \
-        || db_name="$GENESIS_DB_NAME_PREFIX$2"
+        || db_name="eg$2"
     shift 2
     [ -z "$1" ] \
         && echo "Query string isn't set" && return 2
@@ -1269,11 +1243,10 @@ do_db_query() {
 }
 
 block_chain_count() {
-    local num; num="$1"; local query db_name
+    local num; num="$1"; local query
     for i in $(seq 1 $num); do
-        db_name="$GENESIS_DB_NAME_PREFIX$i"
         query='SELECT COUNT(*) FROM block_chain'
-        echo -n "$db_name: $query: "
+        echo -n "eg$i: $query: "
         do_db_query comn "$i" "$query" | tail -n +4 | head -n +1 | $SED_E 's/^ +//'
     done
 }
@@ -1284,12 +1257,10 @@ get_first_blocks() {
     local query; local out; local prev; local res; res=0
     for i in $(seq 1 $num); do
         query='SELECT key_id FROM block_chain WHERE id=1'
-        echo -n "backend #$i db: $query: "
+        echo -n "eg$i: $query: "
         do_db_query t "$i" "$query" | $SED_E -e 's/^[^0-9]+//' -e '/^\s*$/d'
     done
 }
-
-### Update ### 20180405 ### 08fad #### end ####
 
 cmp_first_blocks() {
     local num
@@ -1575,7 +1546,7 @@ get_priv_key() {
     local num; local wps; local cps; local dbp; local cfp
     read_install_params_to_vars || return 2
     [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
-    local priv_key_path; priv_key_path="$GENESIS_BE_ROOT_DATA_DIR/node$1/PrivateKey"; local result
+    local priv_key_path; priv_key_path="/s/s$idx/PrivateKey"; local result
     cont_exec $BF_CONT_NAME "bash -c '[ -e \"$priv_key_path\" ] && cat \"$priv_key_path\"'"
     result=$?
     [ $result -ne 0 ] && echo "File '$priv_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
@@ -1687,23 +1658,19 @@ check_centrifugo_status() {
 }
 
 wait_centrifugo_status() {
-    local result
     wait_cont_http_code $CF_CONT_NAME http://127.0.0.1:8000/connection/ 200 15
-    result=$?
-    [ $result -ne 0 ] && echo "  centrifugo isn't ready" \
+    [ $? -ne 0 ] && echo "  centrifugo isn't ready" \
+        && result=1 \
         || echo "  centrifugo ready"
-    return $result
 }
 
-### Update ### 20180405 ### 08fad ### begin ###
 
 check_backend_apps_status() {
     local num; num=$1
     local app_name; local result; result=0
     echo "Checking backends ..."
     for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="$GENESIS_BE_BIN_BASENAME" \
-            || app_name="$GENESIS_BE_BIN_BASENAME$i"
+        [ $i -eq 1 ] && app_name="go_apla" || app_name="go_apla$i"
         echo -n "  backend number $i status: "
         # TODO: use CONT_CLIENT_PORT_SHIFT here
         check_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 
@@ -1716,8 +1683,7 @@ wait_backend_apps_status() {
     local num; num=$1
     local app_name; local result; result=0
     for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="$GENESIS_BE_BIN_BASENAME" \
-            || app_name="$GENESIS_BE_BIN_BASENAME$i"
+        [ $i -eq 1 ] && app_name="go_apla" || app_name="go_apla$i"
         # TODO: use CONT_CLIENT_PORT_SHIFT here
         wait_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 20
         [ $? -ne 0 ] && echo "  backend number $i isn't ready" \
@@ -1742,8 +1708,7 @@ backend_apps_ctl() {
 
     local app_name; local result; result=0; local rcmd
     for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="$GENESIS_BE_BIN_BASENAME" \
-            || app_name="$GENESIS_BE_BIN_BASENAME$i"
+        [ $i -eq 1 ] && app_name="go_apla" || app_name="go_apla$i"
         case "$cmd" in
             status|stop|start|restart)
                 rcmd="supervisorctl $cmd $app_name"
@@ -1759,8 +1724,6 @@ backend_apps_ctl() {
     done
     return $result
 }
-
-### Update ### 20180405 ### 08fad #### end ####
 
 check_frontend_apps_status() {
     local num; num=$1
@@ -1789,48 +1752,6 @@ wait_frontend_apps_status() {
         || echo "Frontends ready"
 }
 
-### Update ### 20180405 ### 08fad ### begin ###
-
-check_update_mbs_script() {
-    local srcs dsts do_copy
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-    dsts[0]="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-
-    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
-        do_copy="no"
-        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
-        if [ $? -ne 0 ]; then
-            do_copy="yes"
-        fi
-        if [ "$do_copy" = "yes" ] || [ "$FORCE_COPY_MBS_SCRIPT" = "yes" ]; then
-            if [ -e "${srcs[$i]}" ]; then
-                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
-                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
-            else
-                echo "No '${srcs[$i]}' @ host system. Please create it first." \
-                    && return 1
-            fi
-        fi
-    done
-}
-
-run_mbs_cmd() {
-    local num cmd rmt_path
-    check_update_mbs_script || return $?
-    rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-    docker exec -ti $BF_CONT_NAME bash $rmt_path $@
-}
-
-setup_be_apps() {
-    docker exec -t $BF_CONT_NAME bash -c "supervisorctl update && supervisorctl reload"
-    run_mbs_cmd create-configs $1 \
-        && run_mbs_cmd gen-keys $1 \
-        && run_mbs_cmd gen-first-block $1 \
-        && run_mbs_cmd init-dbs $1 \
-        && run_mbs_cmd setup-sv-configs $1 \
-        docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
-}
-
 start_be_apps() {
     local num; [ -z "$1" ] \
         && echo "The number of backends isn't set" && return 1 \
@@ -1838,10 +1759,10 @@ start_be_apps() {
     local cps; [ -z "$2" ] && cps=$CLIENT_PORT_SHIFT || cps=$2
 
     echo "Starting backend applications ..."
-    for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
-        docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
-    done
+    docker exec -t $BF_CONT_NAME bash /start.sh $num
+    docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
+
+    docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     wait_backend_apps_status $num || return 2
 }
 
@@ -1850,36 +1771,17 @@ stop_be_apps() {
     echo "Stopping backend applications ..."
     local app_name
     for i in $(seq 1 $1); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        [ $i -eq 1 ] && app_name="go_apla" || app_name="go_apla$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl stop $app_name"
     done
 }
 
-setup_fe_apps() {
-    local num cps rmt_path
-    [ -z "$1" ] && echo "The number of frontends isn't set"  && return 1
-    num="$1"
-    [ -z "$2" ] && cps="$CLIENT_PORT_SHIFT" || cps="$2"
-    check_update_mbs_script || return $?
-    rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-    docker exec -ti $BF_CONT_NAME bash -c "$rmt_path setup-frontends $num $cps"
-}
-
 start_fe_apps() {
-    local num cps stat rmt_path
-    [ -z "$1" ] && echo "The number of frontends isn't set"  && return 1
-    num="$1"
-    [ -z "$2" ] && cps="$CLIENT_PORT_SHIFT" || cps="$2"
-    rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-    stat="$(docker exec -ti $BF_CONT_NAME \
-        sh -c 'supervisorctl status nginx' | awk '{print $2}')"
-    if [ "$stat" != "RUNNING" ]; then
-        docker exec -ti $BF_CONT_NAME sh -c 'supervisorctl start nginx'
-    fi
-    wait_frontend_apps_status $num || return $?
+    local num; ([ -z "$1" ] || [ $1 -eq 0 ]) && return 1 || num=$1
+    local cps; [ -z "$2" ] && cps=$CLIENT_PORT_SHIFT || cps=$2
+    docker exec -t $BF_CONT_NAME /start3.sh $num $cps
+    wait_frontend_apps_status $num || return 3
 }
-
-### Update ### 20180405 ### 08fad #### end ####
 
 stop_fe_apps() {
     [ -z "$1" ] && echo "The number of frontends isn't set"  && return 1
@@ -1917,6 +1819,9 @@ check_host_side() {
     for i in $(seq 1 $num); do
         w_port=$(expr $i + $wps)
         echo -n "    checking (private key) $w_port: "
+        #echo -n "       getuid: "
+        #check_http_code http://127.0.0.1:$w_port 200,201 20
+        #echo -n "       priv_key: "
         check_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $i 200 64 $wps
         [ $? -ne 0 ] && w_result=1
     done
@@ -1942,19 +1847,17 @@ check_host_side() {
     return $result
 }
 
-### Update ### 20180405 ### 08fad ### begin ###
-
 tail_be_log() {
     local log_basename
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1
-    log_basename="node$1.log"
+    [ "$1" = "1" ] && log_basename="go_apla.log" || log_basename="go_apla$1.log"
 
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -ne 0 ] \
         && echo "Backend/frontend container isn't ready" \
         && return 2
 
-    local log_dirname; log_dirname="$GENESIS_BE_ROOT_DATA_DIR/node$1"
+    local log_dirname; log_dirname="/var/log/go-apla"
     docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
     [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
 
@@ -1964,14 +1867,12 @@ tail_be_log() {
 
     docker exec -ti $BF_CONT_NAME bash -c "tail -f $log_path"
 }
-### Update ### 20180405 ### 08fad #### end ####
 
 ### Backends services #### end ####
 
 
 ### Backend ### begin ###
 
-### Update ### 20180405 ### 08fad ### begin ###
 build_be() {
     local num; [ -z "$1" ] && echo "Number of backends isnt' set" && return 1 \
         || num=$1
@@ -1982,11 +1883,10 @@ build_be() {
         && return 1
 
     local GOPATH; GOPATH=/go
-    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d github.com/GenesisKernel/go-genesis && cd /go/src/github.com/GenesisKernel/go-genesis && git checkout $GENESIS_BACKEND_BRANCH && go get github.com/GenesisKernel/go-genesis && ( [ ! -e $GENESIS_BE_BIN_DIR ] && mkdir -p $GENESIS_BE_BIN_DIR || : ) && git checkout | sed -E -n -e \"s/^([^']+)'([^']+)'/\2/p\" | sed -E -n \"s/origin\/([^.]+)\./\1/p\" > $GENESIS_BE_BIN_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $GENESIS_BE_BIN_DIR.git_commit && ( [ ! -e $GENESIS_BE_ROOT_DATA_DIR/node1 ] && mkdir -p $GENESIS_BE_ROOT_DATA_DIR/node1 || : ) && mv $GOPATH/bin/go-genesis $GENESIS_BE_BIN_DIR.git_branch"
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d github.com/GenesisKernel/go-genesis && cd /go/src/github.com/GenesisKernel/go-genesis && git checkout $GENESIS_BACKEND_BRANCH && go get github.com/GenesisKernel/go-genesis && ( [ ! -e /apla ] && mkdir /apla || : ) && git checkout | sed -E -n -e \"s/^([^']+)'([^']+)'/\2/p\" | sed -E -n \"s/origin\/([^.]+)\./\1/p\" > /apla/go-apla.git_branch && git log --pretty=format:'%h' -n 1 > /apla/go-apla.git_commit && ( [ ! -e /s/s1 ] && mkdir -p /s/s1 || : ) && mv $GOPATH/bin/go-genesis /apla/go-apla"
 
     backend_apps_ctl $num restart
 }
-### Update ### 20180405 ### 08fad #### end ####
 
 clean_be_build() {
     check_cont $BF_CONT_NAME > /dev/null
@@ -1996,30 +1896,24 @@ clean_be_build() {
     docker exec -ti $BF_CONT_NAME bash -c "rm -rf /go"
 }
 
-### Update ### 20180405 ### 08fad ### begin ###
-
 get_be_ver() {
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -ne 0 ] \
         && echo "Backend/frontend container isn't ready" && return 1
-    docker exec -ti $BF_CONT_NAME bash -c "$GENESIS_BE_BIN_PATH -noStart 2>&1 | sed -E -n 's/^.*version\W+([0-9a-zA-Z\.\-]+)\W+.*/\1/pg'"
+    docker exec -ti $BF_CONT_NAME bash -c "/apla/go-apla -noStart 2>&1 | sed -E -n 's/^.*version\W+([0-9a-zA-Z\.\-]+)\W+.*/\1/pg'"
 }
 
 get_be_git_ver() {
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -ne 0 ] \
         && echo "Backend/frontend container isn't ready" && return 1
-    docker exec -ti $BF_CONT_NAME bash -c "[ -e $GENESIS_BE_BIN_PATH.git_branch ] && echo -n 'Git branch: ' && cat $GENESIS_BE_BIN_PATH.git_branch; [ -e $GENESIS_BE_BIN_PATH.git_commit ] && echo -n 'Git commit: ' && cat $GENESIS_BE_BIN_PATH.git_commit && echo"
+    docker exec -ti $BF_CONT_NAME bash -c '[ -e /apla/go-apla.git_branch ] && echo -n "Git branch: " && cat /apla/go-apla.git_branch; [ -e /apla/go-apla.git_commit ] && echo -n "Git commit: " && cat /apla/go-apla.git_commit && echo'
 }
-
-### Update ### 20180405 ### 08fad #### end ####
 
 ### Backend #### end ####
 
 
 ### Frontend ### begin ###
-
-### Update ### 20180405 ### 08fad ### begin ###
 
 build_fe() {
     check_cont $BF_CONT_NAME > /dev/null
@@ -2027,7 +1921,7 @@ build_fe() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
 
-    docker exec -ti $BF_CONT_NAME bash -c "cd / && ([ -e $GENESIS_FE_SRC_DIR ] && rm -rf $GENESIS_FE_SRC_DIR || : ) && git clone --recursive https://github.com/GenesisKernel/genesis-front $GENESIS_FE_SRC_DIR && cd $GENESIS_FE_SRC_DIR && git checkout $GENESIS_FRONT_BRANCH && git pull origin $GENESIS_FRONT_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > $GENESIS_FE_SRC_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $GENESIS_FE_SRC_DIR.git_commit && yarn install && yarn build"
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && ([ -e /apla-front ] && rm -rf /apla-front || : ) && git clone --recursive https://github.com/GenesisKernel/genesis-front apla-front && cd /apla-front && git checkout $GENESIS_FRONT_BRANCH && git pull origin $GENESIS_FRONT_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > /apla-front.git_branch && git log --pretty=format:'%h' -n 1 > /apla-front.git_commit && yarn install && yarn build"
 }
 
 clean_fe_build() {
@@ -2036,9 +1930,8 @@ clean_fe_build() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
     docker exec -ti $BF_CONT_NAME bash -c \
-        "find $GENESIS_FE_SRC_DIR -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;"
+        "find /apla-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;"
 }
-
 
 get_fe_ver() {
     echo "$GENESIS_FRONT_BRANCH"
@@ -2050,9 +1943,8 @@ get_fe_git_ver() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
 
-    docker exec -ti $BF_CONT_NAME bash -c "[ -e $GENESIS_FE_SRC_DIR.git_branch ] && echo -n 'Git branch: ' && cat $GENESIS_FE_SRC_DIR.git_branch; [ -e $GENESIS_FE_SRC_DIR.git_commit ] && echo -n 'Git commit: ' && cat $GENESIS_FE_SRC_DIR.git_commit && echo"
+    docker exec -ti $BF_CONT_NAME bash -c '[ -e /apla-front.git_branch ] && echo -n "Git branch: " && cat /apla-front.git_branch; [ -e /apla-front.git_commit ] && echo -n "Git commit: " && cat /apla-front.git_commit && echo'
 }
-### Update ### 20180405 ### 08fad #### end ####
 
 ### Frontend #### end ####
 
@@ -2141,43 +2033,45 @@ delete_install() {
     remove_cont $DB_CONT_NAME
 }
 
-### Update ### 20180405 ### 08fad ### begin ###
-
-start_update_full_nodes() {
-    local num rmt_path
-    num=$1
+start_fullnodes() {
+    local num; num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
-    check_update_mbs_script || return $?
-    rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-
-    echo "Starting 'update full nodes' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-nodes $num
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/newValToFullNodes.py" $BF_CONT_NAME:/apla-scripts
+    docker exec -t $BF_CONT_NAME bash -c '[ -e /fullnodes.sh ]'
     [ $? -ne 0 ] \
-        && echo "Full nodes updating isn't completed" && return 3
-    echo "Full nodes updating is completed"
+        && echo "/fullnodes.sh doesn't exist @ container '$BF_CONT_NAME'" \
+        && return 2
+
+    echo "Starting 'fullnodes' ..."
+    docker exec -t $BF_CONT_NAME bash /fullnodes.sh $num
+    [ $? -ne 0 ] \
+        && echo "Fullnodes isn't completed" && return 3
+    echo "Fullnodes is completed"
     return 0
 }
 
-start_update_keys() {
-    local num rmt_path
-    num=$1
+start_upkeys() {
+    local num; num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
-    check_update_mbs_script || return $?
-    rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
-
-    echo "Starting 'update keys' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-keys $num
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py" $BF_CONT_NAME:/apla-scripts
+    #docker cp "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/updateKeys.py" $BF_CONT_NAME:/apla-scripts
+    docker exec -t $BF_CONT_NAME bash -c '[ -e /upkeys.sh ]'
     [ $? -ne 0 ] \
-        && echo "Keys updating isn't completed" && return 3
-    echo "Keys updating is completed"
+        && echo "/upkeys.sh doesn't exist @ container '$BF_CONT_NAME'" \
+        && return 2
+
+    echo "Starting 'upkeys' ..."
+    docker exec -t $BF_CONT_NAME bash /upkeys.sh $num
+    [ $? -ne 0 ] \
+        && echo "Upkeys isn't completed" && return 3
+    echo "Upkeys is completed"
     return 0
 }
-
-### Update ### 20180405 ### 08fad #### end ####
 
 get_demo_apps_url_from_dockerfile() {
     local df_path; df_path="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
@@ -2186,19 +2080,18 @@ get_demo_apps_url_from_dockerfile() {
     [ -n "$url" ] && echo "$url" || return 2
 }
 
-### Update ### 20180405 ### 08fad ### begin ###
 copy_import_demo_apps_scripts() {
 
     local srcs; local dsts;
 
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/genesis_api_client.py"
-    dsts[0]="$GENESIS_SCRIPTS_DIR/genesis_api_client.py"
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/genesis_api_client.py"
+    dsts[0]="/apla-scripts/genesis_api_client.py"
 
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/import_demo_apps.py"
-    dsts[1]="$GENESIS_SCRIPTS_DIR/import_demo_apps.py"
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/import_demo_apps.py"
+    dsts[1]="/apla-scripts/import_demo_apps.py"
 
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/import_demo_apps.sh"
-    dsts[2]="$GENESIS_SCRIPTS_DIR/import_demo_apps.sh"
+    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/import_demo_apps.sh"
+    dsts[2]="/import_demo_apps.sh"
 
     local do_copy
 
@@ -2226,11 +2119,11 @@ copy_import_demo_apps_data_files() {
 
     local srcs; local dsts;
     
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_APPS_DIR/demo_apps.json"
-    dsts[0]="$GENESIS_APPS_DIR/demo_apps.json"
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/demo_apps.json"
+    dsts[0]="/apla-scripts/demo_apps.json"
 
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_APPS_DIR/demo_apps.url"
-    dsts[1]="$GENESIS_APPS_DIR/demo_apps.url"
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/apla-scripts/demo_apps.url"
+    dsts[1]="/apla-scripts/demo_apps.url"
 
     local do_copy
 
@@ -2245,7 +2138,6 @@ copy_import_demo_apps_data_files() {
 
             if [ -e "${srcs[$i]}" ]; then
                 echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
-                docker exec -ti $BF_CONT_NAME bash "[ ! -e '$GENESIS_APPS_DIR' ] && mkdir -p '$GENESIS_APPS_DIR'"
                 docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
             else
                 echo "No '${srcs[$i]}' @ host system. Skipping it ..."
@@ -2259,16 +2151,12 @@ start_import_demo_apps() {
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
-    local rmt_path
-
     copy_import_demo_apps_scripts|| return 2
     copy_import_demo_apps_data_files || return 3
-    check_update_mbs_script || return $?
-    rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
 
     local up_da; up_da=1
 
-    local da_path; da_path="$GENESIS_APPS_DIR/demo_apps.json"
+    local da_path; da_path="/apla-scripts/demo_apps.json"
     docker exec -t $BF_CONT_NAME bash -c "[ -e $da_path ]" 
     if [ $? -ne 0 ]; then
         up_da=0
@@ -2276,7 +2164,7 @@ start_import_demo_apps() {
 
     local result
     local da_url; da_url="$GENESIS_DEMO_APPS_URL"
-    local dau_path; dau_path="$GENESIS_APPS_DIR/demo_apps.url"
+    local dau_path; dau_path="/apla-scripts/demo_apps.url"
 
     docker exec -t $BF_CONT_NAME bash -c "[ -e $dau_path ]" 
     if [ $? -eq 0 ]; then
@@ -2302,7 +2190,7 @@ start_import_demo_apps() {
     fi
 
     echo "Starting importing of demo apps with a data from '$da_url' ..."
-    docker exec -ti $BF_CONT_NAME bash $GENESIS_SCRIPTS_DIR/manage_bf_set.sh import-demo-apps
+    docker exec -ti $BF_CONT_NAME bash /import_demo_apps.sh
     [ $? -ne 0 ] \
         && echo "Demo apps importing isn't completed" && return 3
     echo "Demo apps importing is completed"
@@ -2313,15 +2201,12 @@ get_demo_apps_ver() {
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
-    local dau_path; dau_path="$GENESIS_APPS_DIR/demo_apps.url"
+    local dau_path; dau_path="/apla-scripts/demo_apps.url"
     docker exec -t $BF_CONT_NAME bash -c \
         "[ -f '$dau_path' ] && cat '$dau_path'"
     [ $? -ne 0 ] \
         && echo "No or inaccessible '$dau_path' @ $BF_CONT_NAME" && return 2
 }
-
-### Update ### 20180405 ### 08fad #### end ####
-
 
 start_install() {
     local num; num=$1
@@ -2427,38 +2312,22 @@ start_install() {
         || echo "Frontend's nginx ready"
     echo
 
-    ### Update ### 20180405 ### 08fad ### begin ###
-
-    setup_be_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Backend applications setup isn't completed" && return 23 \
-        || echo "Backend applications setup is completed"
-    echo
-
-    ### Update ### 20180405 ### 08fad #### end ####
-
     start_be_apps $num $cps
     [ $? -ne 0 ] \
         && echo "Backend applications arn't available" && return 23 \
         || echo "Backend applications ready"
     echo
 
-    setup_fe_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Fronend applications setup isn't completed" && return 24 \
-        || echo "Fronend applications setup is completed"
-    echo
-
     start_fe_apps $num $cps
     [ $? -ne 0 ] \
         && echo "Fronend applications arn't available" && return 24 \
-        || echo "Fronend applications are ready"
+        || echo "Fronend applications ready"
     echo
 
-    start_update_keys $num || return 26
+    start_fullnodes $num || return 25
     echo
 
-    start_update_full_nodes $num || return 25
+    start_upkeys $num || return 26
     echo
 
     start_import_demo_apps || return 27
@@ -2663,7 +2532,6 @@ update_bf_dockerfile() {
 
 ### Help ### begin ###
 
-### Update ### 20180405 ### 08fad ### begin ###
 show_usage_help() {
     echo
     echo "Usage: $(basename "$0") <command> <parameter>"
@@ -2671,14 +2539,14 @@ show_usage_help() {
     echo "  Commands:"
     echo
     echo "  install NUM [WPS] [CPS] [DBP]"
-    echo "    Install Docker, Genesis Client, database and backend containers"
+    echo "    Install Docker, Apla Client, database and backend containers"
     echo "      NUM - number of clients/backends (mandatory)"
     echo "      WPS - web port shift (optional, default: $WEB_PORT_SHIFT)"
     echo "      CPS - client port shift (optional, default: $CLIENT_PORT_SHIFT)"
     echo "      DBP - database host port (optional, default: $DB_PORT)"
     echo "    Example:"
     echo "      $(basename "$0") install 3 8000 17000"
-    echo "      will install Docker, Genesis Client, start database container,"
+    echo "      will install Docker, Apla Client, start database container,"
     echo "      start container with 3 frontends (web ports 8001, 8002, 8003)"
     echo "      and 3 backends (client ports 17001, 17002, 17003),"
     echo "      setup database for them and finally start 3 clients"
@@ -2724,10 +2592,10 @@ show_usage_help() {
     echo "    BE_NUM - backend's number"
     echo
     echo "  delete"
-    echo "    Stop clients and delete all Genesis-related docker containers"
+    echo "    Stop clients and delete all Apla-related docker containers"
     echo
     echo "  delete-all"
-    echo "    Stop clients and delete all Genesis-related docker containers and images"
+    echo "    Stop clients and delete all Apla-related docker containers and images"
     echo
     echo "  uninstall-docker"
     echo "    Docker unintaller for macOS"
@@ -2748,7 +2616,6 @@ show_usage_help() {
     echo "    Build centrifugo container image"
     echo
 }
-### Update ### 20180405 ### 08fad #### end ####
 
 ### Help #### end ####
 
@@ -2933,22 +2800,22 @@ pre_command() {
         check_run_as_root
         remove_cont $DB_CONT_NAME
         ;;
-
         
     ### DB Container #### end ####
 
 
     ### DB Image ### begin ###
 
-    delete-db-image)
-        check_run_as_root
-        docker rmi -f $DB_CONT_IMAGE
-        ;;
-
     build-db-image)
         check_run_as_root
         (cd "$SCRIPT_DIR" \
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
+        ;;
+
+
+    delete-db-image)
+        check_run_as_root
+        docker rmi -f $DB_CONT_IMAGE
         ;;
 
     delete-prev-db-image)
@@ -3044,29 +2911,6 @@ pre_command() {
         ;;
 
     ### BF Dockerfile #### end ####
-
-
-    ### FE Image ### begin ###
-
-    build-fe-image)
-        check_run_as_root
-        #update_fe_dockerfile || exit 41
-        (cd "$script_dir" \
-            && docker build -t $FE_CONT_NAME -f $FE_CONT_BUILD_DIR/Dockerfile $FE_CONT_BUILD_DIR/.)
-        ;;
-
-    ### FE Image #### end ####
-
-    ### BE Image ### begin ###
-
-    build-be-image)
-        check_run_as_root
-        #update_fe_dockerfile || exit 41
-        (cd "$script_dir" \
-            && docker build -t $BE_CONT_NAME -f $BE_CONT_BUILD_DIR/Dockerfile $BE_CONT_BUILD_DIR/.)
-        ;;
-
-    ### BE Image #### end ####
 
 
     ### BF Image ### begin ###
@@ -3344,18 +3188,6 @@ pre_command() {
         get_priv_keys $2
         ;;
 
-    setup-be-apps)
-        num=""; wps=""; cps=""; dbp=""
-        read_install_params_to_vars || exit 19
-        setup_be_apps $num
-        ;;
-
-    start-be-apps)
-        num=""; wps=""; cps=""; dbp=""
-        read_install_params_to_vars || exit 19
-        start_be_apps $num $cps
-        ;;
-
     check-priv-key)
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
@@ -3400,16 +3232,16 @@ pre_command() {
         tail_be_log $2
         ;;
 
-    update-keys)
+    fullnodes)
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 21
-        start_update_keys $num
+        start_fullnodes $num
         ;;
 
-    update-full-nodes)
+    upkeys)
         num=""; wps=""; cps=""; dbp=""
         read_install_params_to_vars || exit 21
-        start_update_full_nodes $num
+        start_upkeys $num
         ;;
 
     demo-page-url)
@@ -3444,25 +3276,10 @@ pre_command() {
         get_be_git_ver || exit 61
         ;;
 
-    mbs)
-        shift 1
-        run_mbs_cmd $@
-        ;;
-
     ### Backend #### end ####
 
 
     ### Frontend ### begin ###
-
-    setup-fe-apps)
-        shift 1
-        setup_fe_apps $@
-        ;;
-
-    start-fe-apps)
-        shift 1
-        start_fe_apps $@
-        ;;
 
     build-fe)
         build_fe || exit 62
@@ -3584,21 +3401,6 @@ pre_command() {
 
     version)
         echo "$VERSION"
-        ;;
-
-    versions)
-        echo "Quick Start version: $VERSION"
-        echo
-        echo "Backend version: "
-        get_be_git_ver
-        echo
-        echo "Frontend version: "
-        get_fe_git_ver
-        echo
-        echo "Golang version: $GOLANG_VER"
-        echo
-        echo "Demo apps URL: $GENESIS_DEMO_APPS_URL"
-        echo
         ;;
 
     *)
