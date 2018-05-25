@@ -88,7 +88,9 @@ TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
-FORCE_COPY_MBS_SCRIPT="no"
+FORCE_COPY_MBS_SCRIPT="yes"
+
+EMPTY_ENV_VARS="yes"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTENV_PATH="$SCRIPT_DIR/.env"
@@ -1825,10 +1827,12 @@ run_mbs_cmd() {
 
 setup_be_apps() {
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl update && supervisorctl reload"
-    run_mbs_cmd create-configs $1 \
-        && run_mbs_cmd gen-keys $1 \
-        && run_mbs_cmd gen-first-block $1 \
-        && run_mbs_cmd init-dbs $1 \
+    local suffix
+    [ "$EMPTY_ENV_VARS" = "yes" ] && suffix="-eev" || suffix=""
+    run_mbs_cmd create-configs$suffix $1 \
+        && run_mbs_cmd gen-keys$suffix $1 \
+        && run_mbs_cmd gen-first-block$suffix $1 \
+        && run_mbs_cmd init-dbs$suffix $1 \
         && run_mbs_cmd setup-sv-configs $1 \
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
 }
