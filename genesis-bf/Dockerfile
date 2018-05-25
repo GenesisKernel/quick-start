@@ -1,16 +1,17 @@
-FROM debian:stretch
+FROM debian:stretch-slim
 
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV GOLANG_VER 1.10.1
-ENV GENESIS_BACKEND_BRANCH db60e9a
-ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_13/demo_apps.json
-ENV GENESIS_FRONT_BRANCH tags/v0.6.1
+ENV GOLANG_VER 1.10.2
+ENV GENESIS_BACKEND_BRANCH develop
+ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_14/demo_apps.json
+ENV GENESIS_FRONT_BRANCH master
 
-RUN apt-get update -y && \
-    apt-get install -y supervisor curl git gnupg2 postgresql-client-9.6 \
-    build-essential && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN set -ex; apt-get update -y && \
+    mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
+    apt-get install -y --no-install-recommends supervisor curl git gnupg2 \
+    postgresql-client-9.6 build-essential ca-certificates && apt-get clean; \
+    (rm -rf /var/lib/apt/lists/*; :)
 
 RUN curl -L -o /go$GOLANG_VER.linux-amd64.tar.gz https://dl.google.com/go/go$GOLANG_VER.linux-amd64.tar.gz && tar xvf /go$GOLANG_VER.linux-amd64.tar.gz && mv /go /usr/local/ && find /go$GOLANG_VER.linux-amd64.tar.gz -delete
 
@@ -22,30 +23,30 @@ ADD $GENESIS_DEMO_APPS_URL /genesis-apps/demo_apps.json
 
 RUN git clone https://github.com/blitzstern5/genesis-scripts /genesis-scripts
 
-RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 RUN pip3 install -r /genesis-scripts/requirements.txt
 
 RUN apt-get remove -y build-essential && apt-get autoremove -y && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
 COPY supervisor/supervisord.conf /etc/supervisor/
 
 RUN apt-get update -y && \
-    apt-get install -y nginx curl git gnupg2 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN curl -sL https://deb.nodesource.com/setup_9.x | bash - && \
-    apt-get install -y nodejs && \
+    apt-get install -y --no-install-recommends nginx curl git gnupg2 && \
+    apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
     apt-get remove -y cmdtest && \
     apt-get autoremove -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
-    apt-get update && apt-get install -y yarn
+    apt-get update && apt-get install -y --no-install-recommends yarn
 RUN git clone --recursive https://github.com/GenesisKernel/genesis-front genesis-front && cd /genesis-front && git checkout $GENESIS_FRONT_BRANCH && git pull origin $GENESIS_FRONT_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > /genesis-front.git_branch && git log --pretty=format:'%h' -n 1 > /genesis-front.git_commit && yarn install && yarn build && find /genesis-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY genesis-front/settings.json /genesis-front/build/
 
 RUN apt-get remove -y gnupg2 && \
     apt-get autoremove -y && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
 COPY supervisor/conf.d/nginx.conf /etc/supervisor/conf.d/
 COPY nginx/default /etc/nginx/sites-available/default

@@ -2,13 +2,14 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.0"
-VERSION="0.6.1"
+PREV_VERSION="0.6.1"
+VERSION="0.6.2"
 SED_E="sed -E"
 
-GOLANG_VER="1.10.1"
-GENESIS_BACKEND_BRANCH="db60e9a"
-GENESIS_FRONT_BRANCH="tags/v0.6.1"
+GOLANG_VER="1.10.2"
+GENESIS_BACKEND_BRANCH="develop"
+#GENESIS_FRONT_BRANCH="tags/v0.6.1"
+GENESIS_FRONT_BRANCH="master"
 GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_14/demo_apps.json"
 
 GENESIS_DB_NAME_PREFIX="genesis"
@@ -39,7 +40,8 @@ DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
 APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_APP_NAME="Docker"
-DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
+#DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
+DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/23011/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 DOCKER_MAC_APP_DIR_SIZE_M=1144 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
@@ -2375,17 +2377,17 @@ start_install() {
         && echo "Postgres process isn't available" && return 10 \
         || echo "Postgres ready"
 
-    wait_db_exists postgres 25
+    wait_db_exists postgres 45
     [ $? -ne 0 ] \
         && echo "postgres database isn't available" && return 11 \
         || echo "postgres database ready"
 
-    wait_db_exists template0 25
+    wait_db_exists template0 45
     [ $? -ne 0 ] \
         && echo "template0 database isn't available" && return 12 \
         || echo "template0 database ready"
 
-    wait_db_exists template1 25
+    wait_db_exists template1 45
     [ $? -ne 0 ] \
         && echo "template1 database isn't available" && return 13 \
         || echo "template1 database ready"
@@ -2506,17 +2508,17 @@ start_all() {
         && echo "Postgres process isn't available" && return 10 \
         || echo "Postgres ready"
 
-    wait_db_exists postgres 15
+    wait_db_exists postgres 35
     [ $? -ne 0 ] \
         && echo "postgres database isn't available" && return 11 \
         || echo "postgres database ready"
 
-    wait_db_exists template0 15
+    wait_db_exists template0 35
     [ $? -ne 0 ] \
         && echo "template0 database isn't available" && return 12 \
         || echo "template0 database ready"
 
-    wait_db_exists template1 15
+    wait_db_exists template1 35
     [ $? -ne 0 ] \
         && echo "template1 database isn't available" && return 13 \
         || echo "template1 database ready"

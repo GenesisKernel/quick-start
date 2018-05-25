@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM debian:stretch-slim
 
 ENV GENESIS_FRONT_BRANCH tags/v0.6.1
 
