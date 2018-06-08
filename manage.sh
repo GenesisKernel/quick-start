@@ -1833,7 +1833,7 @@ setup_be_apps() {
         && run_mbs_cmd gen-keys$suffix $1 \
         && run_mbs_cmd gen-first-block$suffix $1 \
         && run_mbs_cmd init-dbs$suffix $1 \
-        && run_mbs_cmd setup-sv-configs $1 \
+        && run_mbs_cmd setup-sv-configs$suffix $1 \
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
 }
 
