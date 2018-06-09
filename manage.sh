@@ -7,7 +7,7 @@ VERSION="0.6.2"
 SED_E="sed -E"
 
 GOLANG_VER="1.10.2"
-GENESIS_BACKEND_BRANCH="develop"
+GENESIS_BACKEND_BRANCH="release/0.9"
 #GENESIS_FRONT_BRANCH="tags/v0.6.1"
 GENESIS_FRONT_BRANCH="master"
 GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_14/demo_apps.json"
