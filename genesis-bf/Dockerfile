@@ -4,7 +4,7 @@ ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV GOLANG_VER 1.10.2
 ENV GENESIS_BACKEND_BRANCH release/0.9
-ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_14/demo_apps.json
+ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/basic/basic.json
 ENV GENESIS_FRONT_BRANCH master
 
 RUN set -ex; apt-get update -y && \
