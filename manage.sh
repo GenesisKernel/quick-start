@@ -10,7 +10,8 @@ GOLANG_VER="1.10.2"
 GENESIS_BACKEND_BRANCH="release/0.9"
 #GENESIS_FRONT_BRANCH="tags/v0.6.1"
 GENESIS_FRONT_BRANCH="master"
-GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_14/demo_apps.json"
+#GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_14/demo_apps.json"
+GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/basic/basic.json"
 
 GENESIS_DB_NAME_PREFIX="genesis"
 
@@ -86,9 +87,9 @@ FE_CONT_PREV_IMAGE="str16071985/genesis-fe:$PREV_VERSION"
 FE_CONT_BUILD_DIR="genesis-fe"
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
-FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
-FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
-FORCE_COPY_MBS_SCRIPT="yes"
+FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="yes"
+FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="yes"
+FORCE_COPY_MBS_SCRIPT="no"
 
 EMPTY_ENV_VARS="yes"
 
@@ -2159,7 +2160,7 @@ start_update_full_nodes() {
     rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
 
     echo "Starting 'update full nodes' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-nodes-v1 $num
+    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-nodes-v2 $num
     [ $? -ne 0 ] \
         && echo "Full nodes updating isn't completed" && return 3
     echo "Full nodes updating is completed"
