@@ -48,12 +48,12 @@ DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.3-RC/Genesis-0.8.3-RC.dmg"
+CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.4-RC/Genesis-0.8.4-RC.dmg"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=226 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.3-RC/genesis-front-0.8.3-RC-x86_64.AppImage"
+CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.4-RC/genesis-front-0.8.4-RC-x86_64.AppImage"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
@@ -86,9 +86,10 @@ FE_CONT_PREV_IMAGE="str16071985/genesis-fe:$PREV_VERSION"
 FE_CONT_BUILD_DIR="genesis-fe"
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
-FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="yes"
-FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="yes"
+FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
+FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
 FORCE_COPY_MBS_SCRIPT="no"
+FORCE_COPY_MBLEX_SCRIPT="yes"
 
 EMPTY_ENV_VARS="yes"
 
@@ -806,11 +807,11 @@ start_mac_clients() {
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        run_cmd="open -n $CLIENT_MAC_APP_DIR --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --dry"
+        run_cmd="open -n $CLIENT_MAC_APP_DIR --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry"
         echo "run_cmd: $run_cmd"
         eval "$run_cmd"
-        #offset_x=$(expr $offset_x + 50) 
-        #offset_y=$(expr $offset_y + 50) 
+        offset_x=$(expr $offset_x + 50) 
+        offset_y=$(expr $offset_y + 50) 
     done
 }
 
@@ -834,13 +835,16 @@ start_linux_clients() {
         local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
 
         local w_port; local c_port; local run_cmd
+        local offset_x; offset_x=0; local offset_y; offset_y=0
         for i in $(seq 1 $num); do
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-            run_cmd="$app_inst_path --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --dry &"
+            run_cmd="$app_inst_path --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &"
             echo "run_cmd: $run_cmd"
             run_as_orig_user "$run_cmd"
+            offset_x=$(expr $offset_x + 50) 
+            offset_y=$(expr $offset_y + 50) 
         done
     )
 }
@@ -1826,6 +1830,36 @@ run_mbs_cmd() {
     local num cmd rmt_path
     check_update_mbs_script || return $?
     rmt_path="$GENESIS_SCRIPTS_DIR/manage_bf_set.sh"
+    docker exec -ti $BF_CONT_NAME bash $rmt_path $@
+}
+
+check_update_mblex_script() {
+    local srcs dsts do_copy
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/manage_blex.sh"
+    dsts[0]="$GENESIS_SCRIPTS_DIR/manage_blex.sh"
+
+    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
+        do_copy="no"
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
+        if [ $? -ne 0 ]; then
+            do_copy="yes"
+        fi
+        if [ "$do_copy" = "yes" ] || [ "$FORCE_COPY_MBS_SCRIPT" = "yes" ]; then
+            if [ -e "${srcs[$i]}" ]; then
+                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
+                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
+            else
+                echo "No '${srcs[$i]}' @ host system. Please create it first." \
+                    && return 1
+            fi
+        fi
+    done
+}
+
+run_mblex_cmd() {
+    local num cmd rmt_path
+    check_update_mblex_script || return $?
+    rmt_path="$GENESIS_SCRIPTS_DIR/manage_blex.sh"
     docker exec -ti $BF_CONT_NAME bash $rmt_path $@
 }
 
@@ -3457,6 +3491,11 @@ pre_command() {
     mbs)
         shift 1
         run_mbs_cmd $@
+        ;;
+
+    mblex)
+        shift 1
+        run_mblex_cmd $@
         ;;
 
     ### Backend #### end ####
