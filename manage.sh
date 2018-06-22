@@ -7,12 +7,10 @@ VERSION="0.6.2"
 SED_E="sed -E"
 
 GOLANG_VER="1.10.2"
-GENESIS_BACKEND_BRANCH="release/0.9"
-#GENESIS_FRONT_BRANCH="tags/v0.6.1"
+GENESIS_BACKEND_BRANCH="master"
 GENESIS_FRONT_BRANCH="master"
-#GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/demo_apps_14/demo_apps.json"
-#GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/basic/basic.json"
-GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/blitzstern5/minimal-contract/master/contract1.json"
+GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/basic/basic.json"
+#GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/blitzstern5/minimal-contract/master/contract1.json"
 
 GENESIS_DB_NAME_PREFIX="genesis"
 
@@ -50,12 +48,12 @@ DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.6.1/Genesis-0.6.1.dmg"
+CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.3-RC/Genesis-0.8.3-RC.dmg"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_MAC_APP_DIR_SIZE_M=226 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.6.1/genesis-front-0.6.1-x86_64.AppImage"
+CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.3-RC/genesis-front-0.8.3-RC-x86_64.AppImage"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
@@ -794,6 +792,7 @@ start_mac_clients() {
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
     #local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
     local cfp; cfp=$CF_PORT # FIXME: change to parameter
+    local priv_key; priv_key="$(get_priv_key 1)"
 
     install_mac_client_directly
     case $? in
@@ -807,10 +806,11 @@ start_mac_clients() {
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        run_cmd="open -n $CLIENT_MAC_APP_DIR --args API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp --nosave --offsetX $offset_x --offsetY $offset_y"
+        run_cmd="open -n $CLIENT_MAC_APP_DIR --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --dry"
+        echo "run_cmd: $run_cmd"
         eval "$run_cmd"
-        offset_x=$(expr $offset_x + 50) 
-        offset_y=$(expr $offset_y + 50) 
+        #offset_x=$(expr $offset_x + 50) 
+        #offset_y=$(expr $offset_y + 50) 
     done
 }
 
@@ -823,6 +823,7 @@ start_linux_clients() {
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
     #local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
     local cfp; cfp=$CF_PORT # FIXME: change to parameter
+    local priv_key; priv_key="$(get_priv_key 1)"
 
     install_linux_client_directly
 
@@ -837,7 +838,8 @@ start_linux_clients() {
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-            run_cmd="$app_inst_path API_URL=http://127.0.0.1:$c_port/api/v2 PRIVATE_KEY=http://127.0.0.1:$w_port/keys/PrivateKey SOCKET_URL=http://127.0.0.1:$cfp --nosave &"
+            run_cmd="$app_inst_path --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --dry &"
+            echo "run_cmd: $run_cmd"
             run_as_orig_user "$run_cmd"
         done
     )
