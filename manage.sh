@@ -873,7 +873,7 @@ stop_mac_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "Genesis API_URL")
+        pids=$(pgrep -f "Genesis --full-node")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1
@@ -887,7 +887,7 @@ stop_linux_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "genesis API_URL")
+        pids=$(pgrep -f "genesis --full-node")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1
