@@ -793,7 +793,7 @@ start_mac_clients() {
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
     #local cfp; cfp=$4; [ -z "$cfp" ] && cfp=$CF_PORT
     local cfp; cfp=$CF_PORT # FIXME: change to parameter
-    local priv_key; priv_key="$(get_priv_key 1)"
+    local priv_key
 
     install_mac_client_directly
     case $? in
@@ -804,6 +804,7 @@ start_mac_clients() {
     local w_port; local c_port; local run_cmd
     local offset_x; offset_x=0; local offset_y; offset_y=0
     for i in $(seq 1 $num); do
+        priv_key="$(get_priv_key $i)"
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
@@ -836,7 +837,9 @@ start_linux_clients() {
 
         local w_port; local c_port; local run_cmd
         local offset_x; offset_x=0; local offset_y; offset_y=0
+        local priv_key
         for i in $(seq 1 $num); do
+            priv_key="$(get_priv_key $i)"
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
