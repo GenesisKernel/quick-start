@@ -2669,6 +2669,9 @@ stop_all() {
     check_cont $CF_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $CF_CONT_NAME ..." && docker stop $CF_CONT_NAME
+    check_cont $BLEX_CONT_NAME > /dev/null
+    [ $? -eq 0 ] \
+        && echo "Stopping $BLEX_CONT_NAME ..." && docker stop $BLEX_CONT_NAME
     check_cont $DB_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $DB_CONT_NAME ..." && docker stop $DB_CONT_NAME
