@@ -1136,7 +1136,7 @@ start_blex_cont() {
     local num; ([ -z "$1" ] || [ $1 -lt 1 ]) \
         && echo "The number of backends isn't set" && return 1 || num=$1
     local blexp; blexp=$2
-    [ -z "$blexp" ] && blexcp=$BLEX_PORT
+    [ -z "$blexp" ] && blexp=$BLEX_PORT
     check_cont $BLEX_CONT_NAME > /dev/null
     case $? in
         1)  
@@ -1968,6 +1968,12 @@ run_mblex_cmd() {
     docker exec -ti $BF_CONT_NAME bash $rmt_path $@
 }
 
+setup_blex() {
+    local num blexp
+    num="$1"; [ -z "$2" ] && blexp="$CONT_BLEX_PORT" || blexp="$2"
+    run_mblex_cmd config $num $blexp
+}
+
 setup_be_apps() {
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl update && supervisorctl reload"
     local suffix
@@ -2585,6 +2591,12 @@ start_install() {
         && echo "Block explorer's supervisord isn't available" && return 21 \
         || echo "Block explorer's supervisord ready"
 
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
+
     start_bf_cont $num $wps $cps
 
     wait_cont_proc $BF_CONT_NAME supervisord 15
@@ -2715,6 +2727,12 @@ start_all() {
     [ $? -ne 0 ] \
         && echo "Block explorer's supervisord isn't available" && return 21 \
         || echo "Block explorer's supervisord ready"
+
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
 
     start_bf_cont $num $wps $cps
 
@@ -3637,6 +3655,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         setup_be_apps $num
+        ;;
+
+    setup-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        setup_blex $num
         ;;
 
     start-be-apps)
