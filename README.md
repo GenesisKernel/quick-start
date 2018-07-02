@@ -93,7 +93,7 @@ By default docker backends and database listening ports are exposed to system by
 These default ports shifts values can be changed during installation:
 
 ```shell
-./manage.sh install N WPS CPS DBP
+./manage.sh install N WPS CPS DBP BLEXP
 ```
 
 where:
@@ -102,6 +102,7 @@ where:
 * WPS - web port shift - optional parameter, default value: 8300;
 * CPS - client port shift - optional parameter, default value: 17300;
 * DBP - database port - optional parameter, default value: 15432.
+* BLEXP - block explorer port - optional parameter, default value: 18200.
 
 So running this command:
 
@@ -110,6 +111,11 @@ So running this command:
 ```
 
 will start 4 backends and 4 clients, and fronend ports will be exposed to system port: 9001, 9002, 9003, 9004, clients ports will be exposed to system ports: 19001, 19002, 19003, 19004, and database port will be exposed to system port 6000
+
+Block Explorer
+==============
+
+Initial support of Block Explorer was implemented. It's still pretty buggy (some blocks internals are parsed with errors). The default host port for it is 18200, use browser to open it.
 
 Useful Links
 ============
