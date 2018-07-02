@@ -2260,20 +2260,19 @@ read_install_params() {
             cat "$HOME/.genesis_quick_start"
         elif [ -e "$HOME/.apla_quick_start" ]; then
             cat "$HOME/.apla_quick_start"
-        else
-            echo "No install parameters found."
         fi
     )
 }
 
 read_install_params_to_vars() {
     # Please define variables 'num', 'wps', 'cps', 'dbp' before run this function"
+    local params param cnt
     params="$(read_install_params)"
     [ -z "$params" ] \
         && echo "No install parameters found. Please start install first" \
         && return 1
 
-    local cnt; cnt=0
+    cnt=0
     for param in $params; do
         case $cnt in
             0) num=$param ;;
@@ -2307,6 +2306,7 @@ delete_install() {
     remove_cont $BF_CONT_NAME
     remove_cont $CF_CONT_NAME
     remove_cont $DB_CONT_NAME
+    remove_cont $BLEX_CONT_NAME
 }
 
 ### Update ### 20180405 ### 08fad ### begin ###
@@ -3686,12 +3686,18 @@ pre_command() {
         restart_blex
         ;;
 
-
     start-be-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         start_be_apps $num $cps
         ;;
+
+    stop-be-apps)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        stop_be_apps $num
+        ;;
+
 
     check-priv-key)
         [ -z "$2" ] \
@@ -3914,9 +3920,9 @@ pre_command() {
     delete-all)
         check_run_as_root
         stop_clients
+        stop_all
         delete_install
         clear_install_params
-        stop_all
         show_all_docker_images | while read line; do
             image_id="$(echo "$line" | awk '{print $1}')"
             docker rmi -f $image_id
