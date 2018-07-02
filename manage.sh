@@ -1966,12 +1966,16 @@ run_mblex_cmd() {
     docker exec -ti $BLEX_CONT_NAME bash $rmt_path $@
 }
 
+restart_blex() {
+    check_cont $BLEX_CONT_NAME > /dev/null \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl update && supervisorctl restart blockexplorer"
+}
+
 setup_blex() {
     local num blexp
     num="$1"; [ -z "$2" ] && blexp="$CONT_BLEX_PORT" || blexp="$2"
-    echo "setup_blex num: $num blexp: $blexp"
     run_mblex_cmd config $num $blexp
-    docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl update && supervisorctl restart blockexplorer"
+    restart_blex
 }
 
 setup_be_apps() {
@@ -2648,6 +2652,10 @@ start_install() {
     start_import_demo_apps || return 27
     echo
 
+    echo "Restarting Block Explorer ..."
+    restart_blex
+    echo
+
     echo "Comparing backends 1_keys ..."
     cmp_keys $num || return 28
     echo
@@ -2758,6 +2766,10 @@ start_all() {
     echo
 
     wait_frontend_apps_status $num || return 3
+    echo
+
+    echo "Restarting Block Explorer ..."
+    restart_blex
     echo
 
     check_host_side $num $wps $cps $dbp
@@ -3668,6 +3680,13 @@ pre_command() {
         read_install_params_to_vars || exit 19
         setup_blex $num
         ;;
+
+    restart-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        restart_blex
+        ;;
+
 
     start-be-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
