@@ -1833,13 +1833,43 @@ wait_backend_apps_status() {
         [ $i -eq 1 ] && app_name="$GENESIS_BE_BIN_BASENAME" \
             || app_name="$GENESIS_BE_BIN_BASENAME$i"
         # TODO: use CONT_CLIENT_PORT_SHIFT here
-        wait_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 20
+        wait_cont_http_len $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid 200,201 100 120
         [ $? -ne 0 ] && echo "  backend number $i isn't ready" \
             && result=1 \
             || echo "  backend number $i ready"
     done
     [ $result -ne 0 ] && echo "backends arn't ready" && exit 200 \
         || echo "Backends ready"
+}
+
+backend_app_ctl() {
+    local ind; [ -z "$1" ] && echo "Backend index number isnt' set" && return 1 \
+        || ind=$1
+    local cmd; [ -z "$2" ] && echo "Command isn't set" \
+        && echo "Available commands: status, stop, start, restart" \
+        && return 2 || cmd="$2"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 3
+
+    local app_name; local result; result=0; local rcmd
+    [ $inx -eq 1 ] && app_name="$GENESIS_BE_BIN_BASENAME" \
+        || app_name="$GENESIS_BE_BIN_BASENAME$inx"
+    case "$cmd" in
+        status|stop|start|restart)
+            rcmd="supervisorctl $cmd $app_name"
+            ;;
+        *)
+            echo "Available commands: status, stop, start, restart"
+            return 4
+            ;;
+    esac
+    echo "Backend index number $i, starting '$rcmd' ..."
+    docker exec -ti $BF_CONT_NAME bash -c "$rcmd"
+    [ $? -ne 0 ] && result=4
+    return $result
 }
 
 backend_apps_ctl() {
@@ -1989,7 +2019,27 @@ setup_be_apps() {
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
 }
 
+# FIXIT: BACKEND: fix backend to get back to normal start without restartes
 start_be_apps() {
+    local num; [ -z "$1" ] \
+        && echo "The number of backends isn't set" && return 1 \
+        || num=$1
+    local cps; [ -z "$2" ] && cps=$CLIENT_PORT_SHIFT || cps=$2
+
+    echo "Starting backend applications ..."
+    for i in $(seq 1 $num); do
+        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
+    done
+    echo "Restarting backend applications ..."
+    for i in $(seq 1 $num); do
+        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
+    done
+    wait_backend_apps_status $num || return 2
+}
+
+start_be_apps_normal() {
     local num; [ -z "$1" ] \
         && echo "The number of backends isn't set" && return 1 \
         || num=$1
@@ -3651,6 +3701,10 @@ pre_command() {
         backend_apps_ctl $num $2
         ;;
 
+    be-app-ctl)
+        backend_app_ctl $2 $3
+        ;;
+
     http-priv-key)
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
@@ -3698,6 +3752,11 @@ pre_command() {
         stop_be_apps $num
         ;;
 
+    wait-be-apps)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        wait_backend_apps_status $num || exit 19
+        ;;
 
     check-priv-key)
         [ -z "$2" ] \
