@@ -28,11 +28,13 @@ GENESIS_APPS_DIR="/genesis-apps"
 
 DB_PORT=15432
 CF_PORT=18100
+BLEX_PORT=18200
 WEB_PORT_SHIFT=8300
 CLIENT_PORT_SHIFT=17300
 
 CONT_DB_PORT=5432
 CONT_CF_PORT=8000
+CONT_BLEX_PORT=80
 CONT_WEB_PORT_SHIFT=80
 CONT_CLIENT_PORT_SHIFT=7000
 
@@ -73,6 +75,12 @@ CF_CONT_IMAGE="str16071985/genesis-cf:$VERSION"
 CF_CONT_PREV_IMAGE="str16071985/genesis-cf:$PREV_VERSION"
 CF_CONT_BUILD_DIR="genesis-cf"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
+
+BLEX_CONT_NAME="genesis-blex"
+BLEX_CONT_IMAGE="str16071985/genesis-blex:$VERSION"
+BLEX_CONT_PREV_IMAGE="str16071985/genesis-blex:$PREV_VERSION"
+BLEX_CONT_BUILD_DIR="genesis-blex"
+TRY_LOCAL_BLEX_CONT_NAME_ON_RUN="yes"
 
 BE_CONT_NAME="genesis-be"
 BE_CONT_IMAGE="str16071985/genesis-be:$VERSION"
@@ -290,6 +298,7 @@ check_host_ports() {
     local cps; cps=$3; [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
     local d_port; d_port=$4; [ -z "$d_port" ] && d_port=$DB_PORT
     local cfp; cfp=$CF_PORT # FIXME: Change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: Change to argument
 
     local result; result=0
 
@@ -303,6 +312,14 @@ check_host_ports() {
 
     echo -n "Checking centrifugo port $cfp: "
     if [ -n "$(get_host_port_proc $cfp)" ]; then
+        echo "BUSY"
+        result=5
+    else
+        echo "FREE"
+    fi
+
+    echo -n "Checking block explorer port $blexp: "
+    if [ -n "$(get_host_port_proc $blexp)" ]; then
         echo "BUSY"
         result=5
     else
@@ -1111,6 +1128,43 @@ start_db_cont() {
 }
 
 ### DB container #### end ####
+
+
+### BLEX container ### begin ###
+
+start_blex_cont() {
+    local num; ([ -z "$1" ] || [ $1 -lt 1 ]) \
+        && echo "The number of backends isn't set" && return 1 || num=$1
+    local blexp; blexp=$2
+    [ -z "$blexp" ] && blexcp=$BLEX_PORT
+    check_cont $BLEX_CONT_NAME > /dev/null
+    case $? in
+        1)  
+            local image_name
+            if [ "$TRY_LOCAL_BLEX_CONT_NAME_ON_RUN" = "yes" ]; then
+                local loc; loc=$(docker images --format "{{.Repository}}" -f "reference=$BLEX_CONT_NAME")
+                [ -n "$loc" ] && image_name="$BLEXj_CONT_NAME" \
+                    || image_name="$BLEX_CONT_IMAGE"
+            else
+                image_name="$BLEX_CONT_IMAGE"
+            fi
+            echo "Creating a new block explorer container from image '$image_name' ..."
+            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT -t $image_name
+            ;;
+        2)
+            echo "Starting block explorer container (host port: $blexp) ..."
+            docker start $BLEX_CONT_NAME &
+            ;;
+        0)
+            echo "Block explorer container is already running"
+            ;;
+        *)
+            echo "Unknown block explorer container status"
+            ;;
+    esac
+}
+
+### BLEX container #### end ####
 
 
 ### CF container ### begin ###
@@ -1988,6 +2042,7 @@ check_host_side() {
     local cps; [ -z "$3" ] && cps=$CLIENT_PORT_SHIFT || cps=$3
     local dbp; [ -z "$4" ] && dbp=$DB_PORT || dbp=$4
     local cfp; cfp=$CF_PORT # FIXME: Change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: Change to argument
 
     echo "The host system listens on:"
     echo
@@ -2004,6 +2059,12 @@ check_host_side() {
     echo -n "    checking: "
     [ -n "$(check_http_code "http://127.0.0.1:$cfp/connection/" 200)" ] && echo "ok" \
         || (echo "error" && cf_result=1)
+
+    local blex_result; blex_result=0
+    echo "  Block explorer port: $blexp" 
+    echo -n "    checking: "
+    [ -n "$(check_http_code "http://127.0.0.1:$blexp" 200)" ] && echo "ok" \
+        || (echo "error" && blex_result=1)
 
     local w_result; w_result=0
     echo
@@ -2031,6 +2092,7 @@ check_host_side() {
     local result; result=0
     [ $d_result -ne 0 ] || [ $w_result -ne 0 ] && result=1
     [ $cf_result -ne 0 ] || [ $cf_result -ne 0 ] && result=3
+    [ $blex_result -ne 0 ] || [ $blex_result -ne 0 ] && result=5
     [ $c_result -ne 0 ] && result=2
     echo -n "Total check result: "
     [ $result -ne 0 ] && echo "FAILED" || echo "OK"
@@ -2424,6 +2486,7 @@ start_install() {
     local cps; cps=$3
     local dbp; dbp=$4
     local cfp; cfp=$CF_PORT # FIXME: change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: change to argument
 
     local tot_cont_res; tot_cont_res=0
 
@@ -2435,6 +2498,11 @@ start_install() {
     local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
     [ $cf_cont_res -ne 1 ] \
         && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
+    local blex_cont_res; check_cont $BLEX_CONT_NAME > /dev/null; blex_cont_res=$? 
+    [ $blex_cont_res -ne 1 ] \
+        && echo "Block explorer container already exists. " \
         && tot_cont_res=1
 
     local bf_cont_res; check_cont $BF_CONT_NAME > /dev/null; bf_cont_res=$? 
@@ -2508,6 +2576,13 @@ start_install() {
 
     wait_centrifugo_status || return 21
     echo
+
+    start_blex_cont $num $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
 
     start_bf_cont $num $wps $cps
 
@@ -2591,6 +2666,7 @@ start_all() {
     local cps
     local dbp
     local cfp; cfp=$CF_PORT # FIXME: Change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: Change to argument
 
     read_install_params_to_vars || return 1
 
@@ -2632,6 +2708,13 @@ start_all() {
         || echo "Centrifugo ready"
     echo
 
+    start_blex_cont $num $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
+
     start_bf_cont $num $wps $cps
 
     wait_cont_proc $BF_CONT_NAME supervisord 15
@@ -2664,6 +2747,7 @@ show_status() {
     local wps
     local cps
     local dbp
+    local blexp
 
     read_install_params_to_vars || return 1
 
@@ -2674,6 +2758,8 @@ show_status() {
     get_cont_status $DB_CONT_NAME; cont_status=$?
     echo -n "Centrifugo container status: "
     get_cont_status $CF_CONT_NAME; cont_status=$?
+    echo -n "Block explorer container status: "
+    get_cont_status $BLEX_CONT_NAME; cont_status=$?
     echo -n "Backends/Frontends container status: "
     get_cont_status $BF_CONT_NAME; cont_status=$?
     echo
@@ -2698,21 +2784,21 @@ show_status() {
 
 show_all_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_IMAGE%%:*} ${DB_CONT_IMAGE%%:*} ${CF_CONT_IMAGE%%:*}; do
+    for img_name in ${BF_CONT_IMAGE%%:*} ${DB_CONT_IMAGE%%:*} ${CF_CONT_IMAGE%%:*} ${BLEX_CONT_IMAGE%%:*}; do
         docker images -f reference="$img_name:*" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
 
 show_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_IMAGE} ${DB_CONT_IMAGE} ${CF_CONT_IMAGE}; do
+    for img_name in ${BF_CONT_IMAGE} ${DB_CONT_IMAGE} ${CF_CONT_IMAGE} ${BLEX_CONT_IMAGE}; do
         docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
 
 show_prev_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_PREV_IMAGE} ${DB_CONT_PREV_IMAGE} ${CF_CONT_PREV_IMAGE}; do
+    for img_name in ${BF_CONT_PREV_IMAGE} ${DB_CONT_PREV_IMAGE} ${CF_CONT_PREV_IMAGE} ${BLEX_CONT_PREV_IMAGE}; do
         docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
@@ -2841,6 +2927,9 @@ show_usage_help() {
     echo
     echo "  build-cf-image"
     echo "    Build centrifugo container image"
+    echo
+    echo "  build-blex-image"
+    echo "    Build block explorer container image"
     echo
 }
 ### Update ### 20180405 ### 08fad #### end ####
@@ -3326,6 +3415,65 @@ pre_command() {
         ;;
 
     ### CF Image #### end ####
+
+
+    ### BLEX Image ### begin ###
+
+    build-blex-image)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $BLEX_CONT_NAME -f $BLEX_CONT_BUILD_DIR/Dockerfile $BLEX_CONT_BUILD_DIR/.)
+        ;;
+
+    delete-blex-image)
+        check_run_as_root
+        docker rmi -f $BLEX_CONT_IMAGE
+        ;;
+
+    delete-prev-blex-image)
+        check_run_as_root
+        docker rmi -f $BLEX_CONT_PREV_IMAGE
+        ;;
+
+    pull-blex-image)
+        check_run_as_root
+        docker pull $BLEX_CONT_IMAGE
+        ;;
+        
+    pull-prev-blex-image)
+        check_run_as_root
+        docker pull $BLEX_CONT_PREV_IMAGE
+        ;;
+
+    tag-local-blex-image)
+        check_run_as_root
+        docker tag $BLEX_CONT_NAME $BLEX_CONT_IMAGE
+        ;;
+
+    tag-prev-blex-image)
+        check_run_as_root
+        docker tag $BLEX_CONT_PREV_IMAGE $BLEX_CONT_IMAGE
+        ;;
+
+    push-blex-image)
+        check_run_as_root
+        docker push $BLEX_CONT_IMAGE
+        ;;
+
+    up-prev-blex-image)
+        check_run_as_root
+        docker pull $BLEX_CONT_PREV_IMAGE
+        docker tag $BLEX_CONT_PREV_IMAGE $BLEX_CONT_IMAGE
+        echo
+        echo -n "Are you sure to push '$BLEX_CONT_IMAGE' image to docker hub? [y/n] "
+        read -n 1 answ
+        case $answ in
+            y|Y) docker push $BLEX_CONT_IMAGE ;;
+            *) echo; echo "OK, skipping the pushing ..." ;;
+        esac
+        ;;
+
+    ### BLEX Image #### end ####
 
     
     ### Common Image ### begin ###
