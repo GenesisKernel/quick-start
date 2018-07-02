@@ -1029,7 +1029,7 @@ cont_exec() {
 
 prep_cont_for_inspect() {
     #cont_exec $1 "bash -c \"apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links procps\""
-    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links screen procps'"
+    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet iputils-ping net-tools vim nano links screen procps'"
 }
 
 prep_cont_for_inspect_centos7() {
@@ -1147,7 +1147,7 @@ start_blex_cont() {
                 image_name="$BLEX_CONT_IMAGE"
             fi
             echo "Creating a new block explorer container from image '$image_name' ..."
-            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT -t $image_name
+            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT --link $DB_CONT_NAME:$DB_CONT_NAME -t $image_name
             ;;
         2)
             echo "Starting block explorer container (host port: $blexp) ..."
