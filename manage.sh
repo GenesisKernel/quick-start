@@ -3921,9 +3921,6 @@ pre_command() {
             image_id="$(echo "$line" | awk '{print $1}')"
             docker rmi -f $image_id
         done
-        #docker rmi -f $BF_CONT_IMAGE
-        #docker rmi -f $CF_CONT_IMAGE
-        #docker rmi -f $DB_CONT_IMAGE
         ;;
 
     version)
