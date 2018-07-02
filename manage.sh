@@ -3916,6 +3916,7 @@ pre_command() {
         stop_clients
         delete_install
         clear_install_params
+        stop_all
         show_all_docker_images | while read line; do
             image_id="$(echo "$line" | awk '{print $1}')"
             docker rmi -f $image_id
