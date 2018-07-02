@@ -16,4 +16,4 @@ NUM_WORKERS=3
 echo "Starting $NAME as `whoami`"
 
 #source "$ENV_DIR/bin/activate"
-cd $PROJ_DIR && exec python run-simple.py
+cd $PROJ_DIR && exec python3 run-simple.py
