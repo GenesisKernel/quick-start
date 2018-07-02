@@ -1,4 +1,4 @@
-## 2018-June-02 19:45
+## Version 0.6.3 / 2018-June-02 19:45
 
 * Fix delete-all, stop, start commands functionality
 * Add be-app-ctl command to manage particular backend

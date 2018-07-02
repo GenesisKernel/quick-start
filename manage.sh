@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.1"
-VERSION="0.6.2"
+PREV_VERSION="0.6.2"
+VERSION="0.6.3"
 SED_E="sed -E"
 
 GOLANG_VER="1.10.2"
