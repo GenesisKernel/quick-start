@@ -18,6 +18,8 @@ RUN pip3 install -r /genesis-blex/requirements.txt
 RUN apt-get remove -y build-essential && apt-get autoremove -y && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
+RUN git clone -b update-sign https://github.com/blitzstern5/genesis-scripts /genesis-scripts
+
 COPY start_blockexplorer.sh /
 COPY supervisor/supervisord.conf /etc/supervisor/
 COPY supervisor/conf.d/blockexplorer.conf /etc/supervisor/conf.d/
