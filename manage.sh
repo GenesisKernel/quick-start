@@ -9,7 +9,6 @@ SED_E="sed -E"
 GOLANG_VER="1.10.2"
 GENESIS_BACKEND_BRANCH="master"
 GENESIS_FRONT_BRANCH="master"
-#GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/basic/basic.json"
 GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 
 GENESIS_DB_NAME_PREFIX="genesis"
