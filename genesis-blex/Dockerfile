@@ -11,7 +11,7 @@ RUN set -ex; apt-get update -y && \
 
 RUN git clone -b $GENESIS_BLEX_BRANCH $GENESIS_BLEX_URL /genesis-blex
 
-RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip python3-venv virtualenvwrapper && apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
+RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-dev python3-pip python3-venv virtualenvwrapper && apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 RUN pip3 install setuptools wheel
 RUN pip3 install -r /genesis-blex/requirements.txt
 
