@@ -1143,7 +1143,7 @@ start_blex_cont() {
             local image_name
             if [ "$TRY_LOCAL_BLEX_CONT_NAME_ON_RUN" = "yes" ]; then
                 local loc; loc=$(docker images --format "{{.Repository}}" -f "reference=$BLEX_CONT_NAME")
-                [ -n "$loc" ] && image_name="$BLEXj_CONT_NAME" \
+                [ -n "$loc" ] && image_name="$BLEX_CONT_NAME" \
                     || image_name="$BLEX_CONT_IMAGE"
             else
                 image_name="$BLEX_CONT_IMAGE"
@@ -1689,7 +1689,7 @@ get_http_priv_key() {
 get_priv_key() {
     [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
     local idx; idx="$1"
-    local num; local wps; local cps; local dbp; local cfp
+    local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 2
     [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
     local priv_key_path; priv_key_path="$GENESIS_BE_ROOT_DATA_DIR/node$1/PrivateKey"; local result
@@ -1704,7 +1704,7 @@ get_priv_keys() {
         get_priv_key $1
         return $?
     fi
-    local num; local wps; local cps; local dbp; local cfp
+    local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 10
     cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && priv_key_path=\"/s/s\$i/PrivateKey\" && [ -e \"\$priv_key_path\" ]  && cat \"\$priv_key_path\" && echo; done'"
 }
@@ -2270,6 +2270,7 @@ read_install_params_to_vars() {
             1) wps=$param ;;
             2) cps=$param ;;
             3) dbp=$param ;;
+            4) blexp=$param ;;
         esac
         cnt=$(expr $cnt + 1)
     done
@@ -3054,11 +3055,11 @@ pre_command() {
         ;;
 
     check-host-ports)
-        check_host_ports $2 $3 $4 $5
+        check_host_ports $2 $3 $4 $5 $6
         ;;
 
     check-host-side)
-        check_host_side $2 $3 $4 $5
+        check_host_side $2 $3 $4 $5 $6
         ;;
 
     ### Host ports #### end ####
@@ -3108,7 +3109,7 @@ pre_command() {
 
     start-db-cont)
         check_run_as_root
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         start_db_cont $dbp
         ;;
@@ -3190,7 +3191,7 @@ pre_command() {
 
     start-bf-cont)
         check_run_as_root
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         start_bf_cont $num $wps $cps
         ;;
@@ -3203,7 +3204,7 @@ pre_command() {
     restart-bf-cont)
         check_run_as_root
         docker stop $BF_CONT_NAME
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         start_bf_cont $num $wps $cps
         ;;
@@ -3322,7 +3323,7 @@ pre_command() {
 
     start-cf-cont)
         check_run_as_root
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         start_cf_cont
         ;;
@@ -3335,7 +3336,7 @@ pre_command() {
     restart-cf-cont)
         check_run_as_root
         docker stop $CF_CONT_NAME
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         start_cf_cont $num $wps $cps
         ;;
@@ -3415,6 +3416,46 @@ pre_command() {
         ;;
 
     ### CF Image #### end ####
+
+
+    ### BLEX container ### begin ###
+
+    start-blex-cont)
+        check_run_as_root
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_blex_cont $num $blexp
+        ;;
+
+    stop-blex-cont)
+        check_run_as_root
+        docker stop $BLEX_CONT_NAME
+        ;;
+
+    restart-blex-cont)
+        check_run_as_root
+        docker stop $BLEX_CONT_NAME
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_blex_cont $num $blexp
+        ;;
+
+    prep-blex-cont)
+        check_run_as_root
+        prep_cont_for_inspect $BLEX_CONT_NAME
+        ;;
+
+    blex-cont-bash|blex-cont-sh|blex-cont-shell)
+        check_run_as_root
+        cont_bash $BLEX_CONT_NAME
+        ;;
+
+    delete-blex-cont)
+        check_run_as_root
+        remove_cont $BLEX_CONT_NAME
+        ;;
+        
+    ### BLEX Container #### end ####
 
 
     ### BLEX Image ### begin ###
@@ -3498,7 +3539,7 @@ pre_command() {
     ### Database ### begin ###
 
     create-dbs)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         create_dbs $num
         ;;
@@ -3512,19 +3553,19 @@ pre_command() {
         ;;
 
     block-chain-count)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         block_chain_count $num
         ;;
 
     first-blocks)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         get_first_blocks $num
         ;;
         
     cmp-first-blocks)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         cmp_first_blocks $num
         ;;
@@ -3535,13 +3576,13 @@ pre_command() {
         ;;
 
     cmp-keys)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         cmp_keys $num
         ;;
 
     wait-keys)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         wait_keys_sync $num
         ;;
@@ -3564,13 +3605,13 @@ pre_command() {
         ;;
 
     check-be-apps)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         check_backend_apps_status $num
         ;;
 
     be-apps-ctl)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 17
         backend_apps_ctl $num $2
         ;;
@@ -3579,7 +3620,7 @@ pre_command() {
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
             && exit 30
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 18
         get_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 $wps
         ;;
@@ -3593,13 +3634,13 @@ pre_command() {
         ;;
 
     setup-be-apps)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         setup_be_apps $num
         ;;
 
     start-be-apps)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         start_be_apps $num $cps
         ;;
@@ -3608,7 +3649,7 @@ pre_command() {
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
             && exit 32
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         check_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 $wps
         ;;
@@ -3617,7 +3658,7 @@ pre_command() {
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
             && exit 33
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 20
         wait_http_priv_key "http://127.0.0.1:PORT/keys/PrivateKey" $2 200 64 20 $wps
         ;;
@@ -3626,7 +3667,7 @@ pre_command() {
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
             && exit 33
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
         c_port=$(expr $cps + $2)
@@ -3637,7 +3678,7 @@ pre_command() {
         [ -z "$2" ] \
             && echo "The index number of a backend isn't set" \
             && exit 33
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
         c_port=$(expr $cps + $2)
@@ -3649,13 +3690,13 @@ pre_command() {
         ;;
 
     update-keys)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_update_keys $num
         ;;
 
     update-full-nodes)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_update_full_nodes $num
         ;;
@@ -3665,7 +3706,7 @@ pre_command() {
         ;;
 
     import-demo-apps)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_demo_apps
         ;;
@@ -3675,7 +3716,7 @@ pre_command() {
         ;;
 
     build-be)
-        num=""; wps=""; cps=""; dbp=""
+        num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         build_be $num || exit 61
         ;;
@@ -3742,19 +3783,19 @@ pre_command() {
         check_run_as_root
         check_num_param $2
         start_docker
-        check_host_ports $2 $3 $4 $5
+        check_host_ports $2 $3 $4 $5 $6
         [ $? -ne 0 ] \
             && echo "Please free busy ports first or customize ports shifts" \
             && exit 100
         echo
-        save_install_params $2 $3 $4 $5
-        start_install $2 $3 $4 $5
+        save_install_params $2 $3 $4 $5 $6
+        start_install $2 $3 $4 $5 $6
         ;;
 
     set-params)
         echo "Saving install parameters ..."
         check_num_param $2
-        save_install_params $2 $3 $4 $5
+        save_install_params $2 $3 $4 $5 $6
         ;;
 
     del-params)
@@ -3799,6 +3840,8 @@ pre_command() {
             && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $BLEX_CONT_NAME -f $BLEX_CONT_BUILD_DIR/Dockerfile $BLEX_CONT_BUILD_DIR/.)
         ;;
 
     delete)
