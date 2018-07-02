@@ -115,7 +115,11 @@ will start 4 backends and 4 clients, and fronend ports will be exposed to system
 Block Explorer
 ==============
 
-Initial support of Block Explorer was implemented. It's still pretty buggy (some blocks internals are parsed with errors). The default host port for it is 18200, use browser to open it.
+Initial support of Block Explorer was implemented. The default host port for it is 18200, use browser to open it.
+
+Known bugs:
+* In some cases requests lead to AJAX-errors
+* Some blocks internals are parsed with errors
 
 Useful Links
 ============
