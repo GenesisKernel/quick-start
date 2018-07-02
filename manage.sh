@@ -9,8 +9,8 @@ SED_E="sed -E"
 GOLANG_VER="1.10.2"
 GENESIS_BACKEND_BRANCH="master"
 GENESIS_FRONT_BRANCH="master"
-GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/basic/basic.json"
-#GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/blitzstern5/minimal-contract/master/contract1.json"
+#GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/basic/basic.json"
+GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 
 GENESIS_DB_NAME_PREFIX="genesis"
 
@@ -1133,9 +1133,7 @@ start_db_cont() {
 ### BLEX container ### begin ###
 
 start_blex_cont() {
-    local num; ([ -z "$1" ] || [ $1 -lt 1 ]) \
-        && echo "The number of backends isn't set" && return 1 || num=$1
-    local blexp; blexp=$2
+    local blexp; blexp="$1"
     [ -z "$blexp" ] && blexp=$BLEX_PORT
     check_cont $BLEX_CONT_NAME > /dev/null
     case $? in
@@ -1940,19 +1938,19 @@ run_mbs_cmd() {
 
 check_update_mblex_script() {
     local srcs dsts do_copy
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/manage_blex.sh"
+    srcs[0]="$SCRIPT_DIR/$BLEX_CONT_BUILD_DIR$GENESIS_SCRIPTS_DIR/manage_blex.sh"
     dsts[0]="$GENESIS_SCRIPTS_DIR/manage_blex.sh"
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
-        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
+        docker exec -t $BLEX_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
         if [ $? -ne 0 ]; then
             do_copy="yes"
         fi
         if [ "$do_copy" = "yes" ] || [ "$FORCE_COPY_MBS_SCRIPT" = "yes" ]; then
             if [ -e "${srcs[$i]}" ]; then
-                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
-                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
+                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BLEX_CONT_NAME' ..."
+                docker cp "${srcs[$i]}" $BLEX_CONT_NAME:${dsts[$i]}
             else
                 echo "No '${srcs[$i]}' @ host system. Please create it first." \
                     && return 1
@@ -1965,13 +1963,15 @@ run_mblex_cmd() {
     local num cmd rmt_path
     check_update_mblex_script || return $?
     rmt_path="$GENESIS_SCRIPTS_DIR/manage_blex.sh"
-    docker exec -ti $BF_CONT_NAME bash $rmt_path $@
+    docker exec -ti $BLEX_CONT_NAME bash $rmt_path $@
 }
 
 setup_blex() {
     local num blexp
     num="$1"; [ -z "$2" ] && blexp="$CONT_BLEX_PORT" || blexp="$2"
+    echo "setup_blex num: $num blexp: $blexp"
     run_mblex_cmd config $num $blexp
+    docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl update && supervisorctl restart blockexplorer"
 }
 
 setup_be_apps() {
@@ -2065,6 +2065,7 @@ check_host_side() {
     echo -n "    checking: "
     [ -n "$(check_http_code "http://127.0.0.1:$cfp/connection/" 200)" ] && echo "ok" \
         || (echo "error" && cf_result=1)
+    echo
 
     local blex_result; blex_result=0
     echo "  Block explorer port: $blexp" 
@@ -2584,7 +2585,7 @@ start_install() {
     wait_centrifugo_status || return 21
     echo
 
-    start_blex_cont $num $blexp
+    start_blex_cont $blexp
 
     wait_cont_proc $BLEX_CONT_NAME supervisord 15
     [ $? -ne 0 ] \
@@ -2721,7 +2722,7 @@ start_all() {
         || echo "Centrifugo ready"
     echo
 
-    start_blex_cont $num $blexp
+    start_blex_cont $blexp
 
     wait_cont_proc $BLEX_CONT_NAME supervisord 15
     [ $? -ne 0 ] \
@@ -3442,7 +3443,7 @@ pre_command() {
         check_run_as_root
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
-        start_blex_cont $num $blexp
+        start_blex_cont $blexp
         ;;
 
     stop-blex-cont)
@@ -3455,7 +3456,7 @@ pre_command() {
         docker stop $BLEX_CONT_NAME
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
-        start_blex_cont $num $blexp
+        start_blex_cont $blexp
         ;;
 
     prep-blex-cont)
@@ -3542,6 +3543,7 @@ pre_command() {
         docker pull $DB_CONT_IMAGE
         docker pull $CF_CONT_IMAGE
         docker pull $BF_CONT_IMAGE
+        docker pull $BLEX_CONT_IMAGE
         ;;
 
     pull-prev-images)
@@ -3549,6 +3551,7 @@ pre_command() {
         docker pull $DB_CONT_PREV_IMAGE
         docker pull $CF_CONT_PREV_IMAGE
         docker pull $BF_CONT_PREV_IMAGE
+        docker pull $BLEX_CONT_PREV_IMAGE
         ;;
 
     ### Common Image #### end ####
@@ -3883,7 +3886,6 @@ pre_command() {
         ;;
 
     all-images)
-
         show_all_docker_images
         ;;
 
