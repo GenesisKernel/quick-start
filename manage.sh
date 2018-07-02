@@ -229,6 +229,14 @@ check_proc() {
     echo "ok" && return 0
 }
 
+check_num_of_procs() {
+    local proc_name num_of
+    [ -z "$1" ] && echo "Process name isn't set" && return 2
+    [ -z "$(pgrep "$1")" ] \
+        && echo "No process '$1'" && return 2
+    echo "ok" && return 0
+}
+
 wait_proc() {
     local proc_name; proc_name="$1"
     local timeout_secs; [ -z "$2" ] && timeout_secs=15 || timeout_secs="$2"
@@ -653,12 +661,52 @@ wait_docker_ready_status() {
     return $result
 }
 
+check_mac_docker_proc() {
+    local docker_vmnet_pid pid exists
+    docker_vmnet_pid="$(pgrep com.docker.vmnet)"
+    exists=1
+    for pid in $(pgrep "docker"); do
+        [ "$pid" == "$docker_vmnet_pid" ] && continue
+        exists=0
+    done
+    case $exists in
+        1) echo "no docker process" ;;
+        0) echo "ok" ;;
+    esac
+    return $exists
+}
+
+wait_mac_docker_proc() {
+    local timeout_secs; [ -z "$1" ] && timeout_secs=15 || timeout_secs="$1"
+    local end_time; end_time=$(( $(date +%s) + timeout_secs ))
+
+    echo "Waiting ($timeout_secs seconds) for docker process ..."
+
+    local cnt; cnt=1
+    local stop; stop=0;
+    local result; result=0;
+    while [ $stop -eq 0 ]; do
+        [ $cnt -gt 1 ] && sleep 1
+        echo -n "    try $cnt: "
+        check_mac_docker_proc; result=$?
+        case $result in
+            0) stop=1 ;;
+            1) [ $(date +%s) -lt $end_time ] || stop=1 ;;
+        esac
+        cnt=$(expr $cnt + 1)
+    done
+    return $result
+}
+
 start_mac_docker() {
     install_mac_docker_directly
     [ $? -ne 0 ] \
         && echo "Can't download docker" && return 1
-    open -n "$DOCKER_MAC_APP_DIR"
-    wait_proc docker 120
+    if ! check_mac_docker_proc > /dev/null; then
+        echo "Docker process is absent. Starting ..."
+        open "$DOCKER_MAC_APP_DIR"
+    fi
+    wait_mac_docker_proc 120
     [ $? -ne 0 ] \
         && echo "No docker process. Please reinstall docker." \
         && echo "You can use $(basename "$0") uninstall-docker to uninstall docker" \
@@ -2903,6 +2951,10 @@ pre_command() {
         start_docker
         ;;
 
+    check-mac-docker-proc)
+        check_mac_docker_proc
+        ;;
+
     ### Docker #### end ####
 
 
@@ -2921,6 +2973,7 @@ pre_command() {
         ;;
 
     ### Host ports #### end ####
+
 
     ### Clients ### begin ###
 
