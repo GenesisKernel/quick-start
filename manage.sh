@@ -2018,6 +2018,38 @@ setup_be_apps() {
 }
 
 # FIXIT: BACKEND: fix backend to get back to normal start without restartes
+keep_restart_be_apps_on_error() {
+    local num result i error_codes cnt _stop max_tries
+    [ -z "$1" ] \
+        && echo "The number of backends isn't set" && return 1 \
+        || num=$1
+    [ -z "$2" ] \
+        && echo "The error codes isn't set" && return 2 \
+        || error_codes="$2"
+    [ -z "$3" ] && max_tries="5" || max_tries="$3"
+
+    echo "Checking backends are not in ${error_codes}-error(s) state ..."
+    cnt=1
+    max_tries=5
+    _stop=1
+    while [ $_stop -eq 1 ]; do
+        echo -n "  try $cnt/$max_tries: "
+        [ $cnt -ge $max_tries ] && _stop=0
+        result=0
+        for i in $(seq 1 $num); do
+            if check_cont_http_code $BF_CONT_NAME http://127.0.0.1:700$i/api/v2/getuid $error_codes > /dev/null; then
+                echo
+                echo "        found backend #$i is in 503-error state, restarting ..."
+                result=1
+                [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+                docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
+            fi
+        done
+        [ $result -eq 0 ] && echo "ok" && _stop=0
+        cnt="$(expr $cnt + 1)"
+    done
+}
+
 start_be_apps() {
     local num; [ -z "$1" ] \
         && echo "The number of backends isn't set" && return 1 \
@@ -2029,11 +2061,12 @@ start_be_apps() {
         [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
-    echo "Restarting backend applications ..."
-    for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
-        docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
-    done
+    keep_restart_be_apps_on_error $num 503 10
+    #echo "Restarting backend applications ..."
+    #for i in $(seq 1 $num); do
+    #    [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+    #    docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
+    #done
     wait_backend_apps_status $num || return 2
 }
 
@@ -2808,6 +2841,9 @@ start_all() {
 
     wait_centrifugo_status || return 5
     echo
+
+    keep_restart_be_apps_on_error $num 503 10 || return 2
+    echo 
 
     wait_backend_apps_status $num || return 2
     echo
@@ -3742,6 +3778,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         start_be_apps $num $cps
+        ;;
+
+    keep-restart-be-apps-on-error)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        keep_restart_be_apps_on_error $num 503 3
         ;;
 
     stop-be-apps)
