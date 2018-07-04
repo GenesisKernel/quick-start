@@ -2625,7 +2625,7 @@ start_install() {
     
     start_db_cont $dbp
 
-    wait_cont_proc $DB_CONT_NAME postgres 25
+    wait_cont_proc $DB_CONT_NAME postgres 45
     [ $? -ne 0 ] \
         && echo "Postgres process isn't available" && return 10 \
         || echo "Postgres ready"
@@ -2647,12 +2647,12 @@ start_install() {
 
     echo
 
-    create_dbs $num 25
+    create_dbs $num 45
     [ $? -ne 0 ] \
         && echo "Backend databases creation failed" && return 14 \
         || echo "Backend databases creation compete"
 
-    wait_dbs $num 25
+    wait_dbs $num 45
     [ $? -ne 0 ] \
         && echo "Backend databases ant't available" && return 14 \
         || echo "Backend databases ready"
@@ -2777,7 +2777,7 @@ start_all() {
 
     start_db_cont $dbp
 
-    wait_cont_proc $DB_CONT_NAME postgres 15
+    wait_cont_proc $DB_CONT_NAME postgres 35
     [ $? -ne 0 ] \
         && echo "Postgres process isn't available" && return 10 \
         || echo "Postgres ready"
@@ -2799,7 +2799,7 @@ start_all() {
 
     echo
 
-    wait_dbs $num 15
+    wait_dbs $num 35
     [ $? -ne 0 ] \
         && echo "Backend databases ant't available" && return 14 \
         || echo "Backend databases ready"
