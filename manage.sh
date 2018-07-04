@@ -873,7 +873,6 @@ start_mac_clients() {
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
         run_cmd="open -n $CLIENT_MAC_APP_DIR --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry"
-        echo "run_cmd: $run_cmd"
         eval "$run_cmd"
         offset_x=$(expr $offset_x + 50) 
         offset_y=$(expr $offset_y + 50) 
@@ -908,7 +907,6 @@ start_linux_clients() {
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
             run_cmd="$app_inst_path --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &"
-            echo "run_cmd: $run_cmd"
             run_as_orig_user "$run_cmd"
             offset_x=$(expr $offset_x + 50) 
             offset_y=$(expr $offset_y + 50) 
