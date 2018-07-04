@@ -1855,8 +1855,8 @@ backend_app_ctl() {
         && return 3
 
     local app_name; local result; result=0; local rcmd
-    [ $inx -eq 1 ] && app_name="$GENESIS_BE_BIN_BASENAME" \
-        || app_name="$GENESIS_BE_BIN_BASENAME$inx"
+    [ $ind -eq 1 ] && app_name="$GENESIS_BE_BIN_BASENAME" \
+        || app_name="$GENESIS_BE_BIN_BASENAME$ind"
     case "$cmd" in
         status|stop|start|restart)
             rcmd="supervisorctl $cmd $app_name"
@@ -1866,7 +1866,7 @@ backend_app_ctl() {
             return 4
             ;;
     esac
-    echo "Backend index number $i, starting '$rcmd' ..."
+    echo "Backend #$ind, starting '$rcmd' ..."
     docker exec -ti $BF_CONT_NAME bash -c "$rcmd"
     [ $? -ne 0 ] && result=4
     return $result
