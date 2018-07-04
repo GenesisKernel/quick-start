@@ -2,11 +2,11 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.2"
-VERSION="0.6.3"
+PREV_VERSION="0.6.3"
+VERSION="0.6.4"
 SED_E="sed -E"
 
-GOLANG_VER="1.10.2"
+GOLANG_VER="1.10.3"
 GENESIS_BACKEND_BRANCH="master"
 GENESIS_FRONT_BRANCH="master"
 GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
