@@ -6,6 +6,7 @@
 * Increase db containers/processes waiting timeouts
 * Update golang version to 1.10.3
 * Update go-genesis version to [master/da97624](https://github.com/GenesisKernel/go-genesis/commit/da97624ef756d40c49848734f4b89619b321dac0)
+* Update genesis-db Dockerfile: Remove purging of ca-certificates
 
 ## Version 0.6.3 / 2018-June-02 19:45
 
