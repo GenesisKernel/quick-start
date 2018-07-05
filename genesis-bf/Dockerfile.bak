@@ -2,7 +2,7 @@ FROM debian:stretch-slim
 
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV GOLANG_VER 1.10.2
+ENV GOLANG_VER 1.10.3
 ENV GENESIS_BACKEND_BRANCH master
 ENV GENESIS_DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json
 ENV GENESIS_FRONT_BRANCH master
