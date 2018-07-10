@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.3"
-VERSION="0.6.4"
+PREV_VERSION="0.6.4"
+VERSION="0.6.5"
 SED_E="sed -E"
 
 GOLANG_VER="1.10.3"
@@ -42,16 +42,16 @@ APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_APP_NAME="Docker"
 #DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
-DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/23011/Docker.dmg"
+DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/24312/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
-DOCKER_MAC_APP_DIR_SIZE_M=1144 # to update run 'du -sm /Applications/Docker.app'
+DOCKER_MAC_APP_DIR_SIZE_M=1248 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 CLIENT_APP_NAME="Genesis"
 CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/Genesis-0.8.5-RC.dmg"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
-CLIENT_MAC_APP_DIR_SIZE_M=226 # to update run 'du -sm /Applications/Genesis.app'
+CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
 CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
 CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
 CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/genesis-front-0.8.5-RC-x86_64.AppImage"
@@ -872,7 +872,9 @@ start_mac_clients() {
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        run_cmd="open -n $CLIENT_MAC_APP_DIR --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry"
+        [ $i -eq 1 ] \
+            && run_cmd="open -n $CLIENT_MAC_APP_DIR --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry" \
+            || run_cmd="open -n $CLIENT_MAC_APP_DIR --args --full-node http://127.0.0.1:$c_port --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry"
         eval "$run_cmd"
         offset_x=$(expr $offset_x + 50) 
         offset_y=$(expr $offset_y + 50) 
@@ -906,7 +908,9 @@ start_linux_clients() {
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-            run_cmd="$app_inst_path --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &"
+            [ $i -eq 1 ] \
+                && run_cmd="$app_inst_path --args --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &" \
+                || run_cmd="$app_inst_path --args --full-node http://127.0.0.1:$c_port --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &"
             run_as_orig_user "$run_cmd"
             offset_x=$(expr $offset_x + 50) 
             offset_y=$(expr $offset_y + 50) 
