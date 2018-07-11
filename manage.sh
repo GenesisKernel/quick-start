@@ -4019,7 +4019,6 @@ pre_command() {
         show_all_docker_images
         ;;
 
-
     delete-all)
         check_run_as_root
         stop_clients
@@ -4030,6 +4029,21 @@ pre_command() {
             image_id="$(echo "$line" | awk '{print $1}')"
             docker rmi -f $image_id
         done
+        ;;
+
+    build-tag-push-all-images)
+        "$0" build-cf-image \
+            && "$0" tag-local-cf-image \
+            && "$0" push-cf-image \
+        && "$0" build-db-image \
+            && "$0" tag-local-db-image \
+            && "$0" push-db-image \
+        && "$0" build-blex-image \
+            && "$0" tag-local-blex-image \
+            && "$0" push-blex-image \
+        && "$0" build-bf-image \
+            && "$0" tag-local-bf-image \
+            && "$0" push-bf-image
         ;;
 
     version)
