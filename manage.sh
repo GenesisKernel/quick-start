@@ -48,13 +48,27 @@ DOCKER_MAC_APP_DIR_SIZE_M=1248 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
-CLIENT_APP_NAME="Genesis"
-CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/Genesis-0.8.5-RC.dmg"
+GENESIS_CLIENT_APP_NAME="Genesis"
+GENESIS_CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/Genesis-0.8.5-RC.dmg"
+GENESIS_CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
+GENESIS_CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
+GENESIS_CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
+GENESIS_CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/genesis-front-0.8.5-RC-x86_64.AppImage"
+
+APLA_CLIENT_APP_NAME="Apla"
+APLA_CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/Genesis-0.8.5-RC.dmg"
+APLA_CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
+APLA_CLIENT_MAC_APP_DIR="/Applications/Apla.app"
+APLA_CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
+APLA_CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.5-RC/apla-front-0.8.5-RC-x86_64.AppImage"
+
+CLIENT_APP_NAME="$GENESIS_CLIENT_APP_NAME"
+CLIENT_DMG_DL_URL="$GENESIS_CLIENT_DMG_DL_URL"
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
-CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
-CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
-CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/genesis-front-0.8.5-RC-x86_64.AppImage"
+CLIENT_MAC_APP_DIR_SIZE_M=$GENESIS_CLIENT_MAC_APP_DIR_SIZE_M # to update run 'du -sm /Applications/Genesis.app'
+CLIENT_MAC_APP_DIR="$GENESIS_CLIENT_MAC_APP_DIR"
+CLIENT_MAC_APP_BIN="$GENESIS_CLIENT_MAC_APP_BIN"
+CLIENT_APPIMAGE_DL_URL="$GENESIS_CLIENT_APPIMAGE_DL_URL"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
 BF_CONT_NAME="genesis-bf"
