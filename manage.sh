@@ -3030,11 +3030,11 @@ update_fe_dockerfile_content() {
     esac
 
     fe_repo_url_esc="$(echo "$FRONTEND_REPO_URL" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+FRONTEND_REPO_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$fe_repo_url_esc/' $df"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+FRONTEND_REPO_URL[ ]+)([^ ]+)[ ]*$/\1$fe_repo_url_esc/' $df"
     eval "$sed_cmd"
 
     fe_br_esc="$(echo "$FRONTEND_BRANCH" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+FRONTEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$fe_br_esc/' $df"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+FRONTEND_BRANCH[ ]+)([^ ]+)[ ]*$/\1$fe_br_esc/' $df"
     eval "$sed_cmd"
 }
 
@@ -3061,19 +3061,19 @@ update_be_dockerfile_content() {
     eval "$sed_cmd"
 
     be_go_url_esc="$(echo "$BACKEND_GO_URL" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_GO_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$be_go_url_esc/' $df"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_GO_URL[ ]+)([^ ]+)[ ]*$/\1$be_go_url_esc/' $df"
     eval "$sed_cmd"
 
     be_br_esc="$(echo "$BACKEND_BRANCH" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$be_br_esc/' $df"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_BRANCH[ ]+)([^ ]+)[ ]*$/\1$be_br_esc/' $df"
     eval "$sed_cmd"
 
     sc_repo_url_esc="$(echo "$SCRIPTS_REPO_URL" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_REPO_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$sc_repo_url_esc/' $df"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_REPO_URL[ ]+)([^ ]+)[ ]*$/\1$sc_repo_url_esc/' $df"
     eval "$sed_cmd"
 
     sc_br_esc="$(echo "$SCRIPTS_BRANCH" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$sc_br_esc/' $df"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_BRANCH[ ]+)([^ ]+)[ ]*$/\1$sc_br_esc/' $df"
     eval "$sed_cmd"
 
     demo_apps_url_esc="$(echo "$DEMO_APPS_URL" | $SED_E 's/\//\\\//g')"
