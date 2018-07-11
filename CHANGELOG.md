@@ -1,3 +1,11 @@
+## Version 0.6.5 / 2018-Jule-11 03:45
+
+* Add build-tag-push-all-images command
+* Update Docker for Mac to version 18.03.1-ce-mac65 (24312)
+* Update mac docker's expected app dir size
+* Update mac client's expected app dir size
+* Remove private keys from every starting clients except the founder's one
+
 ## Version 0.6.4 / 2018-June-04 23:17
 
 * Fix backend index in backend_app_ctl
