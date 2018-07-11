@@ -48,6 +48,8 @@ DOCKER_MAC_APP_DIR_SIZE_M=1248 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
+USE_PRODUCT="genesis"
+
 GENESIS_CLIENT_APP_NAME="Genesis"
 GENESIS_CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/Genesis-0.8.5-RC.dmg"
 GENESIS_CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
@@ -56,54 +58,104 @@ GENESIS_CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
 GENESIS_CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/genesis-front-0.8.5-RC-x86_64.AppImage"
 
 APLA_CLIENT_APP_NAME="Apla"
-APLA_CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/Genesis-0.8.5-RC.dmg"
+APLA_CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.5-RC/Apla-0.8.5-RC.dmg"
 APLA_CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
 APLA_CLIENT_MAC_APP_DIR="/Applications/Apla.app"
 APLA_CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
 APLA_CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.5-RC/apla-front-0.8.5-RC-x86_64.AppImage"
 
-CLIENT_APP_NAME="$GENESIS_CLIENT_APP_NAME"
-CLIENT_DMG_DL_URL="$GENESIS_CLIENT_DMG_DL_URL"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    CLIENT_MAC_PROCESS_NAME="Apla"
+    CLIENT_LINUX_PROCESS_NAME="apla"
+    CLIENT_APP_NAME="$APLA_CLIENT_APP_NAME"
+    CLIENT_DMG_DL_URL="$APLA_CLIENT_DMG_DL_URL"
+    CLIENT_MAC_APP_DIR_SIZE_M=$APLA_CLIENT_MAC_APP_DIR_SIZE_M # to update run 'du -sm /Applications/Apla.app'
+    CLIENT_MAC_APP_DIR="$APLA_CLIENT_MAC_APP_DIR"
+    CLIENT_MAC_APP_BIN="$APLA_CLIENT_MAC_APP_BIN"
+    CLIENT_APPIMAGE_DL_URL="$APLA_CLIENT_APPIMAGE_DL_URL"
+else
+    CLIENT_MAC_PROCESS_NAME="Genesis"
+    CLIENT_LINUX_PROCESS_NAME="genesis"
+    CLIENT_APP_NAME="$GENESIS_CLIENT_APP_NAME"
+    CLIENT_DMG_DL_URL="$GENESIS_CLIENT_DMG_DL_URL"
+    CLIENT_MAC_APP_DIR_SIZE_M=$GENESIS_CLIENT_MAC_APP_DIR_SIZE_M # to update run 'du -sm /Applications/Genesis.app'
+    CLIENT_MAC_APP_DIR="$GENESIS_CLIENT_MAC_APP_DIR"
+    CLIENT_MAC_APP_BIN="$GENESIS_CLIENT_MAC_APP_BIN"
+    CLIENT_APPIMAGE_DL_URL="$GENESIS_CLIENT_APPIMAGE_DL_URL"
+fi
+
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
-CLIENT_MAC_APP_DIR_SIZE_M=$GENESIS_CLIENT_MAC_APP_DIR_SIZE_M # to update run 'du -sm /Applications/Genesis.app'
-CLIENT_MAC_APP_DIR="$GENESIS_CLIENT_MAC_APP_DIR"
-CLIENT_MAC_APP_BIN="$GENESIS_CLIENT_MAC_APP_BIN"
-CLIENT_APPIMAGE_DL_URL="$GENESIS_CLIENT_APPIMAGE_DL_URL"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
 
-BF_CONT_NAME="genesis-bf"
-BF_CONT_IMAGE="str16071985/genesis-bf:$VERSION"
-BF_CONT_PREV_IMAGE="str16071985/genesis-bf:$PREV_VERSION"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    BF_CONT_NAME="apla-bf"
+    BF_CONT_IMAGE="str16071985/apla-bf:$VERSION"
+    BF_CONT_PREV_IMAGE="str16071985/apla-bf:$PREV_VERSION"
+else
+    BF_CONT_NAME="genesis-bf"
+    BF_CONT_IMAGE="str16071985/genesis-bf:$VERSION"
+    BF_CONT_PREV_IMAGE="str16071985/genesis-bf:$PREV_VERSION"
+fi
 BF_CONT_BUILD_DIR="genesis-bf"
 TRY_LOCAL_BF_CONT_NAME_ON_RUN="yes"
 
-DB_CONT_NAME="genesis-db"
-DB_CONT_IMAGE="str16071985/genesis-db:$VERSION"
-DB_CONT_PREV_IMAGE="str16071985/genesis-db:$PREV_VERSION"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    DB_CONT_NAME="apla-db"
+    DB_CONT_IMAGE="str16071985/apla-db:$VERSION"
+    DB_CONT_PREV_IMAGE="str16071985/apla-db:$PREV_VERSION"
+else
+    DB_CONT_NAME="genesis-db"
+    DB_CONT_IMAGE="str16071985/genesis-db:$VERSION"
+    DB_CONT_PREV_IMAGE="str16071985/genesis-db:$PREV_VERSION"
+fi
 DB_CONT_BUILD_DIR="genesis-db"
 TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
 
-CF_CONT_NAME="genesis-cf"
-CF_CONT_IMAGE="str16071985/genesis-cf:$VERSION"
-CF_CONT_PREV_IMAGE="str16071985/genesis-cf:$PREV_VERSION"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    CF_CONT_NAME="apla-cf"
+    CF_CONT_IMAGE="str16071985/apla-cf:$VERSION"
+    CF_CONT_PREV_IMAGE="str16071985/apla-cf:$PREV_VERSION"
+else
+    CF_CONT_NAME="genesis-cf"
+    CF_CONT_IMAGE="str16071985/genesis-cf:$VERSION"
+    CF_CONT_PREV_IMAGE="str16071985/genesis-cf:$PREV_VERSION"
+fi
 CF_CONT_BUILD_DIR="genesis-cf"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
-BLEX_CONT_NAME="genesis-blex"
-BLEX_CONT_IMAGE="str16071985/genesis-blex:$VERSION"
-BLEX_CONT_PREV_IMAGE="str16071985/genesis-blex:$PREV_VERSION"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    BLEX_CONT_NAME="apla-blex"
+    BLEX_CONT_IMAGE="str16071985/apla-blex:$VERSION"
+    BLEX_CONT_PREV_IMAGE="str16071985/apla-blex:$PREV_VERSION"
+else
+    BLEX_CONT_NAME="genesis-blex"
+    BLEX_CONT_IMAGE="str16071985/genesis-blex:$VERSION"
+    BLEX_CONT_PREV_IMAGE="str16071985/genesis-blex:$PREV_VERSION"
+fi
 BLEX_CONT_BUILD_DIR="genesis-blex"
 TRY_LOCAL_BLEX_CONT_NAME_ON_RUN="yes"
 
-BE_CONT_NAME="genesis-be"
-BE_CONT_IMAGE="str16071985/genesis-be:$VERSION"
-BE_CONT_PREV_IMAGE="str16071985/genesis-be:$PREV_VERSION"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    BE_CONT_NAME="apla-be"
+    BE_CONT_IMAGE="str16071985/apla-be:$VERSION"
+    BE_CONT_PREV_IMAGE="str16071985/apla-be:$PREV_VERSION"
+else
+    BE_CONT_NAME="genesis-be"
+    BE_CONT_IMAGE="str16071985/genesis-be:$VERSION"
+    BE_CONT_PREV_IMAGE="str16071985/genesis-be:$PREV_VERSION"
+fi
 BE_CONT_BUILD_DIR="genesis-be"
 TRY_LOCAL_BE_CONT_NAME_ON_RUN="yes"
 
-FE_CONT_NAME="genesis-fe"
-FE_CONT_IMAGE="str16071985/genesis-fe:$VERSION"
-FE_CONT_PREV_IMAGE="str16071985/genesis-fe:$PREV_VERSION"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    FE_CONT_NAME="apla-fe"
+    FE_CONT_IMAGE="str16071985/apla-fe:$VERSION"
+    FE_CONT_PREV_IMAGE="str16071985/apla-fe:$PREV_VERSION"
+else
+    FE_CONT_NAME="genesis-fe"
+    FE_CONT_IMAGE="str16071985/genesis-fe:$VERSION"
+    FE_CONT_PREV_IMAGE="str16071985/genesis-fe:$PREV_VERSION"
+fi
 FE_CONT_BUILD_DIR="genesis-fe"
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
@@ -953,7 +1005,7 @@ stop_mac_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "Genesis --full-node")
+        pids=$(pgrep -f "$CLIENT_MAC_PROCESS_NAME --full-node")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1
@@ -967,7 +1019,7 @@ stop_linux_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "genesis --full-node")
+        pids=$(pgrep -f "$CLIENT_LINUX_PROCESS_NAME --full-node")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids \
             || stop=1
@@ -4058,6 +4110,10 @@ pre_command() {
         && "$0" build-bf-image \
             && "$0" tag-local-bf-image \
             && "$0" push-bf-image
+        ;;
+
+    product)
+        echo "$USE_PRODUCT"
         ;;
 
     version)
