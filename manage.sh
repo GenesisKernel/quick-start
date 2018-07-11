@@ -6,10 +6,20 @@ PREV_VERSION="0.6.4"
 VERSION="0.6.5"
 SED_E="sed -E"
 
+USE_PRODUCT="genesis"
+
 GOLANG_VER="1.10.3"
-GENESIS_BACKEND_BRANCH="master"
-GENESIS_FRONT_BRANCH="master"
-GENESIS_DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
+BACKEND_BRANCH="master"
+BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
+else
+    FRONTEND_REPO_URL="https://github.com/GenesisKernel/genesis-front"
+fi
+FRONTEND_BRANCH="master"
+SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
+SCRIPTS_BRANCH="update-sign"
+DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 
 GENESIS_DB_NAME_PREFIX="genesis"
 
@@ -47,8 +57,6 @@ DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*
 DOCKER_MAC_APP_DIR_SIZE_M=1248 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
 DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
-
-USE_PRODUCT="genesis"
 
 GENESIS_CLIENT_APP_NAME="Genesis"
 GENESIS_CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.5-RC/Genesis-0.8.5-RC.dmg"
@@ -91,72 +99,78 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     BF_CONT_NAME="apla-bf"
     BF_CONT_IMAGE="str16071985/apla-bf:$VERSION"
     BF_CONT_PREV_IMAGE="str16071985/apla-bf:$PREV_VERSION"
+    BF_CONT_BUILD_DIR="apla-bf"
 else
     BF_CONT_NAME="genesis-bf"
     BF_CONT_IMAGE="str16071985/genesis-bf:$VERSION"
     BF_CONT_PREV_IMAGE="str16071985/genesis-bf:$PREV_VERSION"
+    BF_CONT_BUILD_DIR="genesis-bf"
 fi
-BF_CONT_BUILD_DIR="genesis-bf"
 TRY_LOCAL_BF_CONT_NAME_ON_RUN="yes"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     DB_CONT_NAME="apla-db"
     DB_CONT_IMAGE="str16071985/apla-db:$VERSION"
     DB_CONT_PREV_IMAGE="str16071985/apla-db:$PREV_VERSION"
+    DB_CONT_BUILD_DIR="apla-db"
 else
     DB_CONT_NAME="genesis-db"
     DB_CONT_IMAGE="str16071985/genesis-db:$VERSION"
     DB_CONT_PREV_IMAGE="str16071985/genesis-db:$PREV_VERSION"
+    DB_CONT_BUILD_DIR="genesis-db"
 fi
-DB_CONT_BUILD_DIR="genesis-db"
 TRY_LOCAL_DB_CONT_NAME_ON_RUN="yes"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     CF_CONT_NAME="apla-cf"
     CF_CONT_IMAGE="str16071985/apla-cf:$VERSION"
     CF_CONT_PREV_IMAGE="str16071985/apla-cf:$PREV_VERSION"
+    CF_CONT_BUILD_DIR="apla-cf"
 else
     CF_CONT_NAME="genesis-cf"
     CF_CONT_IMAGE="str16071985/genesis-cf:$VERSION"
     CF_CONT_PREV_IMAGE="str16071985/genesis-cf:$PREV_VERSION"
+    CF_CONT_BUILD_DIR="genesis-cf"
 fi
-CF_CONT_BUILD_DIR="genesis-cf"
 TRY_LOCAL_CF_CONT_NAME_ON_RUN="yes"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     BLEX_CONT_NAME="apla-blex"
     BLEX_CONT_IMAGE="str16071985/apla-blex:$VERSION"
     BLEX_CONT_PREV_IMAGE="str16071985/apla-blex:$PREV_VERSION"
+    BLEX_CONT_BUILD_DIR="apla-blex"
 else
     BLEX_CONT_NAME="genesis-blex"
     BLEX_CONT_IMAGE="str16071985/genesis-blex:$VERSION"
     BLEX_CONT_PREV_IMAGE="str16071985/genesis-blex:$PREV_VERSION"
+    BLEX_CONT_BUILD_DIR="genesis-blex"
 fi
-BLEX_CONT_BUILD_DIR="genesis-blex"
 TRY_LOCAL_BLEX_CONT_NAME_ON_RUN="yes"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     BE_CONT_NAME="apla-be"
     BE_CONT_IMAGE="str16071985/apla-be:$VERSION"
     BE_CONT_PREV_IMAGE="str16071985/apla-be:$PREV_VERSION"
+    BE_CONT_BUILD_DIR="apla-be"
 else
     BE_CONT_NAME="genesis-be"
     BE_CONT_IMAGE="str16071985/genesis-be:$VERSION"
     BE_CONT_PREV_IMAGE="str16071985/genesis-be:$PREV_VERSION"
+    BE_CONT_BUILD_DIR="genesis-be"
 fi
-BE_CONT_BUILD_DIR="genesis-be"
 TRY_LOCAL_BE_CONT_NAME_ON_RUN="yes"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     FE_CONT_NAME="apla-fe"
     FE_CONT_IMAGE="str16071985/apla-fe:$VERSION"
     FE_CONT_PREV_IMAGE="str16071985/apla-fe:$PREV_VERSION"
+    FE_CONT_BUILD_DIR="apla-fe"
 else
     FE_CONT_NAME="genesis-fe"
     FE_CONT_IMAGE="str16071985/genesis-fe:$VERSION"
     FE_CONT_PREV_IMAGE="str16071985/genesis-fe:$PREV_VERSION"
+    FE_CONT_BUILD_DIR="genesis-fe"
 fi
-FE_CONT_BUILD_DIR="genesis-fe"
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
@@ -2300,7 +2314,7 @@ build_be() {
         && return 1
 
     local GOPATH; GOPATH=/go
-    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d github.com/GenesisKernel/go-genesis && cd /go/src/github.com/GenesisKernel/go-genesis && git checkout $GENESIS_BACKEND_BRANCH && go get github.com/GenesisKernel/go-genesis && ( [ ! -e $GENESIS_BE_BIN_DIR ] && mkdir -p $GENESIS_BE_BIN_DIR || : ) && git checkout | sed -E -n -e \"s/^([^']+)'([^']+)'/\2/p\" | sed -E -n \"s/origin\/([^.]+)\./\1/p\" > $GENESIS_BE_BIN_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $GENESIS_BE_BIN_DIR.git_commit && ( [ ! -e $GENESIS_BE_ROOT_DATA_DIR/node1 ] && mkdir -p $GENESIS_BE_ROOT_DATA_DIR/node1 || : ) && mv $GOPATH/bin/go-genesis $GENESIS_BE_BIN_DIR.git_branch"
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && ( [ ! -e $GENESIS_BE_BIN_DIR ] && mkdir -p $GENESIS_BE_BIN_DIR || : ) && git checkout | sed -E -n -e \"s/^([^']+)'([^']+)'/\2/p\" | sed -E -n \"s/origin\/([^.]+)\./\1/p\" > $GENESIS_BE_BIN_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $GENESIS_BE_BIN_DIR.git_commit && ( [ ! -e $GENESIS_BE_ROOT_DATA_DIR/node1 ] && mkdir -p $GENESIS_BE_ROOT_DATA_DIR/node1 || : ) && mv $GOPATH/bin/go-genesis $GENESIS_BE_BIN_DIR.git_branch"
 
     backend_apps_ctl $num restart
 }
@@ -2345,7 +2359,7 @@ build_fe() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
 
-    docker exec -ti $BF_CONT_NAME bash -c "cd / && ([ -e $GENESIS_FE_SRC_DIR ] && rm -rf $GENESIS_FE_SRC_DIR || : ) && git clone --recursive https://github.com/GenesisKernel/genesis-front $GENESIS_FE_SRC_DIR && cd $GENESIS_FE_SRC_DIR && git checkout $GENESIS_FRONT_BRANCH && git pull origin $GENESIS_FRONT_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > $GENESIS_FE_SRC_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $GENESIS_FE_SRC_DIR.git_commit && yarn install && yarn build"
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && ([ -e $GENESIS_FE_SRC_DIR ] && rm -rf $GENESIS_FE_SRC_DIR || : ) && git clone --recursive https://github.com/GenesisKernel/genesis-front $GENESIS_FE_SRC_DIR && cd $GENESIS_FE_SRC_DIR && git checkout $FRONTEND_BRANCH && git pull origin $FRONTEND_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > $GENESIS_FE_SRC_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $GENESIS_FE_SRC_DIR.git_commit && yarn install && yarn build"
 }
 
 clean_fe_build() {
@@ -2359,7 +2373,7 @@ clean_fe_build() {
 
 
 get_fe_ver() {
-    echo "$GENESIS_FRONT_BRANCH"
+    echo "$FRONTEND_BRANCH"
 }
 
 get_fe_git_ver() {
@@ -2501,7 +2515,7 @@ start_update_keys() {
 get_demo_apps_url_from_dockerfile() {
     local df_path; df_path="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
     [ ! -e "$df_path" ] && return 1
-    local url; url="$($SED_E -n 's/^ENV GENESIS_DEMO_APPS_URL (.*)$/\1/p' "$df_path" | tail -n 1)"
+    local url; url="$($SED_E -n 's/^ENV DEMO_APPS_URL (.*)$/\1/p' "$df_path" | tail -n 1)"
     [ -n "$url" ] && echo "$url" || return 2
 }
 
@@ -2594,7 +2608,7 @@ start_import_demo_apps() {
     fi
 
     local result
-    local da_url; da_url="$GENESIS_DEMO_APPS_URL"
+    local da_url; da_url="$DEMO_APPS_URL"
     local dau_path; dau_path="$GENESIS_APPS_DIR/demo_apps.url"
 
     docker exec -t $BF_CONT_NAME bash -c "[ -e $dau_path ]" 
@@ -2996,13 +3010,44 @@ show_prev_docker_images() {
 
 ### Dockerfile ### begin ###
 
-update_bf_dockerfile() {
-    local df; df="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
+update_fe_dockerfile_content() {
+    local df os_type sed_i_cmd sed_cmd be_br_esc demo_apps_url_esc
+    local fe_repo_url_esc 
+    [ -z "$1" ] \
+        &&  echo "Path to Dockerfile isn't set" && return 1 \
+        || df="$1"
     [ ! -e "$df" ] \
            && echo "No '$df' file. Please create it first" && return 1
 
-    local sed_i_cmd
-    local os_type; os_type="$(get_os_type)"
+    os_type="$(get_os_type)"
+    case $os_type in
+        linux) sed_i_cmd="$SED_E -i" ;;
+        mac) sed_i_cmd="$SED_E -i .bak" ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            exit 23
+            ;;
+    esac
+
+    fe_repo_url_esc="$(echo "$FRONTEND_REPO_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+FRONTEND_REPO_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$fe_repo_url_esc/' $df"
+    eval "$sed_cmd"
+
+    fe_br_esc="$(echo "$FRONTEND_BRANCH" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+FRONTEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$fe_br_esc/' $df"
+    eval "$sed_cmd"
+}
+
+update_be_dockerfile_content() {
+    local df os_type sed_i_cmd sed_cmd be_br_esc demo_apps_url_esc
+    local be_go_url_esc 
+    [ -z "$1" ] \
+        &&  echo "Path to Dockerfile isn't set" && return 1 \
+        || df="$1"
+    [ ! -e "$df" ] \
+           && echo "No '$df' file. Please create it first" && return 1
+
+    os_type="$(get_os_type)"
     case $os_type in
         linux) sed_i_cmd="$SED_E -i" ;;
         mac) sed_i_cmd="$SED_E -i .bak" ;;
@@ -3013,18 +3058,40 @@ update_bf_dockerfile() {
     esac
 
     sed_cmd="$sed_i_cmd 's/(ENV[ ]+GOLANG_VER[ ]+)([0-9a-zA-Z\.\-]+)$/\1$GOLANG_VER/' $df"
-    #echo "sed_cmd: $sed_cmd"
     eval "$sed_cmd"
 
-    local be_br_esc; be_br_esc="$(echo "$GENESIS_BACKEND_BRANCH" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+GENESIS_BACKEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$be_br_esc/' $df"
-    #echo "sed_cmd: $sed_cmd"
+    be_go_url_esc="$(echo "$BACKEND_GO_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_GO_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$be_go_url_esc/' $df"
     eval "$sed_cmd"
 
-    local demo_apps_url_esc; demo_apps_url_esc="$(echo "$GENESIS_DEMO_APPS_URL" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd 's/(ENV[ ]+GENESIS_DEMO_APPS_URL[ ]+)([^ ]+)[ ]*$/\1$demo_apps_url_esc/' $df"
-    #echo "sed_cmd: $sed_cmd"
+    be_br_esc="$(echo "$BACKEND_BRANCH" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$be_br_esc/' $df"
     eval "$sed_cmd"
+
+    sc_repo_url_esc="$(echo "$SCRIPTS_REPO_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_REPO_URL[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$sc_repo_url_esc/' $df"
+    eval "$sed_cmd"
+
+    sc_br_esc="$(echo "$SCRIPTS_BRANCH" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_BRANCH[ ]+)([0-9a-zA-Z\.\_\-\:\/]+)[ ]*$/\1$sc_br_esc/' $df"
+    eval "$sed_cmd"
+
+    demo_apps_url_esc="$(echo "$DEMO_APPS_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd 's/(ENV[ ]+DEMO_APPS_URL[ ]+)([^ ]+)[ ]*$/\1$demo_apps_url_esc/' $df"
+    eval "$sed_cmd"
+}
+
+update_be_dockerfile() {
+    update_be_dockerfile_content "$SCRIPT_DIR/$BE_CONT_BUILD_DIR/Dockerfile"
+}
+
+update_fe_dockerfile() {
+    update_fe_dockerfile_content "$SCRIPT_DIR/$FE_CONT_BUILD_DIR/Dockerfile"
+}
+
+update_bf_dockerfile() {
+    update_be_dockerfile_content "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
+    update_fe_dockerfile_content "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/Dockerfile"
 }
 
 ### Dockerfile #### end ####
@@ -3040,14 +3107,14 @@ show_usage_help() {
     echo "  Commands:"
     echo
     echo "  install NUM [WPS] [CPS] [DBP]"
-    echo "    Install Docker, Genesis Client, database and backend containers"
+    echo "    Install Docker, Client, database and backend containers"
     echo "      NUM - number of clients/backends (mandatory)"
     echo "      WPS - web port shift (optional, default: $WEB_PORT_SHIFT)"
     echo "      CPS - client port shift (optional, default: $CLIENT_PORT_SHIFT)"
     echo "      DBP - database host port (optional, default: $DB_PORT)"
     echo "    Example:"
     echo "      $(basename "$0") install 3 8000 17000"
-    echo "      will install Docker, Genesis Client, start database container,"
+    echo "      will install Docker, Client, start database container,"
     echo "      start container with 3 frontends (web ports 8001, 8002, 8003)"
     echo "      and 3 backends (client ports 17001, 17002, 17003),"
     echo "      setup database for them and finally start 3 clients"
@@ -3093,10 +3160,10 @@ show_usage_help() {
     echo "    BE_NUM - backend's number"
     echo
     echo "  delete"
-    echo "    Stop clients and delete all Genesis-related docker containers"
+    echo "    Stop clients and delete all ${USE_PRODUCT}-related docker containers"
     echo
     echo "  delete-all"
-    echo "    Stop clients and delete all Genesis-related docker containers and images"
+    echo "    Stop clients and delete all ${USE_PRODUCT}-related docker containers and images"
     echo
     echo "  uninstall-docker"
     echo "    Docker unintaller for macOS"
@@ -3416,6 +3483,14 @@ pre_command() {
     
     ### BF Dockerfile ### begin ###
 
+    up-be-dockerfile)
+        update_be_dockerfile || exit 41
+        ;;
+
+    up-fe-dockerfile)
+        update_fe_dockerfile || exit 41
+        ;;
+
     up-bf-dockerfile)
         update_bf_dockerfile || exit 41
         ;;
@@ -3433,6 +3508,56 @@ pre_command() {
         ;;
 
     ### FE Image #### end ####
+
+
+    ### BE container ### begin ###
+
+    start-be-cont)
+        check_run_as_root
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_be_cont $num $wps $cps
+        ;;
+
+    stop-be-cont)
+        check_run_as_root
+        docker stop $BE_CONT_NAME
+        ;;
+
+    restart-be-cont)
+        check_run_as_root
+        docker stop $BE_CONT_NAME
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_be_cont $num $wps $cps
+        ;;
+
+    prep-be-cont)
+        check_run_as_root
+        prep_cont_for_inspect $BE_CONT_NAME
+        ;;
+
+    be-cont-bash|be-cont-sh|be-cont-shell)
+        check_run_as_root
+        cont_bash $BE_CONT_NAME
+        ;;
+
+    delete-be-cont)
+        check_run_as_root
+        remove_cont $BE_CONT_NAME
+        ;;
+        
+    ### BE Container #### end ####
+
+
+    ### BE Dockerfile ### begin ###
+
+    up-be-dockerfile)
+        update_be_dockerfile || exit 41
+        ;;
+
+    ### BE Dockerfile #### end ####
+
 
     ### BE Image ### begin ###
 
@@ -4131,7 +4256,7 @@ pre_command() {
         echo
         echo "Golang version: $GOLANG_VER"
         echo
-        echo "Demo apps URL: $GENESIS_DEMO_APPS_URL"
+        echo "Demo apps URL: $DEMO_APPS_URL"
         echo
         ;;
 

@@ -1,7 +1,7 @@
 FROM debian:stretch-slim
 
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
-ENV FRONTEND_BRANCH master
+ENV FRONTEND_BRANCH shitbranch
 
 RUN apt-get update -y && \
     apt-get install -y nginx curl git gnupg2 && \
