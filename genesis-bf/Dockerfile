@@ -3,6 +3,7 @@ FROM debian:stretch-slim
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV GOLANG_VER 1.10.3
+ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
 ENV BACKEND_BRANCH master
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
@@ -39,13 +40,16 @@ COPY supervisor/supervisord.conf /etc/supervisor/
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends nginx curl git gnupg2 && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
+
+RUN curl -sL $NODEJS_SETUP_SCRIPT_URL | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     apt-get remove -y cmdtest && \
     apt-get autoremove -y
+
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
     apt-get update && apt-get install -y --no-install-recommends yarn
+
 RUN git clone --recursive $FRONTEND_REPO_URL genesis-front && cd /genesis-front && git checkout $FRONT_BRANCH && git pull origin $FRONT_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > /genesis-front.git_branch && git log --pretty=format:'%h' -n 1 > /genesis-front.git_commit && yarn install && yarn build && find /genesis-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY genesis-front/settings.json /genesis-front/build/
 

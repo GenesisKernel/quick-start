@@ -9,6 +9,7 @@ SED_E="sed -E"
 USE_PRODUCT="genesis"
 
 GOLANG_VER="1.10.3"
+NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 BACKEND_BRANCH="master"
 BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -3012,7 +3013,7 @@ show_prev_docker_images() {
 
 update_fe_dockerfile_content() {
     local df os_type sed_i_cmd sed_cmd be_br_esc demo_apps_url_esc
-    local fe_repo_url_esc 
+    local fe_repo_url_esc fe_br_esc njss_url_esc
     [ -z "$1" ] \
         &&  echo "Path to Dockerfile isn't set" && return 1 \
         || df="$1"
@@ -3036,11 +3037,15 @@ update_fe_dockerfile_content() {
     fe_br_esc="$(echo "$FRONTEND_BRANCH" | $SED_E 's/\//\\\//g')"
     sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+FRONTEND_BRANCH[ ]+)([^ ]+)[ ]*$/\1$fe_br_esc/' $df"
     eval "$sed_cmd"
+
+    njss_url_esc="$(echo "$NODEJS_SETUP_SCRIPT_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+NODEJS_SETUP_SCRIPT_URL[ ]+)([^ ]+)[ ]*$/\1$njss_url_esc/' $df"
+    eval "$sed_cmd"
 }
 
 update_be_dockerfile_content() {
     local df os_type sed_i_cmd sed_cmd be_br_esc demo_apps_url_esc
-    local be_go_url_esc 
+    local be_go_url_esc be_br_esc sc_repo_url_esc sc_br_esc
     [ -z "$1" ] \
         &&  echo "Path to Dockerfile isn't set" && return 1 \
         || df="$1"
@@ -3483,16 +3488,22 @@ pre_command() {
     
     ### BF Dockerfile ### begin ###
 
-    up-be-dockerfile)
+    up-be-df|up-be-dockerfile|update-be-dockerfile)
         update_be_dockerfile || exit 41
         ;;
 
-    up-fe-dockerfile)
+    up-fe-df|up-fe-dockerfile|update-be-dockerfile)
         update_fe_dockerfile || exit 41
         ;;
 
-    up-bf-dockerfile)
+    up-bf-df|up-bf-dockerfile|update-bf-dockerfile)
         update_bf_dockerfile || exit 41
+        ;;
+
+    up-dfs|up-dockerfiles|update-dockerfiles)
+        update_be_dockerfile \
+            && update_fe_dockerfile \
+            && update_bf_dockerfile || exit 41
         ;;
 
     ### BF Dockerfile #### end ####
