@@ -51,7 +51,7 @@ CONT_WEB_PORT_SHIFT=80
 CONT_CLIENT_PORT_SHIFT=7000
 
 DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
-APPS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
+APPLICATIONS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_APP_NAME="Docker"
 #DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
@@ -429,7 +429,7 @@ update_global_downloads_and_apps_dir_vars() {
     local home; home="$(get_orig_user_homedir)"
     local home_esc; home_esc="$(echo "$home" | $SED_E 's/\//\\\//g')"
     DOWNLOADS_DIR="$(echo "$DOWNLOADS_DIR" | $SED_E "s/\\\$HOME/$home_esc/g")"
-    APPS_DIR="$(echo "$APPS_DIR" | $SED_E "s/\\\$HOME/$home_esc/g")"
+    APPLICATIONS_DIR="$(echo "$APPLICATIONS_DIR" | $SED_E "s/\\\$HOME/$home_esc/g")"
 }
 
 create_downloads_dir() {
@@ -438,8 +438,8 @@ create_downloads_dir() {
 }
 
 create_apps_dir() {
-    [ -d "$APPS_DIR" ] && return 0
-    run_as_orig_user "mkdir -p '$APPS_DIR'"
+    [ -d "$APPLICATIONS_DIR" ] && return 0
+    run_as_orig_user "mkdir -p '$APPLICATIONS_DIR'"
 }
 
 get_app_dir_size_m() {
@@ -900,7 +900,7 @@ install_linux_client_directly() {
         update_global_downloads_and_apps_dir_vars
         local app_basename; app_basename="$CLIENT_APPIMAGE_BASENAME"
         local app_dl_path; app_dl_path="$DOWNLOADS_DIR/$app_basename"
-        local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
+        local app_inst_path; app_inst_path="$APPLICATIONS_DIR/$app_basename"
 
         if [ ! -f "$app_inst_path" ]; then
             if [ ! -f "$app_dl_path" ]; then
@@ -966,7 +966,7 @@ start_linux_clients() {
         update_global_downloads_and_apps_dir_vars
 
         local app_basename; app_basename="$CLIENT_APPIMAGE_BASENAME"
-        local app_inst_path; app_inst_path="$APPS_DIR/$app_basename"
+        local app_inst_path; app_inst_path="$APPLICATIONS_DIR/$app_basename"
 
         local w_port; local c_port; local run_cmd
         local offset_x; offset_x=0; local offset_y; offset_y=0
