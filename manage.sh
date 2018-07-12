@@ -3071,12 +3071,53 @@ update_be_dockerfile_content() {
     eval "$sed_cmd"
 }
 
+update_blex_dockerfile_content() {
+    local df os_type sed_i_cmd sed_cmd be_br_esc demo_apps_url_esc
+    local blex_repo_url_esc blex_br_esc sc_repo_url_esc sc_br_esc
+    [ -z "$1" ] \
+        &&  echo "Path to Dockerfile isn't set" && return 1 \
+        || df="$1"
+    [ ! -e "$df" ] \
+           && echo "No '$df' file. Please create it first" && return 1
+
+    os_type="$(get_os_type)"
+    case $os_type in
+        linux) sed_i_cmd="$SED_E -i" ;;
+        mac) sed_i_cmd="$SED_E -i .bak" ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            exit 23
+            ;;
+    esac
+
+    blex_repo_url_esc="$(echo "$BLEX_REPO_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BLEX_REPO_URL[ ]+)([^ ]+)[ ]*$/\1$blex_repo_url_esc/' $df"
+    eval "$sed_cmd"
+
+    blex_br_esc="$(echo "$BLEX_BRANCH" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BLEX_BRANCH[ ]+)([^ ]+)[ ]*$/\1$blex_br_esc/' $df"
+    eval "$sed_cmd"
+
+    sc_repo_url_esc="$(echo "$SCRIPTS_REPO_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_REPO_URL[ ]+)([^ ]+)[ ]*$/\1$sc_repo_url_esc/' $df"
+    eval "$sed_cmd"
+
+    sc_br_esc="$(echo "$SCRIPTS_BRANCH" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+SCRIPTS_BRANCH[ ]+)([^ ]+)[ ]*$/\1$sc_br_esc/' $df"
+    eval "$sed_cmd"
+
+}
+
 update_be_dockerfile() {
     update_be_dockerfile_content "$SCRIPT_DIR/$BE_CONT_BUILD_DIR/Dockerfile"
 }
 
 update_fe_dockerfile() {
     update_fe_dockerfile_content "$SCRIPT_DIR/$FE_CONT_BUILD_DIR/Dockerfile"
+}
+
+update_blex_dockerfile() {
+    update_blex_dockerfile_content "$SCRIPT_DIR/$BLEX_CONT_BUILD_DIR/Dockerfile"
 }
 
 update_bf_dockerfile() {
@@ -3481,6 +3522,10 @@ pre_command() {
         update_fe_dockerfile || exit 41
         ;;
 
+    up-blex-df|up-blex-dockerfile|update-blex-dockerfile)
+        update_blex_dockerfile || exit 41
+        ;;
+
     up-bf-df|up-bf-dockerfile|update-bf-dockerfile)
         update_bf_dockerfile || exit 41
         ;;
@@ -3488,6 +3533,7 @@ pre_command() {
     up-dfs|up-dockerfiles|update-dockerfiles)
         update_be_dockerfile \
             && update_fe_dockerfile \
+            && update_blex_dockerfile \
             && update_bf_dockerfile || exit 41
         ;;
 
