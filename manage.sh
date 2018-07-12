@@ -24,7 +24,20 @@ BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 BLEX_BRANCH="develop"
 DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 
-DB_NAME_PREFIX="genesis"
+if [ "$USE_PRODUCT" = "apla" ]; then
+    DB_NAME_PREFIX="apla"
+    DB_HOST="apla-db"
+    DB_PASSWORD="apla"
+    CENT_URL="http://apla-cf:8000"
+    BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
+else
+    DB_NAME_PREFIX="genesis"
+    DB_HOST="genesis-db"
+    DB_PASSWORD="genesis"
+    CENT_URL="http://genesis-cf:8000"
+    BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
+fi
+BLEX_BRANCH="develop"
 
 BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
@@ -2996,6 +3009,67 @@ show_prev_docker_images() {
 ### Docker Images #### end ####
 
 
+### Scripts Config ### begin ###
+
+#DB_NAME_PREFIX="genesis"
+#DB_HOST="genesis-db"
+#DB_PASSWORD="genesis"
+#CENT_URL="http://genesis-cf:8000"
+#BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
+#BLEX_BRANCH="develop"
+
+update_scripts_config_content() {
+    local cf os_type sed_i_cmd val_esc sed_cmd
+    [ -z "$1" ] \
+        && echo "Path to scripts config isn't set" && return 1 \
+        || cf="$1"
+
+    os_type="$(get_os_type)"
+    case $os_type in
+        linux) sed_i_cmd="$SED_E -i" ;;
+        mac) sed_i_cmd="$SED_E -i .bak" ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            exit 23
+            ;;
+    esac
+
+    val_esc="$(echo "$DB_NAME_PREFIX" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(DB_NAME_PREFIX=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$DB_HOST" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(DB_HOST=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$DB_PASSWORD" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(DB_PASSWORD=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$CENT_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(CENT_URL=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$BLEX_REPO_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(BLEX_REPO_URL=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$BLEX_BRANCH" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(BLEX_BRANCH=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+}
+
+update_be_scripts_config() {
+    update_scripts_config_content "$SCRIPT_DIR/$BE_CONT_BUILD_DIR/scripts.config.sh"
+}
+
+update_bf_scripts_config() {
+    update_scripts_config_content "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
+}
+
+### Scripts Config #### end ####
+
+
 ### Dockerfile ### begin ###
 
 update_fe_dockerfile_content() {
@@ -3513,8 +3587,26 @@ pre_command() {
         
     ### BF Container #### end ####
 
+
+    ### Scripts Config ### begin ###
+
+    up-be-scf|update-be-scripts-config)
+        update_be_scripts_config
+        ;;
+
+    up-bf-scf|update-bf-scripts-config)
+        update_bf_scripts_config
+        ;;
+
+    up-scfs|update-scripts-configs)
+        update_be_scripts_config \
+            && update_bf_scripts_config
+        ;;
+
+    ### Scripts Config #### end ####
+
     
-    ### BF Dockerfile ### begin ###
+    ### Dockerfile ### begin ###
 
     up-be-df|up-be-dockerfile|update-be-dockerfile)
         update_be_dockerfile || exit 41
@@ -3539,7 +3631,9 @@ pre_command() {
             && update_bf_dockerfile || exit 41
         ;;
 
-    ### BF Dockerfile #### end ####
+    ### Dockerfile #### end ####
+
+
 
 
     ### FE Image ### begin ###

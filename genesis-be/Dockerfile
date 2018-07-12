@@ -23,6 +23,7 @@ RUN mkdir /genesis-apps && \
 ADD $DEMO_APPS_URL /genesis-apps/demo_apps.json
 
 RUN git clone -b $SCRIPTS_BRANCH $SCRIPTS_REPO_URL /genesis-scripts
+COPY scripts.config.sh /genesis-scripts/.env
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN pip3 install -r /genesis-scripts/requirements.txt

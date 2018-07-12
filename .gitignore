@@ -42,3 +42,6 @@ include
 
 # .env
 .env
+
+# bak
+*.sh.bak
