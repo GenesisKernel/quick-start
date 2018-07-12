@@ -29,7 +29,8 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     DB_HOST="apla-db"
     DB_PASSWORD="apla"
     CENT_URL="http://apla-cf:8000"
-    BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
+    #BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
+    BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 else
     DB_NAME_PREFIX="genesis"
     DB_HOST="genesis-db"
