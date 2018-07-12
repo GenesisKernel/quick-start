@@ -1,6 +1,9 @@
+[submodule "genesis-be/genesis-scripts"]
+	path = genesis-be/genesis-scripts
+	url = https://github.com/blitzstern5/genesis-scripts
 [submodule "genesis-bf/genesis-scripts"]
 	path = genesis-bf/genesis-scripts
-	url = https://github.com/blitzstern5/genesis-scripts.git
+	url = https://github.com/blitzstern5/genesis-scripts
 [submodule "genesis-blex/genesis-scripts"]
 	path = genesis-blex/genesis-scripts
-	url = https://github.com/blitzstern5/genesis-scripts.git
+	url = https://github.com/blitzstern5/genesis-scripts
