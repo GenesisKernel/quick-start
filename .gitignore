@@ -39,3 +39,6 @@ nosetests.xml
 local
 include
 *.sqlite
+
+# .env
+.env
