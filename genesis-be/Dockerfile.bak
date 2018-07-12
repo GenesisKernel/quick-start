@@ -6,7 +6,7 @@ ENV GOLANG_VER 1.10.3
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
 ENV BACKEND_BRANCH master
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH update-sign
+ENV SCRIPTS_BRANCH develop
 ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json
 
 RUN apt-get update -y && \

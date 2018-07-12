@@ -9,7 +9,7 @@ ENV BACKEND_BRANCH master
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH master
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH update-sign
+ENV SCRIPTS_BRANCH develop
 ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json
 
 RUN set -ex; apt-get update -y && \

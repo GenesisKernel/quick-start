@@ -2,7 +2,7 @@ FROM debian:stretch-slim
 
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH master
-ENV NODEJS_SETUP_SCRIPT_URL SHITTTT
+ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
 
 RUN apt-get update -y && \
     apt-get install -y nginx curl git gnupg2 && \

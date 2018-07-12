@@ -19,7 +19,7 @@ else
 fi
 FRONTEND_BRANCH="master"
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="master"
+SCRIPTS_BRANCH="develop"
 DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 
 DB_NAME_PREFIX="genesis"
