@@ -8,6 +8,12 @@ SED_E="sed -E"
 
 USE_PRODUCT="genesis"
 
+if [ "$USE_PRODUCT" = "apla" ]; then
+    PRODUCT_BRAND_NAME="Apla"
+else
+    PRODUCT_BRAND_NAME="Genesis"
+fi
+
 GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 BACKEND_BRANCH="master"
@@ -3013,13 +3019,6 @@ show_prev_docker_images() {
 
 ### Scripts Config ### begin ###
 
-#DB_NAME_PREFIX="genesis"
-#DB_HOST="genesis-db"
-#DB_PASSWORD="genesis"
-#CENT_URL="http://genesis-cf:8000"
-#BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-#BLEX_BRANCH="develop"
-
 update_scripts_config_content() {
     local cf os_type sed_i_cmd val_esc sed_cmd
     [ -z "$1" ] \
@@ -3035,6 +3034,10 @@ update_scripts_config_content() {
             exit 23
             ;;
     esac
+
+    val_esc="$(echo "$PRODUCT_BRAND_NAME" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(PRODUCT_BRAND_NAME=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
 
     val_esc="$(echo "$DB_NAME_PREFIX" | $SED_E 's/\//\\\//g')"
     sed_cmd="$sed_i_cmd -e 's/(DB_NAME_PREFIX=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"

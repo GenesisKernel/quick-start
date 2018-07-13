@@ -1,3 +1,4 @@
+PRODUCT_BRAND_NAME="Genesis"
 DB_HOST="genesis-db"
 DB_NAME_PREFIX="genesis"
 DB_USER="postgres"
