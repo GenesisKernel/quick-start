@@ -21,6 +21,7 @@ RUN apt-get remove -y build-essential && apt-get autoremove -y && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
 RUN git clone -b $SCRIPTS_BRANCH $SCRIPTS_REPO_URL /genesis-scripts
+COPY scripts.config.sh /genesis-scripts/.env
 
 COPY start_blockexplorer.sh /
 COPY supervisor/supervisord.conf /etc/supervisor/

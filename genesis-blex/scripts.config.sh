@@ -1,0 +1,8 @@
+PRODUCT_BRAND_NAME="Genesis"
+DB_HOST="genesis-db"
+DB_NAME_PREFIX="genesis"
+DB_USER="postgres"
+DB_PASSWORD="genesis"
+CENT_URL="http://genesis-cf:8000"
+BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
+BLEX_BRANCH="develop"
