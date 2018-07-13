@@ -27,6 +27,7 @@ DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick
 if [ "$USE_PRODUCT" = "apla" ]; then
     DB_NAME_PREFIX="apla"
     DB_HOST="apla-db"
+    DB_USER="apla"
     DB_PASSWORD="apla"
     CENT_URL="http://apla-cf:8000"
     #BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
@@ -34,6 +35,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
 else
     DB_NAME_PREFIX="genesis"
     DB_HOST="genesis-db"
+    DB_USER="genesis"
     DB_PASSWORD="genesis"
     CENT_URL="http://genesis-cf:8000"
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
@@ -3037,6 +3039,10 @@ update_scripts_config_content() {
 
     val_esc="$(echo "$DB_NAME_PREFIX" | $SED_E 's/\//\\\//g')"
     sed_cmd="$sed_i_cmd -e 's/(DB_NAME_PREFIX=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$DB_USER" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(DB_USER=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
     eval "$sed_cmd"
 
     val_esc="$(echo "$DB_HOST" | $SED_E 's/\//\\\//g')"
