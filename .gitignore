@@ -45,3 +45,4 @@ include
 
 # bak
 *.sh.bak
+*.bak
