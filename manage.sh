@@ -3076,6 +3076,10 @@ update_bf_scripts_config() {
     update_scripts_config_content "$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
 }
 
+update_blex_scripts_config() {
+    update_scripts_config_content "$SCRIPT_DIR/$BLEX_CONT_BUILD_DIR/scripts.config.sh"
+}
+
 ### Scripts Config #### end ####
 
 
@@ -3607,9 +3611,14 @@ pre_command() {
         update_bf_scripts_config
         ;;
 
+    up-blex-scf|update-blex-scripts-config)
+        update_blex_scripts_config
+        ;;
+
     up-scfs|update-scripts-configs)
         update_be_scripts_config \
-            && update_bf_scripts_config
+            && update_bf_scripts_config \
+            && update_blex_scripts_config
         ;;
 
     ### Scripts Config #### end ####
