@@ -2534,8 +2534,8 @@ copy_import_demo_apps_scripts() {
     srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_demo_apps.py"
     dsts[1]="$SCRIPTS_DIR/import_demo_apps.py"
 
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_demo_apps.sh"
-    dsts[2]="$SCRIPTS_DIR/import_demo_apps.sh"
+    #srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_demo_apps.sh"
+    #dsts[2]="$SCRIPTS_DIR/import_demo_apps.sh"
 
     local do_copy
 
