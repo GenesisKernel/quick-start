@@ -24,10 +24,10 @@ BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 BLEX_BRANCH="develop"
 DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 
+DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
     DB_NAME_PREFIX="apla"
     DB_HOST="apla-db"
-    DB_USER="apla"
     DB_PASSWORD="apla"
     CENT_URL="http://apla-cf:8000"
     #BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
@@ -35,7 +35,6 @@ if [ "$USE_PRODUCT" = "apla" ]; then
 else
     DB_NAME_PREFIX="genesis"
     DB_HOST="genesis-db"
-    DB_USER="genesis"
     DB_PASSWORD="genesis"
     CENT_URL="http://genesis-cf:8000"
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
