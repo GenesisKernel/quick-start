@@ -16,19 +16,26 @@ fi
 
 GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
-BACKEND_BRANCH="feature/1029-quick-start"
-BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+
+if [ "$USE_PRODUCT" = "apla" ]; then
+    BACKEND_BRANCH="feature/1029-quick-start"
+    BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+    DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start-simple/quick-start.json"
+else
+    BACKEND_BRANCH="master"
+    BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+    DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
+fi
+
 if [ "$USE_PRODUCT" = "apla" ]; then
     FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
 else
     FRONTEND_REPO_URL="https://github.com/GenesisKernel/genesis-front"
 fi
 FRONTEND_BRANCH="master"
+
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
 SCRIPTS_BRANCH="develop"
-BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-BLEX_BRANCH="develop"
-DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -36,8 +43,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     DB_HOST="apla-db"
     DB_PASSWORD="apla"
     CENT_URL="http://apla-cf:8000"
-    #BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
-    BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
+    BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
 else
     DB_NAME_PREFIX="genesis"
     DB_HOST="genesis-db"
