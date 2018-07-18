@@ -16,7 +16,7 @@ fi
 
 GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
-BACKEND_BRANCH="master"
+BACKEND_BRANCH="feature/1029-quick-start"
 BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
 if [ "$USE_PRODUCT" = "apla" ]; then
     FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
