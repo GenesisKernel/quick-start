@@ -4446,7 +4446,7 @@ pre_command() {
         ;;
 
     help)
-        show_detaled_help
+        show_detailed_help
         ;;
 
     *)
