@@ -3226,11 +3226,14 @@ update_bf_dockerfile() {
 ### Help ### begin ###
 
 ### Update ### 20180405 ### 08fad ### begin ###
-show_usage_help() {
+show_brief_help() {
     echo
-    echo "Usage: $(basename "$0") <command> <parameter>"
+    echo "Usage help: $(basename "$0") <command> <parameter>"
     echo
     echo "  Commands:"
+    echo
+    echo "  help"
+    echo "   Show detailed help"
     echo
     echo "  install NUM [WPS] [CPS] [DBP]"
     echo "    Install Docker, Client, database and backend containers"
@@ -3270,6 +3273,27 @@ show_usage_help() {
     echo "  restart-clients"
     echo "    Restart clients"
     echo 
+    echo "  delete"
+    echo "    Stop clients and delete all ${USE_PRODUCT}-related docker containers"
+    echo
+    echo "  delete-all"
+    echo "    Stop clients and delete all ${USE_PRODUCT}-related docker containers and images"
+    echo
+    echo "  uninstall-docker"
+    echo "    Docker unintaller for macOS"
+    echo
+    echo "  uninstall-client"
+    echo "    Client unintaller for macOS"
+    echo
+    echo "  founder-key"
+    echo "    Show founder's (1st backend) private key"
+}
+
+show_detailed_help() {
+    show_brief_help
+    echo "  priv-key [BE_NUM]"
+    echo "    Show appropriate backend's private key"
+    echo
     echo "  be-apps-ctl [CMD]"
     echo "    Control backend applications."
     echo "    CMD - command, available: status, start, stop, restart"
@@ -3284,12 +3308,6 @@ show_usage_help() {
     echo "  db-query [BE_NUM]"
     echo "    Run SQL-query at backend's database"
     echo "    BE_NUM - backend's number"
-    echo
-    echo "  delete"
-    echo "    Stop clients and delete all ${USE_PRODUCT}-related docker containers"
-    echo
-    echo "  delete-all"
-    echo "    Stop clients and delete all ${USE_PRODUCT}-related docker containers and images"
     echo
     echo "  uninstall-docker"
     echo "    Docker unintaller for macOS"
@@ -3313,6 +3331,7 @@ show_usage_help() {
     echo "    Build block explorer container image"
     echo
 }
+
 ### Update ### 20180405 ### 08fad #### end ####
 
 ### Help #### end ####
@@ -4109,6 +4128,10 @@ pre_command() {
         get_priv_key $2
         ;;
 
+    founder-key)
+        get_priv_key 1
+        ;;
+
     priv-keys)
         get_priv_keys $2
         ;;
@@ -4422,8 +4445,12 @@ pre_command() {
         echo
         ;;
 
+    help)
+        show_detaled_help
+        ;;
+
     *)
-        show_usage_help
+        show_brief_help
         ;;
 esac
 
