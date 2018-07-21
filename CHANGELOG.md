@@ -1,3 +1,13 @@
+## Version 0.6.6 / 2018-Jule-22 02:33
+
+* Update frontend's settings.json format
+* Split usage help to brief (default) and detailed.
+* Add founder-key command. Remove --args from linux client start up parameters.
+* Change back frontend preparing method to the building from the source
+* Update scripts
+* Fix detailed help function call
+* Update frontend settings.json: add socketUrl and disableFullNodesSync parameters.
+
 ## Version 0.6.5 / 2018-Jule-11 03:45
 
 * Add build-tag-push-all-images command
