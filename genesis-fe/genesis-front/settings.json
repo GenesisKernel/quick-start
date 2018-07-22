@@ -1,1 +1,1 @@
-{ "apiUrl": "http://127.0.0.1:7001/api/v2", "socketUrl": "http://127.0.0.1:18100", "disableFullNodesSync": true }
+{ "fullNodes": ["http://127.0.0.1:7001"], "socketUrl": "http://127.0.0.1:18100", "disableFullNodesSync": true }
