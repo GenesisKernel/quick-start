@@ -92,11 +92,11 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CLIENT_MAC_PROCESS_NAME="Apla"
     CLIENT_LINUX_PROCESS_NAME="apla"
     CLIENT_APP_NAME="Apla"
-    CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.5-RC/Apla-0.8.5-RC.dmg"
+    CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.6-RC/Apla-0.8.6-RC.dmg"
     CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
     CLIENT_MAC_APP_DIR="/Applications/Apla.app"
     CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
-    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.5-RC/apla-front-0.8.5-RC-x86_64.AppImage"
+    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.6-RC/apla-front-0.8.6-RC-x86_64.AppImage"
 else
     CLIENT_MAC_PROCESS_NAME="Genesis"
     CLIENT_LINUX_PROCESS_NAME="genesis"

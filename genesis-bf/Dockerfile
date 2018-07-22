@@ -7,7 +7,7 @@ ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
 ENV BACKEND_BRANCH master
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
-ENV FRONTEND_BRANCH master
+ENV FRONTEND_BRANCH tags/v0.8.6-RC
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
 ENV SCRIPTS_BRANCH develop
 ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json
