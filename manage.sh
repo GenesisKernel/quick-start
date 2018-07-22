@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.5"
-VERSION="0.6.6"
+PREV_VERSION="0.6.6"
+VERSION="0.6.7"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
