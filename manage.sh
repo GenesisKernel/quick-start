@@ -35,7 +35,7 @@ fi
 FRONTEND_BRANCH="tags/v0.8.6-RC"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="master"
+SCRIPTS_BRANCH="develop"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
