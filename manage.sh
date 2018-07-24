@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.6"
-VERSION="0.6.7"
+PREV_VERSION="0.6.7"
+VERSION="0.6.8"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -18,11 +18,11 @@ GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="feature/1029-quick-start"
+    BACKEND_BRANCH="develop"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
-    DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start-simple/quick-start.json"
+    DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 else
-    BACKEND_BRANCH="master"
+    BACKEND_BRANCH="develop"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 fi
@@ -188,9 +188,9 @@ else
 fi
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
-FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
+FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="yes"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
-FORCE_COPY_MBS_SCRIPT="no"
+FORCE_COPY_MBS_SCRIPT="yes"
 FORCE_COPY_MBLEX_SCRIPT="no"
 
 EMPTY_ENV_VARS="yes"
@@ -1034,9 +1034,9 @@ stop_mac_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "$CLIENT_MAC_PROCESS_NAME --full-node")
+        pids=$(pgrep -f "$CLIENT_MAC_PROCESS_NAME --disable-full-nodes-sync=true --full-node")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
-            && echo "Stopping clients ..." && kill $pids \
+            && echo "Stopping clients ..." && kill $pids > /dev/null \
             || stop=1
         [ $cnt -gt $max_tries ] && echo "Can't stop clients ..." && return 1
         cnt=$(expr $cnt + 1)
@@ -1048,9 +1048,9 @@ stop_linux_clients() {
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "$CLIENT_LINUX_PROCESS_NAME --full-node")
+        pids=$(pgrep -f "$CLIENT_LINUX_PROCESS_NAME --disable-full-nodes-sync=true --full-node")
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
-            && echo "Stopping clients ..." && kill $pids \
+            && echo "Stopping clients ..." && kill $pids > /dev/null \
             || stop=1
         [ $cnt -gt $max_tries ] && echo "Can't stop clients ..." && return 1
         cnt=$(expr $cnt + 1)
@@ -2545,8 +2545,8 @@ copy_import_demo_apps_scripts() {
     srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_demo_apps.py"
     dsts[1]="$SCRIPTS_DIR/import_demo_apps.py"
 
-    #srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_demo_apps.sh"
-    #dsts[2]="$SCRIPTS_DIR/import_demo_apps.sh"
+    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
+    dsts[2]="$SCRIPTS_DIR/thread_pool.py"
 
     local do_copy
 
