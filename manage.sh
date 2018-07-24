@@ -90,7 +90,7 @@ DOCKER_MAC_APP_BIN="/Applications/Docker.app/Contents/MacOS/Docker"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     CLIENT_MAC_PROCESS_NAME="Apla"
-    CLIENT_LINUX_PROCESS_NAME="apla"
+    CLIENT_LINUX_PROCESS_NAME="apla-front"
     CLIENT_APP_NAME="Apla"
     CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.6-RC/Apla-0.8.6-RC.dmg"
     CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
@@ -99,7 +99,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.8.6-RC/apla-front-0.8.6-RC-x86_64.AppImage"
 else
     CLIENT_MAC_PROCESS_NAME="Genesis"
-    CLIENT_LINUX_PROCESS_NAME="genesis"
+    CLIENT_LINUX_PROCESS_NAME="genesis-front"
     CLIENT_APP_NAME="Genesis"
     CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.8.6-RC/Genesis-0.8.6-RC.dmg"
     CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
