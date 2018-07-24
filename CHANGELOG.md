@@ -1,9 +1,9 @@
 ## Version 0.6.8 / 2018-Jule-24 06:54
 
-* Update scripts
 * Switch scripts branch to master
+* Update scripts
 * Fix stop-clients command
-* Switch Block exreplorer branch to master
+* Switch Block Explorer branch to master
 * Turn off debugging forced copying of scripts
 * Switch backends to [release/0.9.1 branch, commit da9a2a4](https://github.com/GenesisKernel/go-genesis/tree/release/0.9.1)
 
