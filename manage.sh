@@ -51,7 +51,7 @@ else
     CENT_URL="http://genesis-cf:8000"
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 fi
-BLEX_BRANCH="develop"
+BLEX_BRANCH="master"
 
 BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
