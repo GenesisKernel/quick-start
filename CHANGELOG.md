@@ -1,3 +1,21 @@
+## Version 0.6.8 / 2018-Jule-24 06:54
+
+* Update scripts
+* Switch scripts branch to master
+* Fix stop-clients command
+* Switch Block exreplorer branch to master
+* Turn off debugging forced copying of scripts
+* Switch backends to [release/0.9.1 branch, commit da9a2a4](https://github.com/GenesisKernel/go-genesis/tree/release/0.9.1)
+
+## Version 0.6.7 / 2018-Jule-22 05:30
+
+* Add --disable-full-nodes-sync=true parameter to client start up functionality
+* Update apla client to version [v0.8.6-RC](https://github.com/GenesisKernel/genesis-front/releases/tag/v0.8.6-RC)
+* Update genesis client to version [v0.8.6-RC](https://github.com/AplaProject/apla-front/releases/tag/v0.8.6-RC)
+* Change scripts branch to develop
+* Remove genesis-front prebuild
+* Fix settings.json format
+
 ## Version 0.6.6 / 2018-Jule-22 02:33
 
 * Update frontend's settings.json format
