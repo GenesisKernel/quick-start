@@ -18,11 +18,11 @@ GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="develop"
+    BACKEND_BRANCH="release/0.9.1"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 else
-    BACKEND_BRANCH="develop"
+    BACKEND_BRANCH="release/0.9.1"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 fi
@@ -35,7 +35,7 @@ fi
 FRONTEND_BRANCH="tags/v0.8.6-RC"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="develop"
+SCRIPTS_BRANCH="master"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -188,9 +188,9 @@ else
 fi
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
-FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="yes"
+FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
-FORCE_COPY_MBS_SCRIPT="yes"
+FORCE_COPY_MBS_SCRIPT="no"
 FORCE_COPY_MBLEX_SCRIPT="no"
 
 EMPTY_ENV_VARS="yes"
