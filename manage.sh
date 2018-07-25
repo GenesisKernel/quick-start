@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.7"
-VERSION="0.6.8"
+PREV_VERSION="0.6.8"
+VERSION="0.6.9"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -18,11 +18,11 @@ GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="release/0.9.1"
+    BACKEND_BRANCH="master"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 else
-    BACKEND_BRANCH="release/0.9.1"
+    BACKEND_BRANCH="master"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
 fi
@@ -2829,6 +2829,13 @@ start_install() {
     echo
 
     start_import_demo_apps || return 27
+    echo
+
+    stop_be_apps
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
     echo
 
     echo "Restarting Block Explorer ..."
