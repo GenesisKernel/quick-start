@@ -1,3 +1,6 @@
+## Version 0.6.10 / 2018-Jule-26 11:32
+* Update scripts: switch backend running mode to PrivateBlockchain
+
 ## Version 0.6.9 / 2018-Jule-25 23:07
 * Switch backend to version [master/2603ab1](https://github.com/GenesisKernel/go-genesis/commit/2603ab132201e58122cfd8473133399fa5d04e0e)
 * Add backend restarting after importing
