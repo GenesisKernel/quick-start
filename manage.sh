@@ -18,13 +18,13 @@ GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="master"
+    BACKEND_BRANCH="0.9.1"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
-    DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
+    DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json"
 else
-    BACKEND_BRANCH="master"
+    BACKEND_BRANCH="0.9.1"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
-    DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json"
+    DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json"
 fi
 
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -32,10 +32,10 @@ if [ "$USE_PRODUCT" = "apla" ]; then
 else
     FRONTEND_REPO_URL="https://github.com/GenesisKernel/genesis-front"
 fi
-FRONTEND_BRANCH="tags/v0.8.6-RC"
+FRONTEND_BRANCH="v0.8.6-RC"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="master"
+SCRIPTS_BRANCH="0.1.0"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -51,7 +51,7 @@ else
     CENT_URL="http://genesis-cf:8000"
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 fi
-BLEX_BRANCH="master"
+BLEX_BRANCH="0.1.0"
 
 BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
