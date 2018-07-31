@@ -3,6 +3,7 @@
 * Switch backend to version tag [0.9.11](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.1)
 * Switch frontend to version tag [v0.8.6-RC](https://github.com/GenesisKernel/genesis-front/releases/tag/v0.8.6-RC)
 * Switch demo apps to vesion tag [quick-start-0.9.15](https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15)
+* Fix port checking function
 
 ## Version 0.6.10 / 2018-Jule-26 11:32
 * Update scripts: switch backend running mode to PrivateBlockchain
