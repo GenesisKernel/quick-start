@@ -967,9 +967,7 @@ start_mac_clients() {
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-        [ $i -eq 1 ] \
-            && run_cmd="open -n $CLIENT_MAC_APP_DIR --args --disable-full-nodes-sync=true --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry" \
-            || run_cmd="open -n $CLIENT_MAC_APP_DIR --args --disable-full-nodes-sync=true --full-node http://127.0.0.1:$c_port --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry"
+        run_cmd="open -n $CLIENT_MAC_APP_DIR --args --disable-full-nodes-sync=true --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry"
         eval "$run_cmd"
         offset_x=$(expr $offset_x + 50) 
         offset_y=$(expr $offset_y + 50) 
@@ -1003,9 +1001,7 @@ start_linux_clients() {
             w_port=$(expr $i + $wps)
             c_port=$(expr $i + $cps)
             echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
-            [ $i -eq 1 ] \
-                && run_cmd="$app_inst_path --disable-full-nodes-sync=true --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &" \
-                || run_cmd="$app_inst_path --disable-full-nodes-sync=true --full-node http://127.0.0.1:$c_port --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &"
+            run_cmd="$app_inst_path --disable-full-nodes-sync=true --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry &" 
             run_as_orig_user "$run_cmd"
             offset_x=$(expr $offset_x + 50) 
             offset_y=$(expr $offset_y + 50) 
