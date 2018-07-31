@@ -5,12 +5,12 @@ ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr
 ENV GOLANG_VER 1.10.3
 ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
-ENV BACKEND_BRANCH master
+ENV BACKEND_BRANCH 0.9.1
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
-ENV FRONTEND_BRANCH tags/v0.8.6-RC
+ENV FRONTEND_BRANCH v0.8.6-RC
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH master
-ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json
+ENV SCRIPTS_BRANCH 0.1.0
+ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json
 
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
