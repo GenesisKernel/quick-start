@@ -1,6 +1,9 @@
+## Version 0.6.12 / 2018-Aug-03 02:36
+* Update backend to version tag [0.9.2](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.2)
+
 ## Version 0.6.11 / 2018-Jule-31 02:28
 * Change supervisor unix socket file path to /dev/shm/supervisor.sock
-* Switch backend to version tag [0.9.11](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.1)
+* Switch backend to version tag [0.9.1](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.1)
 * Switch frontend to version tag [v0.8.6-RC](https://github.com/GenesisKernel/genesis-front/releases/tag/v0.8.6-RC)
 * Switch demo apps to vesion tag [quick-start-0.9.15](https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15)
 * Fix port checking function
