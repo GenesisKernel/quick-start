@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.10"
-VERSION="0.6.11"
+PREV_VERSION="0.6.11"
+VERSION="0.6.12"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -18,11 +18,11 @@ GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="0.9.1"
+    BACKEND_BRANCH="0.9.2"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json"
 else
-    BACKEND_BRANCH="0.9.1"
+    BACKEND_BRANCH="0.9.2"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json"
 fi
