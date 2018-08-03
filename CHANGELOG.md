@@ -1,5 +1,5 @@
 ## Version 0.6.13 / 2018-Aug-03 18:01
-* Update backend to version branch/commit [master:da88f37](https://github.com/GenesisKernel/go-genesis/commit/da88f375b3a9a428b803248bfb2325a84dd68342): fix another potential desynchronization issue
+* Update backend to version [0.9.3](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.3): fix another potential desynchronization issue
 
 ## Version 0.6.12 / 2018-Aug-03 02:36
 * Update backend to version tag [0.9.2](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.2)
