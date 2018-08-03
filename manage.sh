@@ -3686,7 +3686,7 @@ pre_command() {
 
     build-fe-image)
         check_run_as_root
-        #update_fe_dockerfile || exit 41
+        update_fe_dockerfile || exit 41
         (cd "$script_dir" \
             && docker build -t $FE_CONT_NAME -f $FE_CONT_BUILD_DIR/Dockerfile $FE_CONT_BUILD_DIR/.)
         ;;
@@ -3747,7 +3747,7 @@ pre_command() {
 
     build-be-image)
         check_run_as_root
-        #update_fe_dockerfile || exit 41
+        update_be_dockerfile || exit 41
         (cd "$script_dir" \
             && docker build -t $BE_CONT_NAME -f $BE_CONT_BUILD_DIR/Dockerfile $BE_CONT_BUILD_DIR/.)
         ;;
@@ -4422,7 +4422,9 @@ pre_command() {
             && "$0" push-blex-image \
         && "$0" build-bf-image \
             && "$0" tag-local-bf-image \
-            && "$0" push-bf-image
+            && "$0" push-bf-image \
+        update_be_dockerfile \
+        update_fe_dockerfile
         ;;
 
     product)
