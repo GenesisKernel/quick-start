@@ -18,11 +18,11 @@ GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="0.9.2"
+    BACKEND_BRANCH="0.9.3"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json"
 else
-    BACKEND_BRANCH="0.9.2"
+    BACKEND_BRANCH="0.9.3"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json"
 fi
@@ -2325,7 +2325,7 @@ build_be() {
         && return 1
 
     local GOPATH; GOPATH=/go
-    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && ( [ ! -e $BE_BIN_DIR ] && mkdir -p $BE_BIN_DIR || : ) && git checkout | sed -E -n -e \"s/^([^']+)'([^']+)'/\2/p\" | sed -E -n \"s/origin\/([^.]+)\./\1/p\" > $BE_BIN_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $BE_BIN_DIR.git_commit && ( [ ! -e $BE_ROOT_DATA_DIR/node1 ] && mkdir -p $BE_ROOT_DATA_DIR/node1 || : ) && mv $GOPATH/bin/go-genesis $BE_BIN_DIR.git_branch"
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git rev-parse --abbrev-ref HEAD  > /genesis-back/bin/go-genesis.git_branch && git rev-parse HEAD > /genesis-back/bin/go-genesis.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/go-genesis /genesis-back/bin/go-genesis && rm -rf /go"
 
     backend_apps_ctl $num restart
 }
@@ -2370,7 +2370,7 @@ build_fe() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
 
-    docker exec -ti $BF_CONT_NAME bash -c "cd / && ([ -e $FE_SRC_DIR ] && rm -rf $FE_SRC_DIR || : ) && git clone --recursive https://github.com/GenesisKernel/genesis-front $FE_SRC_DIR && cd $FE_SRC_DIR && git checkout $FRONTEND_BRANCH && git pull origin $FRONTEND_BRANCH && git branch | sed -E -n 's/.* (v[0-9a-zA-Z\-\.\_]+)\)/\1/p' > $FE_SRC_DIR.git_branch && git log --pretty=format:'%h' -n 1 > $FE_SRC_DIR.git_commit && yarn install && yarn build"
+    docker exec -ti $BF_CONT_NAME bash -c "cd / && ([ -e $FE_SRC_DIR ] && rm -rf $FE_SRC_DIR || : ) && git clone --recursive $FRONTEND_REPO_URL genesis-front && cd /genesis-front && git checkout $FRONT_BRANCH && git pull origin $FRONT_BRANCH && git rev-parse --abbrev-ref HEAD > /genesis-front.git_branch && git rev-parse HEAD > /genesis-front.git_commit && yarn install && yarn build && find /genesis-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;"
 }
 
 clean_fe_build() {
