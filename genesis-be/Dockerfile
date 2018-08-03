@@ -4,10 +4,10 @@ ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV GOLANG_VER 1.10.3
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
-ENV BACKEND_BRANCH master
+ENV BACKEND_BRANCH 0.9.3
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH develop
-ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/quick-start/quick-start.json
+ENV SCRIPTS_BRANCH 0.1.0
+ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json
 
 RUN apt-get update -y && \
     apt-get install -y supervisor curl git gnupg2 postgresql-client-9.6 \
@@ -16,7 +16,7 @@ RUN apt-get update -y && \
 
 RUN curl -L -o /go$GOLANG_VER.linux-amd64.tar.gz https://dl.google.com/go/go$GOLANG_VER.linux-amd64.tar.gz && tar xvf /go$GOLANG_VER.linux-amd64.tar.gz && mv /go /usr/local/ && find /go$GOLANG_VER.linux-amd64.tar.gz -delete
 
-RUN go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git checkout | sed -E -n -e "s/^([^']+)'([^']+)'/\2/p" | sed -E -n "s/origin\/([^.]+)\./\1/p" > /genesis-back/bin/go-genesis.git_branch && git log --pretty=format:'%h' -n 1 > /genesis-back/bin/go-genesis.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/go-genesis /genesis-back/bin/go-genesis && rm -rf /go
+RUN go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git rev-parse --abbrev-ref HEAD  > /genesis-back/bin/go-genesis.git_branch && git rev-parse HEAD > /genesis-back/bin/go-genesis.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/go-genesis /genesis-back/bin/go-genesis && rm -rf /go
 
 RUN mkdir /genesis-apps && \
     echo -n "$DEMO_APPS_URL" > /genesis-apps/demo_apps.url
