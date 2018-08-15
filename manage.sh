@@ -190,6 +190,7 @@ TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
+FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="yes"
 FORCE_COPY_MBS_SCRIPT="no"
 FORCE_COPY_MBLEX_SCRIPT="no"
 
@@ -2597,6 +2598,42 @@ copy_import_demo_apps_data_files() {
         fi
     done
 }
+
+copy_update_sys_params_scripts() {
+
+    local srcs; local dsts;
+
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/genesis_api_client.py"
+    dsts[0]="$SCRIPTS_DIR/genesis_api_client.py"
+
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/newValToFullNodes.py"
+    dsts[1]="$SCRIPTS_DIR/import_demo_apps.py"
+
+    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
+    dsts[2]="$SCRIPTS_DIR/thread_pool.py"
+
+    local do_copy
+
+    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
+        do_copy="no"
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
+        if [ $? -ne 0 ]; then
+            do_copy="yes"
+        fi
+        if [ "$do_copy" = "yes" ] \
+            || [ "$FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS" = "yes" ]; then
+
+            if [ -e "${srcs[$i]}" ]; then
+                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
+                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
+            else
+                echo "No '${srcs[$i]}' @ host system. Please create it first." \
+                    && return 1
+            fi
+        fi
+    done
+}
+
 
 start_import_demo_apps() {
     echo "Preparing for importing of demo apps ..."
