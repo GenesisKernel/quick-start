@@ -1,6 +1,7 @@
 ## Version 0.6.14 / 2018-Aug-15 17:01
 * Update backend to version [0.9.4](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.4): fix potential hangs and/or errors while importing big XLSM data files
 * Update applications to version [0.9.16](https://github.com/GenesisKernel/apps/releases/tag/quick-start-0.9.16)
+* Update db container: update Dockerfile and PostgreSQL version to 9.6.10-1.pgdg90+1
 
 ## Version 0.6.13 / 2018-Aug-03 18:01
 * Update backend to version [0.9.3](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.3): fix another potential desynchronization issue
