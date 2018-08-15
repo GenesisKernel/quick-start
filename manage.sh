@@ -35,7 +35,7 @@ fi
 FRONTEND_BRANCH="v0.8.6-RC"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="0.1.0"
+SCRIPTS_BRANCH="0.1.1"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -190,7 +190,7 @@ TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
-FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="yes"
+FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="no"
 FORCE_COPY_MBS_SCRIPT="no"
 FORCE_COPY_MBLEX_SCRIPT="no"
 
@@ -2495,6 +2495,7 @@ start_update_full_nodes() {
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
     check_update_mbs_script || return $?
+    copy_update_sys_params_scripts || return $?
     rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
 
     echo "Starting 'update full nodes' ..."
@@ -2607,7 +2608,7 @@ copy_update_sys_params_scripts() {
     dsts[0]="$SCRIPTS_DIR/genesis_api_client.py"
 
     srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/newValToFullNodes.py"
-    dsts[1]="$SCRIPTS_DIR/import_demo_apps.py"
+    dsts[1]="$SCRIPTS_DIR/newValToFullNodes.py"
 
     srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
     dsts[2]="$SCRIPTS_DIR/thread_pool.py"
@@ -2642,7 +2643,7 @@ start_import_demo_apps() {
 
     local rmt_path
 
-    copy_import_demo_apps_scripts|| return 2
+    copy_import_demo_apps_scripts || return 2
     copy_import_demo_apps_data_files || return 3
     check_update_mbs_script || return $?
     rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
