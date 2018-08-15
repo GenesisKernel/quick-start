@@ -9,7 +9,7 @@ ENV BACKEND_BRANCH 0.9.4
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH v0.8.6-RC
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH 0.1.0
+ENV SCRIPTS_BRANCH 0.1.1
 ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json
 
 RUN set -ex; apt-get update -y && \
