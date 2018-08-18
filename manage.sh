@@ -2310,6 +2310,54 @@ tail_be_log() {
 }
 ### Update ### 20180405 ### 08fad #### end ####
 
+cp_be_log() {
+    local log_basename dst_path
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    log_basename="node$1.log"
+
+    [ -z "$2" ] && dst_path="." || dst_path="$2"
+    echo "dst_path: $dst_path"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    local log_dirname; log_dirname="$BE_ROOT_DATA_DIR/node$1"
+    docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
+    [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
+
+    local log_path; log_path="$log_dirname/$log_basename"
+    docker exec -t $BF_CONT_NAME bash -c "[ -e '$log_path' ]"
+    [ $? -ne 0 ] && echo "No log file '$log_path'" && return 4
+
+    docker cp "$BF_CONT_NAME:$log_path" "$dst_path"
+}
+
+cp_be_logs() {
+    local log_basename dst_path
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    log_basename="node$1.log"
+
+    [ -z "$2" ] && dst_dir="." || dst_dir="$2"
+    echo "dst_path: $dst_path"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    local log_dirname; log_dirname="$BE_ROOT_DATA_DIR/node$1"
+    docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
+    [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
+
+    local log_path; log_path="$log_dirname/$log_basename"
+    docker exec -t $BF_CONT_NAME bash -c "[ -e '$log_path' ]"
+    [ $? -ne 0 ] && echo "No log file '$log_path'" && return 4
+
+    docker cp "$BF_CONT_NAME:$log_path" "$dst_path"
+}
+
 ### Backends services #### end ####
 
 
@@ -4261,6 +4309,10 @@ pre_command() {
 
     tail-be-log)
         tail_be_log $2
+        ;;
+
+    cp-be-log)
+        cp_be_log $2 $3
         ;;
 
     update-keys)
