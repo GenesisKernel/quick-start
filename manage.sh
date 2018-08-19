@@ -2895,6 +2895,7 @@ safe_dump_be_dbs_and_data_dirs() {
         y|Y)
             echo
             stop_be_apps $num \
+                && cp_be_logs "$dst_dir/logs" \
                 && dump_be_data_dirs "$dst_dir/data-dirs" \
                 && dump_be_dbs "$dst_dir/db-dumps" \
                 && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
