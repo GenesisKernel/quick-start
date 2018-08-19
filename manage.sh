@@ -3032,7 +3032,7 @@ get_fe_git_ver() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
 
-    docker exec -ti $BF_CONT_NAME bash -c "[ -e $FE_SRC_DIR.git_branch ] && echo -n 'Git branch: ' && cat $FE_SRC_DIR.git_branch; [ -e $FE_SRC_DIR.git_commit ] && echo -n 'Git commit: ' && cat $SRC_DIR.git_commit && echo"
+    docker exec -ti $BF_CONT_NAME bash -c "[ -e $FE_SRC_DIR.git_branch ] && echo -n 'Git branch: ' && cat $FE_SRC_DIR.git_branch; [ -e $FE_SRC_DIR.git_commit ] && echo -n 'Git commit: ' && cat $FE_SRC_DIR.git_commit && echo"
 }
 ### Update ### 20180405 ### 08fad #### end ####
 
