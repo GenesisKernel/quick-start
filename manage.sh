@@ -2897,16 +2897,18 @@ safe_dump_be_dbs_and_data_dirs() {
             stop_be_apps $num \
                 && dump_be_data_dirs "$dst_dir/data-dirs" \
                 && dump_be_dbs "$dst_dir/db-dumps" \
+                && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
+                && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :) \
                 && start_be_apps $num
             ;;
         *) echo; echo "OK, canceling dbs restore process ..." ;;
     esac
-
 }
 
 safe_restore_be_dbs_and_data_dirs() {
-    local num wps cps dbp cfp blexp src_dir ind
-    [ -z "$1" ] && echo "Source directory isn't set" && return 1
+    local num wps cps dbp cfp blexp src_dir ind is_tar_gz
+    [ -z "$1" ] && echo "Source directory or tar.gz archive isn't set" \
+        && return 1
     src_dir="$1"
 
     read_install_params_to_vars || return $? 
@@ -2922,12 +2924,21 @@ safe_restore_be_dbs_and_data_dirs() {
     case $answ in
         y|Y)
             echo
+            is_tar_gz="$(file "$src_dir" | cut -f 2 -d ':' | cut -d ',' -f1 | $SED_E 's/^[ ]*//' | grep "gzip compressed data")"
+            if [ -n "$is_tar_gz" ]; then
+                echo "Source path '$src_dir' is a tar.gz archive. Unpacking ..."
+                (cd "$(dirname "$src_dir")" && tar zvxf "$src_dir")
+                src_dir="$(echo "$src_dir" | $SED_E 's/\.tar\.gz$//')"
+            fi
+
+            [ ! -e "$src_dir" ] && echo "Source directory doesn't exist" && return 3
             stop_blex \
                 && stop_be_apps $num \
                 && restore_be_data_dirs "$src_dir/data-dirs" \
                 && drop_be_dbs \
                 && create_be_dbs \
                 && restore_be_dbs "$src_dir/db-dumps" \
+                && ([ -n "$is_tar_gz" ] && [ -e "$src_dir" ] && rm -rf "$src_dir" || :) \
                 && start_be_apps $num \
                 && start_blex
             ;;
