@@ -52,3 +52,6 @@ logs/
 
 # .sql
 *.sql
+
+# archives
+*.tar.gz
