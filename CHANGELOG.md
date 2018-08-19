@@ -1,3 +1,7 @@
+## Version 0.6.15 / 2018-Aug-20 00:58
+* Add dump-be-all and restore-be-all command to dump/restore backends logs, data directories and databases
+* Update backend to version [hotfix/1103-rollback](https://github.com/GenesisKernel/go-genesis/tree/hotfix/1103-rollback): fix another one potential bug leading to desynchronizationwhile importing big XLSM data files
+
 ## Version 0.6.14 / 2018-Aug-15 17:01
 * Update backend to version [0.9.4](https://github.com/GenesisKernel/go-genesis/releases/tag/0.9.4): fix potential hangs and/or errors while importing big XLSM data files
 * Update applications to version [0.9.16](https://github.com/GenesisKernel/apps/releases/tag/quick-start-0.9.16)
