@@ -46,3 +46,9 @@ include
 # bak
 *.sh.bak
 *.bak
+
+# logs
+logs/
+
+# .sql
+*.sql
