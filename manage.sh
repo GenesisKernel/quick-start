@@ -1797,7 +1797,7 @@ get_priv_keys() {
     fi
     local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 10
-    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && priv_key_path=\"/s/s\$i/PrivateKey\" && [ -e \"\$priv_key_path\" ]  && cat \"\$priv_key_path\" && echo; done'"
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && priv_key_path=\"$BE_ROOT_DATA_DIR/node\$i/PrivateKey\" && [ -e \"\$priv_key_path\" ]  && cat \"\$priv_key_path\" && echo; done'"
 }
 
 check_http_priv_key() {
