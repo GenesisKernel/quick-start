@@ -2895,6 +2895,7 @@ safe_dump_be_dbs_and_data_dirs() {
         y|Y)
             echo
             stop_be_apps $num \
+                && get_versions > "$dst_dir/versions" \
                 && cp_be_logs "$dst_dir/logs" \
                 && dump_be_data_dirs "$dst_dir/data-dirs" \
                 && dump_be_dbs "$dst_dir/db-dumps" \
@@ -3040,6 +3041,21 @@ get_fe_git_ver() {
 
 
 ### Misc ### begin ###
+
+get_versions() {
+    echo "Quick Start version: $VERSION"
+    echo
+    echo "Backend version: "
+    get_be_git_ver
+    echo
+    echo "Frontend version: "
+    get_fe_git_ver
+    echo
+    echo "Golang version: $GOLANG_VER"
+    echo
+    echo "Demo apps URL: $DEMO_APPS_URL"
+    echo
+}
 
 check_num_param() {
     [ -z "$1" ] && echo "The number of clients/backends is not set" && exit 100
@@ -5196,18 +5212,7 @@ pre_command() {
         ;;
 
     versions)
-        echo "Quick Start version: $VERSION"
-        echo
-        echo "Backend version: "
-        get_be_git_ver
-        echo
-        echo "Frontend version: "
-        get_fe_git_ver
-        echo
-        echo "Golang version: $GOLANG_VER"
-        echo
-        echo "Demo apps URL: $DEMO_APPS_URL"
-        echo
+        get_versions
         ;;
 
     help)
