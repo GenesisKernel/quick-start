@@ -14,7 +14,7 @@ ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/quick-
 
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
-    apt-get install -y --no-install-recommends supervisor curl git gnupg2 \
+    apt-get install -y --no-install-recommends sudo supervisor curl git gnupg2 \
     postgresql-client-9.6 build-essential ca-certificates && apt-get clean; \
     (rm -rf /var/lib/apt/lists/*; :)
 

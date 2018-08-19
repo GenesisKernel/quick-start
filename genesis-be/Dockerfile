@@ -10,7 +10,7 @@ ENV SCRIPTS_BRANCH 0.1.0
 ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json
 
 RUN apt-get update -y && \
-    apt-get install -y supervisor curl git gnupg2 postgresql-client-9.6 \
+    apt-get install -y sudo supervisor curl git gnupg2 postgresql-client-9.6 \
     build-essential && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
