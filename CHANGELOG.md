@@ -1,5 +1,7 @@
 ## Version 0.6.15 / 2018-Aug-20 00:58
 * Add dump-be-all and restore-be-all command to dump/restore backends logs, data directories and databases
+* Fix priv-keys command
+* Fix frontend git version
 * Update backend to version [hotfix/1103-rollback](https://github.com/GenesisKernel/go-genesis/tree/hotfix/1103-rollback): fix another one potential bug leading to desynchronizationwhile importing big XLSM data files
 
 ## Version 0.6.14 / 2018-Aug-15 17:01
