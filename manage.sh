@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.6.14"
-VERSION="0.6.15"
+PREV_VERSION="0.6.13"
+VERSION="0.6.14"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -2070,7 +2070,7 @@ check_update_mblex_script() {
         if [ $? -ne 0 ]; then
             do_copy="yes"
         fi
-        if [ "$do_copy" = "yes" ] || [ "$FORCE_COPY_MBS_SCRIPT" = "yes" ]; then
+        if [ "$do_copy" = "yes" ] || [ "$FORCE_COPY_MBLEX_SCRIPT" = "yes" ]; then
             if [ -e "${srcs[$i]}" ]; then
                 echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BLEX_CONT_NAME' ..."
                 docker cp "${srcs[$i]}" $BLEX_CONT_NAME:${dsts[$i]}
@@ -2089,16 +2089,34 @@ run_mblex_cmd() {
     docker exec -ti $BLEX_CONT_NAME bash $rmt_path $@
 }
 
+update_blex_supervisor() {
+    check_cont $BLEX_CONT_NAME > /dev/null \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl update"
+}
+
 restart_blex() {
     check_cont $BLEX_CONT_NAME > /dev/null \
-    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl update && supervisorctl restart blockexplorer"
+    && echo "Restarting blockexplorer ..." \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl restart blockexplorer"
+}
+
+start_blex() {
+    check_cont $BLEX_CONT_NAME > /dev/null \
+    && echo "Starting blockexplorer ..." \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl start blockexplorer"
+}
+
+stop_blex() {
+    check_cont $BLEX_CONT_NAME > /dev/null \
+    && echo "Stopping blockexplorer ..." \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer"
 }
 
 setup_blex() {
     local num blexp
     num="$1"; [ -z "$2" ] && blexp="$CONT_BLEX_PORT" || blexp="$2"
     run_mblex_cmd config $num $blexp
-    restart_blex
+    update_blex_supervisor && restart_blex
 }
 
 setup_be_apps() {
@@ -2178,6 +2196,33 @@ start_be_apps_normal() {
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
     wait_backend_apps_status $num || return 2
+}
+
+stop_be_app() {
+    local ind app_name
+    [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
+    ind="$1"
+    echo "Stopping backend #$ind ..."
+    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    docker exec -t $BF_CONT_NAME bash -c "supervisorctl stop $app_name"
+}
+
+start_be_app() {
+    local ind app_name
+    [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
+    ind="$1"
+    echo "Starting backend #$ind ..."
+    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
+}
+
+restart_be_app() {
+    local ind app_name
+    [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
+    ind="$1"
+    echo "Restarting backend #$ind ..."
+    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
 }
 
 stop_be_apps() {
@@ -2289,7 +2334,7 @@ check_host_side() {
 ### Update ### 20180405 ### 08fad ### begin ###
 
 tail_be_log() {
-    local log_basename
+    local log_basename log_dirname log_path
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1
     log_basename="node$1.log"
 
@@ -2298,11 +2343,11 @@ tail_be_log() {
         && echo "Backend/frontend container isn't ready" \
         && return 2
 
-    local log_dirname; log_dirname="$BE_ROOT_DATA_DIR/node$1"
+    log_dirname="$BE_ROOT_DATA_DIR/node$1"
     docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
     [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
 
-    local log_path; log_path="$log_dirname/$log_basename"
+    log_path="$log_dirname/$log_basename"
     docker exec -t $BF_CONT_NAME bash -c "[ -e '$log_path' ]"
     [ $? -ne 0 ] && echo "No log file '$log_path'" && return 4
 
@@ -2311,52 +2356,585 @@ tail_be_log() {
 ### Update ### 20180405 ### 08fad #### end ####
 
 cp_be_log() {
-    local log_basename dst_path
+    local log_basename log_dirname log_path dst_path _dst_path
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1
     log_basename="node$1.log"
 
     [ -z "$2" ] && dst_path="." || dst_path="$2"
-    echo "dst_path: $dst_path"
 
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -ne 0 ] \
         && echo "Backend/frontend container isn't ready" \
         && return 2
 
-    local log_dirname; log_dirname="$BE_ROOT_DATA_DIR/node$1"
+    log_dirname="$BE_ROOT_DATA_DIR/node$1"
     docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
     [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
 
-    local log_path; log_path="$log_dirname/$log_basename"
+    log_path="$log_dirname/$log_basename"
     docker exec -t $BF_CONT_NAME bash -c "[ -e '$log_path' ]"
     [ $? -ne 0 ] && echo "No log file '$log_path'" && return 4
 
+    [ "$dst_path" = "." ] \
+        && _dst_path="./$log_basename" \
+        || _dst_path="$dst_path"
+    echo "Copying backend #$1 log from container '$BF_CONT_NAME' to the host path '$_dst_path' ..."
     docker cp "$BF_CONT_NAME:$log_path" "$dst_path"
 }
 
 cp_be_logs() {
-    local log_basename dst_path
+    local num  wps cps dbp cfp blexp dst_dir
+    [ -z "$1" ] && dst_dir="." || dst_dir="$1"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        echo "Copying backend #$i log from container '$BF_CONT_NAME' to the host dir '$dst_dir' ..."
+        (cd "$dst_dir" && cp_be_log $i > /dev/null) || return 10
+    done
+}
+
+null_be_log() {
+    local log_basename log_dirname log_path
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1
     log_basename="node$1.log"
-
-    [ -z "$2" ] && dst_dir="." || dst_dir="$2"
-    echo "dst_path: $dst_path"
 
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -ne 0 ] \
         && echo "Backend/frontend container isn't ready" \
         && return 2
 
-    local log_dirname; log_dirname="$BE_ROOT_DATA_DIR/node$1"
+    log_dirname="$BE_ROOT_DATA_DIR/node$1"
     docker exec -t $BF_CONT_NAME bash -c "[ -d '$log_dirname' ]"
     [ $? -ne 0 ] && echo "No log dir '$log_dirname'" && return 3
 
-    local log_path; log_path="$log_dirname/$log_basename"
+    log_path="$log_dirname/$log_basename"
     docker exec -t $BF_CONT_NAME bash -c "[ -e '$log_path' ]"
     [ $? -ne 0 ] && echo "No log file '$log_path'" && return 4
 
-    docker cp "$BF_CONT_NAME:$log_path" "$dst_path"
+    echo "Nulling backend #$1 log @ container '$BF_CONT_NAME' ..."
+    docker exec -t $BF_CONT_NAME bash -c "cp /dev/null '$log_path'"
 }
+
+null_be_logs() {
+    local num wps cps dbp cfp blexp dst_dir
+    [ -z "$1" ] && dst_dir="." || dst_dir="$1"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        null_be_log $i || return $?
+    done
+}
+
+install_postgresql_dump_requirements() {
+    check_cont $DB_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Database container isn't ready" \
+        && return 2
+
+    docker exec -ti $DB_CONT_NAME bash -c "[ ! "$(command -v sudo)" ] && apt update -f && apt install -y sudo || :"
+    docker exec -ti $DB_CONT_NAME bash -c "[ -z \`getent passwd | grep -E '^postgres:x'\` ] && useradd -m -u 102 -s /bin/bash -d /var/lib/postgresql -c 'PostgreSQL administrator' postgres || :"
+}
+
+dump_be_db() {
+    local ind db_name db_dump_path dst_path _dst_path
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+    db_name="$DB_NAME_PREFIX$ind"
+
+    [ -z "$2" ] && dst_path="." || dst_path="$2"
+
+    install_postgresql_dump_requirements || return $?
+
+    db_dump_path="/tmp/db_dump.$(date '+%Y%m%d%H%M%S').sql"
+    [ "$dst_path" = "." ] \
+        && _dst_path="./$(basename "$db_dump_path")" \
+        || _dst_path="$dst_path"
+    echo "Creating database dump into temporary file '$db_dump_path' ..."
+    docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD pg_dump -h localhost -U $DB_USER $db_name -f $db_dump_path" \
+    && echo "Copying backend #$ind database dump from container '$BF_CONT_NAME:$db_dump_path' to the host path '$_dst_path' ..." \
+    && docker cp "$DB_CONT_NAME:$db_dump_path" "$_dst_path" \
+    && echo "Removing temporary file '$db_dump_path' ..." \
+    && docker exec -ti $DB_CONT_NAME bash -c "rm '$db_dump_path'"
+}
+
+dump_be_dbs() {
+    local num wps cps dbp cfp blexp dst_dir
+    [ -z "$1" ] && dst_dir="./db-dumps-$(date '+%Y%m%d%H%M%S')" || dst_dir="$1"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        echo "Dumping backend #$i database  from container '$BF_CONT_NAME' to the host dir '$dst_dir' ..."
+        (cd "$dst_dir" && dump_be_db $i "./be-db.$i.sql" > /dev/null) || return 10
+    done
+}
+
+safe_dump_be_db() {
+    local ind answ app_name dst_path
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+    [ -z "$2" ] && dst_path="." || dst_path="$2"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$i"
+    echo
+    echo -n "Are you sure to run safe db dump (backend will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_blex \
+                && stop_be_app $ind \
+                && dump_be_db $ind "$dst_path" \
+                && start_be_app $ind \
+                && start_blex
+            ;;
+        *) echo; echo "OK, canceling database dump process ..." ;;
+    esac
+}
+
+safe_dump_be_dbs() {
+    local num wps cps dbp cfp blexp dst_dir ind app_name
+    read_install_params_to_vars || return $? 
+
+    dst_dir="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    echo -n "Are you sure to run safe dbs dump (backends will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_blex \
+                && stop_be_apps $num \
+                && dump_be_dbs \
+                && start_be_apps $num \
+                && start_blex
+            ;;
+        *) echo; echo "OK, canceling database dump process ..." ;;
+    esac
+}
+
+drop_be_db() {
+    local ind db_name
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    install_postgresql_dump_requirements || return $?
+
+    db_name="$DB_NAME_PREFIX$ind"
+
+    echo "Dropping database '$db_name' @ container '$DB_CONT_NAME' ..."
+    docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD dropdb -h localhost -U $DB_USER $db_name"
+}
+
+drop_be_dbs() {
+    local num wps cps dbp cfp blexp
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        drop_be_db $i
+    done
+}
+
+create_be_db() {
+    local ind db_name
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    install_postgresql_dump_requirements || return $?
+
+    db_name="$DB_NAME_PREFIX$ind"
+
+    echo "Creating database '$db_name' @ container '$DB_CONT_NAME' ..."
+    docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD createdb -h localhost -U $DB_USER -O $DB_USER $db_name"
+}
+
+create_be_dbs() {
+    local num wps cps dbp cfp blexp
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        create_be_db $i
+    done
+}
+
+init_be_db() {
+    local ind data_dir config_path empty_env_vars
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    empty_env_vars="GENESIS_DB_HOST='' GENESIS_DB_PORT='' GENESIS_DB_NAME=''"
+    empty_env_vars="$empty_env_vars GENESIS_DB_USER='' GENESIS_DB_PASSWORD=''"
+
+    data_dir="$BE_ROOT_DATA_DIR/node$ind"
+    config_path="$data_dir/config.toml"
+
+    docker exec -ti $BF_CONT_NAME bash -c "$empty_env_vars $BE_BIN_PATH initDatabase --config=$config_path"
+}
+
+safe_recreate_be_db() {
+    local ind answ app_name
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$i"
+    echo
+    echo -n "Are you sure to run safe db drop (backend will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_blex \
+                && stop_be_app $ind \
+                && drop_be_db $ind \
+                && create_be_db $ind \
+                && init_be_db $ind \
+                && start_be_app $ind \
+                && start_blex
+            ;;
+        *) echo; echo "OK, canceling database drop process ..." ;;
+    esac
+}
+
+restore_be_db() {
+    local ind db_name db_dump_path src_path
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+    db_name="$DB_NAME_PREFIX$ind"
+
+    [ -z "$2" ] && echo "Source path for database dump isn't set" && return 2
+    src_path="$2"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    install_postgresql_dump_requirements || return $?
+
+    db_dump_path="/tmp/db_dump.$(date '+%Y%m%d%H%M%S').sql"
+    echo "Copying database dump from the host '$src_path' to '$db_dump_path' @ '$DB_CONT_NAME' ..."
+    docker cp "$src_path" "$DB_CONT_NAME:$db_dump_path" \
+    && echo "Restoring database dump into backend #$ind database ..." \
+    && docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD psql -h localhost -U $DB_USER -d $db_name -f '$db_dump_path'"
+}
+
+safe_restore_be_db() {
+    local ind answ app_name src_path
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    [ -z "$2" ] && echo "Source path for database dump isn't set" && return 2
+    src_path="$2"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$i"
+    echo
+    echo -n "Are you sure to run safe db restore (backend will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_blex \
+                && stop_be_app $ind \
+                && drop_be_db $ind \
+                && create_be_db $ind \
+                && restore_be_db $ind "$src_path" \
+                && start_be_app $ind \
+                && start_blex
+            ;;
+        *) echo; echo "OK, canceling database restore process ..." ;;
+    esac
+}
+
+restore_be_dbs() {
+    local num wps cps dbp cfp blexp src_dir src_paths src_path j
+    [ -z "$1" ] && echo "Source path for databases dumps isn't set" && return 1
+    src_dir="$1"
+
+    read_install_params_to_vars || return $? 
+
+    src_paths=()
+    while IFS= read -d $'\0' -r src_path ; do
+        src_paths=("${src_paths[@]}" "$src_path")
+    done < <(find "$src_dir" -mindepth 1 -maxdepth 1 -print0)
+
+    j=0
+    for i in $(seq $num); do
+        echo "Restoring backend #$i database from file '${src_paths[$j]}' ..."
+        restore_be_db $i "${src_paths[$j]}" || return $?
+        j=$(expr $j + 1)
+    done
+}
+
+safe_restore_be_dbs() {
+    local num wps cps dbp cfp blexp src_dir ind
+    read_install_params_to_vars || return $? 
+
+    src_dir="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    echo -n "Are you sure to run safe dbs restore (backends will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_blex \
+                && stop_be_apps $num \
+                && drop_be_dbs \
+                && create_be_dbs \
+                && restore_be_dbs "$src_dir" \
+                && start_be_apps $num \
+                && start_blex
+            ;;
+        *) echo; echo "OK, canceling dbs restore process ..." ;;
+    esac
+}
+
+dump_be_data_dir() {
+    local ind dst_path dst_dir src_path data_dir
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    [ -z "$2" ] && dst_dir="./node$ind" || dst_dir="$2"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    data_dir="$BE_ROOT_DATA_DIR/node$ind"
+    #config_path="$data_dir/config.toml"
+
+    docker exec -t $BF_CONT_NAME bash -c "find '$data_dir' -mindepth 1 -maxdepth 1 -not -name '*.toml' -not -name '*.lock' -not -name '*.pid' -not -name '*.log'" | tr -d '\r' | while read src_path; do
+        dst_path="$dst_dir/$(basename "$src_path")"
+        echo "Copying '$BF_CONT_NAME:$src_path' to '$dst_path' ..."
+        docker cp "$BF_CONT_NAME:$src_path" "$dst_path"
+    done
+}
+
+dump_be_data_dirs() {
+    local num wps cps dbp cfp blexp dst_dir
+    [ -z "$1" ] && dst_dir="./data-dirs-$(date '+%Y%m%d%H%M%S')" || dst_dir="$1"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        echo "Dumping backend #$i data dir from container '$BF_CONT_NAME' to the host dir '$dst_dir' ..."
+        (cd "$dst_dir" && dump_be_data_dir $i "./node$i" > /dev/null) || return 10
+    done
+}
+
+restore_be_data_dir() {
+    local ind src_dir data_dir
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    [ -z "$2" ] && src_dir="./node$ind" || src_dir="$2"
+    [ ! -e "$src_dir" ] && echo "Source backend data dir '$src_dir' doesn't exist" \
+        && return 2
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    data_dir="$BE_ROOT_DATA_DIR/node$ind"
+    #config_path="$data_dir/config.toml"
+
+    find "$src_dir" -mindepth 1 -maxdepth 1 -not -name '*.toml' -not -name '*.lock' -not -name '*.pid' -not -name '*.log' | tr -d '\r' | while read src_path; do
+        dst_path="$data_dir/$(basename "$src_path")"
+        echo "Copying '$src_path' to '$BF_CONT_NAME:$dst_path' ..."
+        docker cp "$src_path" "$BF_CONT_NAME:$dst_path"
+    done
+}
+
+restore_be_data_dirs() {
+    local num wps cps dbp cfp blexp src_dir src_paths src_path j
+    [ -z "$1" ] && echo "Source path for databases dumps isn't set" && return 1
+    src_dir="$1"
+
+    read_install_params_to_vars || return $? 
+
+    src_paths=()
+    while IFS= read -d $'\0' -r src_path ; do
+        src_paths=("${src_paths[@]}" "$src_path")
+    done < <(find "$src_dir" -mindepth 1 -maxdepth 1 -print0)
+
+    j=0
+    for i in $(seq $num); do
+        echo "Restoring backend #$i data dir from dir '${src_paths[$j]}' ..."
+        restore_be_data_dir $i "${src_paths[$j]}" || return $?
+        j=$(expr $j + 1)
+    done
+}
+
+safe_restore_be_data_dir() {
+    local ind answ app_name src_path
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    src_path="$2"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$i"
+    echo
+    echo -n "Are you sure to run safe data dir restore (backend will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_be_app $ind \
+                && restore_be_data_dir $ind "$src_path" \
+                && start_be_app $ind 
+            ;;
+        *) echo; echo "OK, canceling data dir restore process ..." ;;
+    esac
+}
+
+safe_restore_be_data_dirs() {
+    local num wps cps dbp cfp blexp src_dir ind
+    read_install_params_to_vars || return $? 
+
+    src_dir="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    echo -n "Are you sure to run safe data dirs restore (backends will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_be_apps $num \
+                && restore_be_data_dirs "$src_dir" \
+                && start_be_apps $num
+            ;;
+        *) echo; echo "OK, canceling data dirs restore process ..." ;;
+    esac
+}
+
+
+safe_dump_be_dbs_and_data_dirs() {
+    local num wps cps dbp cfp blexp dst_dir
+    [ -z "$1" ] && dst_dir="./dbs-and-data-dirs-$(date '+%Y%m%d%H%M%S')" || dst_dir="$1"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    echo -n "Are you sure to run safe dbs and data dirs dump (backends will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_be_apps $num \
+                && dump_be_data_dirs "$dst_dir/data-dirs" \
+                && dump_be_dbs "$dst_dir/db-dumps" \
+                && start_be_apps $num
+            ;;
+        *) echo; echo "OK, canceling dbs restore process ..." ;;
+    esac
+
+}
+
+safe_restore_be_dbs_and_data_dirs() {
+    local num wps cps dbp cfp blexp src_dir ind
+    [ -z "$1" ] && echo "Source directory isn't set" && return 1
+    src_dir="$1"
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    echo -n "Are you sure to run safe dbs and data dirs restore (backends will be stopped) [y/n]? "
+    read -n 1 answ
+    case $answ in
+        y|Y)
+            echo
+            stop_blex \
+                && stop_be_apps $num \
+                && restore_be_data_dirs "$src_dir/data-dirs" \
+                && drop_be_dbs \
+                && create_be_dbs \
+                && restore_be_dbs "$src_dir/db-dumps" \
+                && start_be_apps $num \
+                && start_blex
+            ;;
+        *) echo; echo "OK, canceling dbs and data dirs restore process ..." ;;
+    esac
+}
+
 
 ### Backends services #### end ####
 
@@ -4313,6 +4891,86 @@ pre_command() {
 
     cp-be-log)
         cp_be_log $2 $3
+        ;;
+
+    cp-be-logs)
+        cp_be_logs $2
+        ;;
+
+    null-be-log)
+        null_be_log $2
+        ;;
+
+    null-be-logs)
+        null_be_logs
+        ;;
+
+    dump-be-db)
+        dump_be_db $2
+        ;;
+
+    safe-dump-be-db)
+        safe_dump_be_db $2 $3
+        ;;
+
+    safe-dump-be-dbs)
+        safe_dump_be_dbs $2
+        ;;
+
+    drop-be-db)
+        drop_be_db $2
+        ;;
+
+    create-be-db)
+        create_be_db $2
+        ;;
+
+    safe-recreate-be-db)
+        safe_recreate_be_db $2
+        ;;
+
+    restore-be-db)
+        restore_be_db $2 $3
+        ;;
+
+    safe-restore-be-db)
+        safe_restore_be_db $2 $3
+        ;;
+
+    restore-be-dbs)
+        restore_be_dbs $2
+        ;;
+
+    safe-restore-be-dbs)
+        safe_restore_be_dbs $2
+        ;;
+
+    dump-be-data-dir)
+        dump_be_data_dir $2 $3
+        ;;
+
+    restore-be-data-dir)
+        restore_be_data_dir $2 $3
+        ;;
+
+    safe-restore-be-data-dir)
+        safe_restore_be_data_dir $2 $3
+        ;;
+        
+    dump-be-data-dirs)
+        dump_be_data_dirs $2
+        ;;
+
+    safe-restore-be-data-dirs)
+        safe_restore_be_data_dirs $2
+        ;;
+
+    dump-be-all)
+        safe_dump_be_dbs_and_data_dirs $2
+        ;;
+
+    restore-be-all)
+        safe_restore_be_dbs_and_data_dirs $2
         ;;
 
     update-keys)
