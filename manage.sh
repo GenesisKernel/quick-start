@@ -2695,7 +2695,8 @@ restore_be_dbs() {
     read_install_params_to_vars || return $? 
 
     src_paths=()
-    while IFS= read -d $'\0' -r src_path ; do
+    #while IFS= read -d $'\0' -r src_path ; do
+    while read src_path ; do
         src_paths=("${src_paths[@]}" "$src_path")
     done < <(find "$src_dir" -mindepth 1 -maxdepth 1 | sort -n)
 
@@ -2934,7 +2935,8 @@ safe_restore_be_dbs_and_data_dirs() {
                 src_dir="$(echo "$src_dir" | $SED_E 's/\.tar\.gz$//')"
             fi
 
-            [ ! -e "$src_dir" ] && echo "Source directory doesn't exist" && return 3
+            [ ! -e "$src_dir" ] \
+                && echo "Source directory '$src_dir' doesn't exist" && return 3
             num_of_backends="$([ -e "$src_dir/num_of_backends" ] && cat "$src_dir/num_of_backends" || echo 0)"
             if [ $num_of_backends -ne $num ]; then
                 echo "The expected number of backends '$num_of_backends' isn't equal to real number of backends '$num'. Please run './manage.sh install $num_of_backends' first."
