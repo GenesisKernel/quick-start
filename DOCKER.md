@@ -41,19 +41,19 @@ Build images
 To build db container run: 
 
 ```shell
-./manage build-db
+./manage build-db-image
 ```
 
 To build backend/frontend container run: 
 
 ```shell
-./manage build-bf
+./manage build-bf-image
 ```
 
 To build all (db and bf) containers run: 
 
 ```shell
-./manage build
+./manage build-images
 ```
 
 Usage
