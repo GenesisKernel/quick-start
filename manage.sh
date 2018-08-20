@@ -2697,7 +2697,7 @@ restore_be_dbs() {
     src_paths=()
     while IFS= read -d $'\0' -r src_path ; do
         src_paths=("${src_paths[@]}" "$src_path")
-    done < <(find "$src_dir" -mindepth 1 -maxdepth 1 -print0)
+    done < <(find "$src_dir" -mindepth 1 -maxdepth 1 | sort -n)
 
     j=0
     for i in $(seq $num); do
@@ -2793,7 +2793,7 @@ restore_be_data_dir() {
     data_dir="$BE_ROOT_DATA_DIR/node$ind"
     #config_path="$data_dir/config.toml"
 
-    find "$src_dir" -mindepth 1 -maxdepth 1 -not -name '*.toml' -not -name '*.lock' -not -name '*.pid' -not -name '*.log' | tr -d '\r' | while read src_path; do
+    find "$src_dir" -mindepth 1 -maxdepth 1 -not -name '*.toml' -not -name '*.lock' -not -name '*.pid' -not -name '*.log' | tr -d '\r' | sort -n | while read src_path; do
         dst_path="$data_dir/$(basename "$src_path")"
         echo "Copying '$src_path' to '$BF_CONT_NAME:$dst_path' ..."
         docker cp "$src_path" "$BF_CONT_NAME:$dst_path"
