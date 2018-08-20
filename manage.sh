@@ -35,7 +35,7 @@ fi
 FRONTEND_BRANCH="v0.8.6-RC"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="0.1.1"
+SCRIPTS_BRANCH="0.1.2"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -2494,7 +2494,7 @@ safe_dump_be_db() {
     [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
         || app_name="$BE_BIN_BASENAME$i"
     echo
-    echo -n "Are you sure to run safe db dump (backend will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start db dump process (backend will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2505,7 +2505,7 @@ safe_dump_be_db() {
                 && start_be_app $ind \
                 && start_blex
             ;;
-        *) echo; echo "OK, canceling database dump process ..." ;;
+        *) echo; echo "OK, canceling db dump process ..." ;;
     esac
 }
 
@@ -2521,7 +2521,7 @@ safe_dump_be_dbs() {
         && return 2
 
     echo
-    echo -n "Are you sure to run safe dbs dump (backends will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start dbs dump process (backends will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2532,7 +2532,7 @@ safe_dump_be_dbs() {
                 && start_be_apps $num \
                 && start_blex
             ;;
-        *) echo; echo "OK, canceling database dump process ..." ;;
+        *) echo; echo "OK, canceling dbs dump process ..." ;;
     esac
 }
 
@@ -2614,7 +2614,7 @@ safe_recreate_be_db() {
     [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
         || app_name="$BE_BIN_BASENAME$i"
     echo
-    echo -n "Are you sure to run safe db drop (backend will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start db drop process (backend will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2627,7 +2627,7 @@ safe_recreate_be_db() {
                 && start_be_app $ind \
                 && start_blex
             ;;
-        *) echo; echo "OK, canceling database drop process ..." ;;
+        *) echo; echo "OK, canceling db drop process ..." ;;
     esac
 }
 
@@ -2670,7 +2670,7 @@ safe_restore_be_db() {
     [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
         || app_name="$BE_BIN_BASENAME$i"
     echo
-    echo -n "Are you sure to run safe db restore (backend will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start db restore process (backend will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2683,7 +2683,7 @@ safe_restore_be_db() {
                 && start_be_app $ind \
                 && start_blex
             ;;
-        *) echo; echo "OK, canceling database restore process ..." ;;
+        *) echo; echo "OK, canceling db restore process ..." ;;
     esac
 }
 
@@ -2719,7 +2719,7 @@ safe_restore_be_dbs() {
         && return 2
 
     echo
-    echo -n "Are you sure to run safe dbs restore (backends will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start dbs restore process (backends will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2835,7 +2835,7 @@ safe_restore_be_data_dir() {
     [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
         || app_name="$BE_BIN_BASENAME$i"
     echo
-    echo -n "Are you sure to run safe data dir restore (backend will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start data dir restore (backend will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2860,7 +2860,7 @@ safe_restore_be_data_dirs() {
         && return 2
 
     echo
-    echo -n "Are you sure to run safe data dirs restore (backends will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start data dirs restore process (backends will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2889,12 +2889,13 @@ safe_dump_be_dbs_and_data_dirs() {
         && return 2
 
     echo
-    echo -n "Are you sure to run safe dbs and data dirs dump (backends will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start dbs and data dirs dump process (backends will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
             echo
             stop_be_apps $num \
+                && echo "$num" > "$dst_dir/num_of_backends" \
                 && get_versions > "$dst_dir/versions" \
                 && cp_be_logs "$dst_dir/logs" \
                 && dump_be_data_dirs "$dst_dir/data-dirs" \
@@ -2903,12 +2904,12 @@ safe_dump_be_dbs_and_data_dirs() {
                 && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :) \
                 && start_be_apps $num
             ;;
-        *) echo; echo "OK, canceling dbs restore process ..." ;;
+        *) echo; echo "OK, canceling dbs and data dirs dump process ..." ;;
     esac
 }
 
 safe_restore_be_dbs_and_data_dirs() {
-    local num wps cps dbp cfp blexp src_dir ind is_tar_gz
+    local num wps cps dbp cfp blexp src_dir ind is_tar_gz num_of_backends
     [ -z "$1" ] && echo "Source directory or tar.gz archive isn't set" \
         && return 1
     src_dir="$1"
@@ -2921,7 +2922,7 @@ safe_restore_be_dbs_and_data_dirs() {
         && return 2
 
     echo
-    echo -n "Are you sure to run safe dbs and data dirs restore (backends will be stopped) [y/n]? "
+    echo -n "Are you sure you want to start dbs and data dirs restore process (backends will be stopped) [y/n]? "
     read -n 1 answ
     case $answ in
         y|Y)
@@ -2934,6 +2935,11 @@ safe_restore_be_dbs_and_data_dirs() {
             fi
 
             [ ! -e "$src_dir" ] && echo "Source directory doesn't exist" && return 3
+            num_of_backends="$([ -e "$src_dir/num_of_backends" ] && cat "$src_dir/num_of_backends" || echo 0)"
+            if [ $num_of_backends -ne $num ]; then
+                echo "The expected number of backends '$num_of_backends' isn't equal to real number of backends '$num'. Please run './manage.sh install $num_of_backends' first."
+            fi
+
             stop_blex \
                 && stop_be_apps $num \
                 && restore_be_data_dirs "$src_dir/data-dirs" \
@@ -2947,7 +2953,6 @@ safe_restore_be_dbs_and_data_dirs() {
         *) echo; echo "OK, canceling dbs and data dirs restore process ..." ;;
     esac
 }
-
 
 ### Backends services #### end ####
 
