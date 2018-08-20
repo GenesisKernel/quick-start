@@ -1011,13 +1011,15 @@ start_linux_clients() {
 }
 
 start_clients() {
+    local num wps cps dbp cfp blexp src_dir ind
+    read_install_params_to_vars || return $? 
     local os_type; os_type="$(get_os_type)"
     case $os_type in
         linux)
-            start_linux_clients $@
+            start_linux_clients $num #$@
             ;;
         mac)
-            start_mac_clients $@
+            start_mac_clients $num #$@
             ;;
         *)
             echo "Sorry, but $os_type is not supported yet"
@@ -2499,11 +2501,13 @@ safe_dump_be_db() {
     case $answ in
         y|Y)
             echo
-            stop_blex \
+            stop_clients \
+                && stop_blex \
                 && stop_be_app $ind \
                 && dump_be_db $ind "$dst_path" \
                 && start_be_app $ind \
-                && start_blex
+                && start_blex \
+                && start_clients
             ;;
         *) echo; echo "OK, canceling db dump process ..." ;;
     esac
@@ -2526,11 +2530,13 @@ safe_dump_be_dbs() {
     case $answ in
         y|Y)
             echo
-            stop_blex \
+            stop_clients \
+                && stop_blex \
                 && stop_be_apps $num \
                 && dump_be_dbs \
                 && start_be_apps $num \
-                && start_blex
+                && start_blex \
+                && start_clients \
             ;;
         *) echo; echo "OK, canceling dbs dump process ..." ;;
     esac
@@ -2619,13 +2625,15 @@ safe_recreate_be_db() {
     case $answ in
         y|Y)
             echo
-            stop_blex \
+            stop_clients \
+                && stop_blex \
                 && stop_be_app $ind \
                 && drop_be_db $ind \
                 && create_be_db $ind \
                 && init_be_db $ind \
                 && start_be_app $ind \
-                && start_blex
+                && start_blex \
+                && start_clients
             ;;
         *) echo; echo "OK, canceling db drop process ..." ;;
     esac
@@ -2675,13 +2683,15 @@ safe_restore_be_db() {
     case $answ in
         y|Y)
             echo
-            stop_blex \
+            stop_clients \
+                && stop_blex \
                 && stop_be_app $ind \
                 && drop_be_db $ind \
                 && create_be_db $ind \
                 && restore_be_db $ind "$src_path" \
                 && start_be_app $ind \
-                && start_blex
+                && start_blex \
+                && start_clients
             ;;
         *) echo; echo "OK, canceling db restore process ..." ;;
     esac
@@ -2725,13 +2735,15 @@ safe_restore_be_dbs() {
     case $answ in
         y|Y)
             echo
-            stop_blex \
+            stop_clients \
+                && stop_blex \
                 && stop_be_apps $num \
                 && drop_be_dbs \
                 && create_be_dbs \
                 && restore_be_dbs "$src_dir" \
                 && start_be_apps $num \
-                && start_blex
+                && start_blex \
+                && start_clients
             ;;
         *) echo; echo "OK, canceling dbs restore process ..." ;;
     esac
@@ -2841,9 +2853,11 @@ safe_restore_be_data_dir() {
     case $answ in
         y|Y)
             echo
-            stop_be_app $ind \
+            stop_clients \
+                && stop_be_app $ind \
                 && restore_be_data_dir $ind "$src_path" \
-                && start_be_app $ind 
+                && start_be_app $ind \
+                && start_clients
             ;;
         *) echo; echo "OK, canceling data dir restore process ..." ;;
     esac
@@ -2866,9 +2880,11 @@ safe_restore_be_data_dirs() {
     case $answ in
         y|Y)
             echo
-            stop_be_apps $num \
+            stop_clients \
+                && stop_be_apps $num \
                 && restore_be_data_dirs "$src_dir" \
-                && start_be_apps $num
+                && start_be_apps $num \
+                && stop_clients
             ;;
         *) echo; echo "OK, canceling data dirs restore process ..." ;;
     esac
@@ -2895,7 +2911,8 @@ safe_dump_be_dbs_and_data_dirs() {
     case $answ in
         y|Y)
             echo
-            stop_be_apps $num \
+            stop_clients \
+                && stop_be_apps $num \
                 && echo "$num" > "$dst_dir/num_of_backends" \
                 && get_versions > "$dst_dir/versions" \
                 && cp_be_logs "$dst_dir/logs" \
@@ -2903,7 +2920,8 @@ safe_dump_be_dbs_and_data_dirs() {
                 && dump_be_dbs "$dst_dir/db-dumps" \
                 && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
                 && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :) \
-                && start_be_apps $num
+                && start_be_apps $num \
+                && start_clients
             ;;
         *) echo; echo "OK, canceling dbs and data dirs dump process ..." ;;
     esac
@@ -2942,7 +2960,8 @@ safe_restore_be_dbs_and_data_dirs() {
                 echo "The expected number of backends '$num_of_backends' isn't equal to real number of backends '$num'. Please run './manage.sh install $num_of_backends' first."
             fi
 
-            stop_blex \
+            stop_clients \
+                && stop_blex \
                 && stop_be_apps $num \
                 && restore_be_data_dirs "$src_dir/data-dirs" \
                 && drop_be_dbs \
@@ -2950,7 +2969,8 @@ safe_restore_be_dbs_and_data_dirs() {
                 && restore_be_dbs "$src_dir/db-dumps" \
                 && ([ -n "$is_tar_gz" ] && [ -e "$src_dir" ] && rm -rf "$src_dir" || :) \
                 && start_be_apps $num \
-                && start_blex
+                && start_blex \
+                && start_clients
             ;;
         *) echo; echo "OK, canceling dbs and data dirs restore process ..." ;;
     esac
