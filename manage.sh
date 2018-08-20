@@ -2821,9 +2821,9 @@ restore_be_data_dirs() {
     read_install_params_to_vars || return $? 
 
     src_paths=()
-    while IFS= read -d $'\0' -r src_path ; do
+    while read src_path ; do
         src_paths=("${src_paths[@]}" "$src_path")
-    done < <(find "$src_dir" -mindepth 1 -maxdepth 1 -print0)
+    done < <(find "$src_dir" -mindepth 1 -maxdepth 1 | sort -n)
 
     j=0
     for i in $(seq $num); do
