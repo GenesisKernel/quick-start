@@ -1,4 +1,4 @@
-## Version 0.6.15 / 2018-Aug-20 00:58
+## Version 0.6.15 / 2018-Aug-20 05:40
 * Add dump-be-all and restore-be-all command to dump/restore backends logs, data directories and databases
 * Fix priv-keys command
 * Fix frontend git version
