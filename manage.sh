@@ -1124,7 +1124,7 @@ cont_exec() {
 
 prep_cont_for_inspect() {
     #cont_exec $1 "bash -c \"apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links procps\""
-    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet iputils-ping net-tools vim nano links screen procps'"
+    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet iputils-ping net-tools vim nano links screen procps mc'"
 }
 
 prep_cont_for_inspect_centos7() {
