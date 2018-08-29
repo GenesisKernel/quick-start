@@ -22,7 +22,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json"
 else
-    BACKEND_BRANCH="hotfix/1103-rollback"
+    BACKEND_BRANCH="master" 
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json"
 fi
@@ -1124,7 +1124,7 @@ cont_exec() {
 
 prep_cont_for_inspect() {
     #cont_exec $1 "bash -c \"apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links procps\""
-    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet iputils-ping net-tools vim nano links screen procps mc; echo \"Installing delve ...\"; go get -u github.com/derekparker/delve/cmd/dlv'"
+    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet iputils-ping net-tools vim nano links screen procps mc build-essential; echo \"Installing delve ...\"; go get -u github.com/derekparker/delve/cmd/dlv'"
 }
 
 prep_cont_for_inspect_centos7() {
