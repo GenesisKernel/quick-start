@@ -27,6 +27,12 @@ else
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json"
 fi
 
+DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
+DEV_BE_BRANCH="feature/cmd-version" 
+DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK="yes"
+DEV_BE_GO_URL_VENDOR_SRC="github.com/blitzstern5"
+DEV_BE_GO_URL_VENDOR_DST="github.com/GenesisKernel"
+
 if [ "$USE_PRODUCT" = "apla" ]; then
     FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
 else
@@ -2991,9 +2997,22 @@ build_be() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
 
-    local GOPATH; GOPATH=/go
-    docker exec -ti $BF_CONT_NAME bash -c "cd / && go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git rev-parse --abbrev-ref HEAD  > /genesis-back/bin/go-genesis.git_branch && git rev-parse HEAD > /genesis-back/bin/go-genesis.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/go-genesis /genesis-back/bin/go-genesis && rm -rf /go"
+    docker exec -ti $BF_CONT_NAME bash -c "echo \"GOPATH: '\$GOPATH' @ '$BF_CONT_NAME' container\"; (dpkg-query -l build-essential > /dev/null || (apt update --fix-missing; apt install -y build-essential)) && cd / && echo \"Starting 'go get -d $BACKEND_GO_URL' ...\" && go get -d $BACKEND_GO_URL && cd \$GOPATH/src/$BACKEND_GO_URL && echo \"Starting 'git checkout $BACKEND_BRANCH' ...\" && git checkout $BACKEND_BRANCH && echo \"Starting 'go get $BACKEND_GO_URL' ...\" && go get $BACKEND_GO_URL && mkdir -p $BE_BIN_DIR && git rev-parse --abbrev-ref HEAD > $BE_BIN_PATH.git_branch && echo \"git commit: \$(git rev-parse HEAD)\" && git rev-parse HEAD > $BE_BIN_PATH.git_commit && mkdir -p $BE_ROOT_DATA_DIR/node1 && mv \$GOPATH/bin/$BE_BIN_BASENAME $BE_BIN_PATH && rm -rf \$GOPATH && echo \"md5 of final $BE_BIN_PATH: \$(md5sum $BE_BIN_PATH | cut -f1 -d' ')\""
+    backend_apps_ctl $num restart
+}
 
+dev_build_be() {
+    local num; [ -z "$1" ] && echo "Number of backends isnt' set" && return 1 \
+        || num=$1
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 1
+
+    docker exec -ti $BF_CONT_NAME sh -c "echo \"GOPATH: '\$GOPATH' @ '$BF_CONT_NAME' container\""
+    docker exec -ti $BF_CONT_NAME sh -c "dpkg-query -l build-essential > /dev/null || (apt update --fix-missing; apt install -y build-essential)"
+    docker exec -ti $BF_CONT_NAME sh -c "([ ! -e '\$GOPATH/src/$DEV_BE_GO_URL' ] && echo \"Directory '\$GOPATH/src/$DEV_BE_GO_URL' doesn't exist. Starting 'go get -d $DEV_BE_GO_URL' ...\" && go get -d $DEV_BE_GO_URL || :) && echo \"Starting 'cd \$GOPATH/src/$DEV_BE_GO_URL'... \" && cd \$GOPATH/src/$DEV_BE_GO_URL && echo \"Starting 'git checkout $DEV_BE_BRANCH' ...\" && git checkout $DEV_BE_BRANCH && echo \"Starting 'git pull' ...\" && git pull && cd \$GOPATH/src/$DEV_BE_GO_URL && ([ '$DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK' = 'yes' ] && [ '$DEV_BE_GO_URL_VENDOR_SRC' != '$DEV_BE_GO_URL_VENDOR_DST' ] && cd \$GOPATH/src && ([ ! -e $DEV_BE_GO_URL_VENDOR_SRC ] || mv $DEV_BE_GO_URL_VENDOR_DST $DEV_BE_GO_URL_VENDOR_DST.bak.\$(date '+%Y%m%d%H%M%S')) && ln -s \$GOPATH/src/$DEV_BE_GO_URL_VENDOR_SRC \$GOPATH/src/$DEV_BE_GO_URL_VENDOR_DST) && echo \"Starting go build in '\$(pwd)' ...\" && go build && echo \"md5 of a new \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME: \$(md5sum \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME | cut -f1 -d' ')\" && git rev-parse --abbrev-ref HEAD > $BE_BIN_PATH.git_branch && echo \"git commit: \$(git rev-parse HEAD)\" && git rev-parse HEAD > $BE_BIN_PATH.git_commit && cd \$GOPATH/src/$DEV_BE_GO_URL && ([ -e \$GOPATH/bin ] || mkdir -p \$GOPATH/bin) && echo \"Starting 'mv \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME \$GOPATH/bin/$BE_BIN_BASENAME\" && mv \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME \$GOPATH/bin/$BE_BIN_BASENAME && ([ -e $BE_ROOT_DATA_DIR/node1 ] || mkdir -p $BE_ROOT_DATA_DIR/node1) && echo \"Starting 'mv \$GOPATH/bin/$BE_BIN_BASENAME $BE_BIN_PATH' ...\" && mv \$GOPATH/bin/$BE_BIN_BASENAME $BE_BIN_PATH && echo \"md5 of final $BE_BIN_PATH: \$(md5sum $BE_BIN_PATH | cut -f1 -d' ')\""
     backend_apps_ctl $num restart
 }
 ### Update ### 20180405 ### 08fad #### end ####
@@ -5058,6 +5077,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         build_be $num || exit 61
+        ;;
+
+    dev-build-be)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        dev_build_be $num || exit 61
         ;;
 
     clean-be-build)
