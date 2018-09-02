@@ -28,7 +28,8 @@ else
 fi
 
 DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
-DEV_BE_BRANCH="feature/cmd-version" 
+#DEV_BE_BRANCH="feature/cmd-version" 
+DEV_BE_BRANCH="feature/block-txs-info-fixes"
 DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK="yes"
 DEV_BE_GO_URL_VENDOR_SRC="github.com/blitzstern5"
 DEV_BE_GO_URL_VENDOR_DST="github.com/GenesisKernel"
@@ -3034,6 +3035,14 @@ get_be_ver() {
     docker exec -ti $BF_CONT_NAME bash -c "$BE_BIN_PATH -noStart 2>&1 | sed -E -n 's/^.*version\W+([0-9a-zA-Z\.\-]+)\W+.*/\1/pg'"
 }
 
+get_be_version() {
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] && return
+    local ver
+    ver="$(docker exec -ti $BF_CONT_NAME sh -c "$BE_BIN_PATH help | grep version")"
+    [ -z "$ver" ] || echo "Backend binary version: $ver"
+}
+
 get_be_git_ver() {
     check_cont $BF_CONT_NAME > /dev/null
     [ $? -ne 0 ] \
@@ -3089,14 +3098,14 @@ get_fe_git_ver() {
 ### Misc ### begin ###
 
 get_versions() {
+    echo
     echo "Quick Start version: $VERSION"
     echo
     echo "Backend version: "
+    get_be_version
     get_be_git_ver
-    echo
     echo "Frontend version: "
     get_fe_git_ver
-    echo
     echo "Golang version: $GOLANG_VER"
     echo
     echo "Demo apps URL: $DEMO_APPS_URL"
@@ -5090,7 +5099,7 @@ pre_command() {
         ;;
 
     be-ver|be-version)
-        get_be_ver || exit 61
+        get_be_version || exit 61
         ;;
 
     be-git-ver|be-git-version)
