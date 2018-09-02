@@ -3040,7 +3040,10 @@ get_be_version() {
     [ $? -ne 0 ] && return
     local ver
     ver="$(docker exec -ti $BF_CONT_NAME sh -c "$BE_BIN_PATH help | grep version")"
-    [ -z "$ver" ] || echo "Backend binary version: $ver"
+    if [ -n "$ver" ]; then
+        echo -n "Binary version: "
+        docker exec -ti $BF_CONT_NAME sh -c "$BE_BIN_PATH version"
+    fi
 }
 
 get_be_git_ver() {
