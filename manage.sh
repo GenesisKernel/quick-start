@@ -29,7 +29,7 @@ fi
 
 DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
 #DEV_BE_BRANCH="feature/cmd-version" 
-DEV_BE_BRANCH="feature/block-txs-info-fixes"
+DEV_BE_BRANCH="feature/block-txes-info-api-fixes"
 DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK="yes"
 DEV_BE_GO_URL_VENDOR_SRC="github.com/blitzstern5"
 DEV_BE_GO_URL_VENDOR_DST="github.com/GenesisKernel"
