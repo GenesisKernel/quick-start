@@ -50,15 +50,26 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     DB_HOST="apla-db"
     DB_PASSWORD="apla"
     CENT_URL="http://apla-cf:8000"
-    BLEX_REPO_URL="https://github.com/ApraProject/blockexplorer"
+
+    BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
+    BLEX_BRANCH="0.1.0"
+    BLEX_DB_HOST="$DB_HOST"
+    BLEX_DB_USER="$DB_USER"
+    BLEX_DB_NAME_PREFIX="genesis_blex_"
+    BLEX_DB_PASSWORD="$DB_PASSWORD"
 else
     DB_NAME_PREFIX="genesis"
     DB_HOST="genesis-db"
     DB_PASSWORD="genesis"
     CENT_URL="http://genesis-cf:8000"
+
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
+    BLEX_BRANCH="0.1.0"
+    BLEX_DB_HOST="$DB_HOST"
+    BLEX_DB_USER="$DB_USER"
+    BLEX_DB_NAME_PREFIX="genesis_blex_"
+    BLEX_DB_PASSWORD="$DB_PASSWORD"
 fi
-BLEX_BRANCH="0.1.0"
 
 BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
