@@ -2132,9 +2132,23 @@ stop_blex() {
     && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer"
 }
 
+create_blex_dbs() {
+    local num db_name
+    num="$1"
+    [ -z "$num" ] && echo "The number of backends isn't set" && return 1
+    check_cont $DB_CONT_NAME > /dev/null \
+    run_mblex_cmd create-dbs $num
+    for i in $(seq 1 $num); do
+        db_name="$BLEX_DB_NAME_PREFIX$i"
+        echo "Creating '$db_name' database @ '$DB_CONT_NAME' ..."
+        docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
+    done
+}
+
 setup_blex() {
     local num blexp
     num="$1"; [ -z "$2" ] && blexp="$CONT_BLEX_PORT" || blexp="$2"
+    create_blex_dbs $num
     run_mblex_cmd config $num $blexp
     update_blex_supervisor && restart_blex
 }
@@ -4904,6 +4918,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         setup_be_apps $num
+        ;;
+
+    create-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        create_blex_dbs $num
         ;;
 
     setup-blex)
