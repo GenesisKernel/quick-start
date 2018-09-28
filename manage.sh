@@ -3,7 +3,7 @@
 ### Configuration ### begin ###
 
 PREV_VERSION="0.6.15"
-VERSION="0.6.16"
+VERSION="0.6.15"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -28,8 +28,7 @@ else
 fi
 
 DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
-#DEV_BE_BRANCH="feature/cmd-version" 
-DEV_BE_BRANCH="feature/block-txes-info-api-fixes"
+DEV_BE_BRANCH="feature/1067-send-tx"
 DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK="yes"
 DEV_BE_GO_URL_VENDOR_SRC="github.com/blitzstern5"
 DEV_BE_GO_URL_VENDOR_DST="github.com/GenesisKernel"
@@ -3023,7 +3022,7 @@ build_be() {
         && echo "Backend/frontend container isn't ready" \
         && return 1
 
-    docker exec -ti $BF_CONT_NAME bash -c "echo \"GOPATH: '\$GOPATH' @ '$BF_CONT_NAME' container\"; (dpkg-query -l build-essential > /dev/null || (apt update --fix-missing; apt install -y build-essential)) && cd / && echo \"Starting 'go get -d $BACKEND_GO_URL' ...\" && go get -d $BACKEND_GO_URL && cd \$GOPATH/src/$BACKEND_GO_URL && echo \"Starting 'git checkout $BACKEND_BRANCH' ...\" && git checkout $BACKEND_BRANCH && echo \"Starting 'go get $BACKEND_GO_URL' ...\" && go get $BACKEND_GO_URL && mkdir -p $BE_BIN_DIR && git rev-parse --abbrev-ref HEAD > $BE_BIN_PATH.git_branch && echo \"git commit: \$(git rev-parse HEAD)\" && git rev-parse HEAD > $BE_BIN_PATH.git_commit && mkdir -p $BE_ROOT_DATA_DIR/node1 && mv \$GOPATH/bin/$BE_BIN_BASENAME $BE_BIN_PATH && rm -rf \$GOPATH && echo \"md5 of final $BE_BIN_PATH: \$(md5sum $BE_BIN_PATH | cut -f1 -d' ')\""
+    docker exec -ti $BF_CONT_NAME bash -c "echo \"GOPATH: '\$GOPATH' @ '$BF_CONT_NAME' container\"; (dpkg-query -s build-essential > /dev/null || (apt update --fix-missing; apt install -y build-essential)) && cd / && echo \"Starting 'go get -d $BACKEND_GO_URL' ...\" && go get -d $BACKEND_GO_URL && cd \$GOPATH/src/$BACKEND_GO_URL && echo \"Starting 'git checkout $BACKEND_BRANCH' ...\" && git checkout $BACKEND_BRANCH && echo \"Starting 'go get $BACKEND_GO_URL' ...\" && go get $BACKEND_GO_URL && mkdir -p $BE_BIN_DIR && git rev-parse --abbrev-ref HEAD > $BE_BIN_PATH.git_branch && echo \"git commit: \$(git rev-parse HEAD)\" && git rev-parse HEAD > $BE_BIN_PATH.git_commit && mkdir -p $BE_ROOT_DATA_DIR/node1 && mv \$GOPATH/bin/$BE_BIN_BASENAME $BE_BIN_PATH && rm -rf \$GOPATH && echo \"md5 of final $BE_BIN_PATH: \$(md5sum $BE_BIN_PATH | cut -f1 -d' ')\""
     backend_apps_ctl $num restart
 }
 
@@ -3037,7 +3036,7 @@ dev_build_be() {
         && return 1
 
     docker exec -ti $BF_CONT_NAME sh -c "echo \"GOPATH: '\$GOPATH' @ '$BF_CONT_NAME' container\""
-    docker exec -ti $BF_CONT_NAME sh -c "dpkg-query -l build-essential > /dev/null || (apt update --fix-missing; apt install -y build-essential)"
+    docker exec -ti $BF_CONT_NAME sh -c "dpkg-query -s build-essential > /dev/null || (apt update --fix-missing; apt install -y build-essential)"
     docker exec -ti $BF_CONT_NAME sh -c "([ ! -e '\$GOPATH/src/$DEV_BE_GO_URL' ] && echo \"Directory '\$GOPATH/src/$DEV_BE_GO_URL' doesn't exist. Starting 'go get -d $DEV_BE_GO_URL' ...\" && go get -d $DEV_BE_GO_URL || :) && echo \"Starting 'cd \$GOPATH/src/$DEV_BE_GO_URL'... \" && cd \$GOPATH/src/$DEV_BE_GO_URL && echo \"Starting 'git checkout $DEV_BE_BRANCH' ...\" && git checkout $DEV_BE_BRANCH && echo \"Starting 'git pull' ...\" && git pull && cd \$GOPATH/src/$DEV_BE_GO_URL && ([ '$DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK' = 'yes' ] && [ '$DEV_BE_GO_URL_VENDOR_SRC' != '$DEV_BE_GO_URL_VENDOR_DST' ] && cd \$GOPATH/src && ([ ! -e $DEV_BE_GO_URL_VENDOR_SRC ] || mv $DEV_BE_GO_URL_VENDOR_DST $DEV_BE_GO_URL_VENDOR_DST.bak.\$(date '+%Y%m%d%H%M%S')) && ln -s \$GOPATH/src/$DEV_BE_GO_URL_VENDOR_SRC \$GOPATH/src/$DEV_BE_GO_URL_VENDOR_DST) && echo \"Starting go build in '\$(pwd)' ...\" && go build && echo \"md5 of a new \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME: \$(md5sum \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME | cut -f1 -d' ')\" && git rev-parse --abbrev-ref HEAD > $BE_BIN_PATH.git_branch && echo \"git commit: \$(git rev-parse HEAD)\" && git rev-parse HEAD > $BE_BIN_PATH.git_commit && cd \$GOPATH/src/$DEV_BE_GO_URL && ([ -e \$GOPATH/bin ] || mkdir -p \$GOPATH/bin) && echo \"Starting 'mv \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME \$GOPATH/bin/$BE_BIN_BASENAME\" && mv \$GOPATH/src/$DEV_BE_GO_URL/$BE_BIN_BASENAME \$GOPATH/bin/$BE_BIN_BASENAME && ([ -e $BE_ROOT_DATA_DIR/node1 ] || mkdir -p $BE_ROOT_DATA_DIR/node1) && echo \"Starting 'mv \$GOPATH/bin/$BE_BIN_BASENAME $BE_BIN_PATH' ...\" && mv \$GOPATH/bin/$BE_BIN_BASENAME $BE_BIN_PATH && echo \"md5 of final $BE_BIN_PATH: \$(md5sum $BE_BIN_PATH | cut -f1 -d' ')\""
     backend_apps_ctl $num restart
 }
