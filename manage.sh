@@ -2164,6 +2164,15 @@ setup_be_apps() {
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
 }
 
+init_be_dbs() {
+    local suffix num
+    [ -z "$1" ] && echo "Number of backends isnt' set" && return 1 || num=$1
+    [ "$EMPTY_ENV_VARS" = "yes" ] && suffix="-eev" || suffix=""
+    backend_apps_ctl "$num" "stop" \
+        && run_mbs_cmd init-dbs$suffix $num \
+        && backend_apps_ctl "$num" "start"
+}
+
 # FIXIT: BACKEND: fix backend to get back to normal start without restartes
 keep_restart_be_apps_on_error() {
     local num result i error_codes cnt _stop max_tries
@@ -4852,6 +4861,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
         create_dbs $num
+        ;;
+
+    init-be-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        init_be_dbs $num
         ;;
 
     db-shell)
