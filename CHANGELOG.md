@@ -1,7 +1,9 @@
 ## Upcoming Version 0.6.16
-* Update scripts to v0.1.4
-* Update demo apps to 0.9.7 
-* Update backend to 0.9.7
+* Update golang to v1.11: DONE
+* Update scripts to v0.1.4: DONE
+* Update demo apps to 0.9.17: IN PROGRESS
+* Update backend to 0.9.7: IN PROGRESS
+* Update Block Explorer to the latest with Aux DB support: IN PROGRESS
 
 ## Version 0.6.15 / 2018-Aug-20 05:40
 * Add dump-be-all and restore-be-all command to dump/restore backends logs, data directories and databases

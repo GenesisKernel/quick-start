@@ -3,7 +3,7 @@
 ### Configuration ### begin ###
 
 PREV_VERSION="0.6.15"
-VERSION="0.6.15"
+VERSION="0.6.16"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -14,11 +14,11 @@ else
     PRODUCT_BRAND_NAME="Genesis"
 fi
 
-GOLANG_VER="1.10.3"
+GOLANG_VER="1.11"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="hotfix/1103-rollback"
+    BACKEND_BRANCH="master"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json"
 else
