@@ -3371,7 +3371,6 @@ copy_update_sys_params_scripts() {
     done
 }
 
-
 start_import_demo_apps() {
     echo "Preparing for importing of demo apps ..."
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
@@ -3425,6 +3424,45 @@ start_import_demo_apps() {
         && echo "Demo apps importing isn't completed" && return 3
     echo "Demo apps importing is completed"
     return 0
+}
+
+import_from_file() {
+    echo "Preparing for importing ..."
+    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
+        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
+
+    local loc_path rmt_path
+    loc_path="$1"
+    [ ! -e "$loc_path" ] && echo "Path '$loc_path' doesn't exist" && return 2
+
+    copy_import_demo_apps_scripts || return 3
+    copy_import_demo_apps_data_files || return 4
+    check_update_mbs_script || return $?
+
+    rmt_path="$(docker exec -ti "$BF_CONT_NAME" sh -c "mktemp")"
+    docker exec -ti "$BF_CONT_NAME" sh -c "echo 'test' > $rmt_path"
+    [ $? -ne 0 ] && echo "Can't write to '$rmt_path'" && return 5
+    echo "Copying '$loc_path' to '$rmt_path' @ '$BF_CONT_NAME' container ..."
+    docker cp "$loc_path" "$BF_CONT_NAME:$rmt_path"
+    [ $? -ne 0 ] && echo "Can't copy '$loc_path' to '$rmt_path'" && return 6
+
+    run_mbs_cmd import-from-file "$rmt_path"
+}
+
+import_from_url() {
+    echo "Preparing for importing ..."
+    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
+        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
+
+    local url
+    url="$1"
+    [ -z "$url" ] && echo "URL isn't set" && return 2
+
+    copy_import_demo_apps_scripts || return 3
+    copy_import_demo_apps_data_files || return 4
+    check_update_mbs_script || return $?
+
+    run_mbs_cmd import-from-url "$url"
 }
 
 get_demo_apps_ver() {
@@ -3598,7 +3636,7 @@ start_install() {
     start_update_full_nodes $num || return 25
     echo
 
-    start_import_demo_apps || return 27
+    #start_import_demo_apps || return 27
     echo
 
     stop_be_apps
@@ -5109,6 +5147,18 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_demo_apps
+        ;;
+
+    import-from-file)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        import_from_file "$2"
+        ;;
+
+    import-from-url)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        import_from_url "$2"
         ;;
 
     demo-apps-ver)
