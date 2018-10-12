@@ -2,12 +2,12 @@ FROM debian:stretch-slim
 
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV GOLANG_VER 1.10.3
+ENV GOLANG_VER 1.11
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
-ENV BACKEND_BRANCH 0.9.3
+ENV BACKEND_BRANCH 1.0.4
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH 0.1.0
-ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.15/quick-start.json
+ENV SCRIPTS_BRANCH develop
+ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/system.json
 
 RUN apt-get update -y && \
     apt-get install -y sudo supervisor curl git gnupg2 postgresql-client-9.6 \
@@ -26,6 +26,8 @@ RUN git clone -b $SCRIPTS_BRANCH $SCRIPTS_REPO_URL /genesis-scripts
 COPY scripts.config.sh /genesis-scripts/.env
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN pip3 install -U pip
+RUN pip3 install setuptools wheel
 RUN pip3 install -r /genesis-scripts/requirements.txt
 
 RUN apt-get remove -y build-essential && apt-get autoremove -y && \

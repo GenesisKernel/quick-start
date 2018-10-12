@@ -2,15 +2,15 @@ FROM debian:stretch-slim
 
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV GOLANG_VER 1.10.3
+ENV GOLANG_VER 1.11
 ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
-ENV BACKEND_BRANCH hotfix/1103-rollback
+ENV BACKEND_BRANCH 1.0.4
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
-ENV FRONTEND_BRANCH v0.8.6-RC
+ENV FRONTEND_BRANCH v0.9.2
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH 0.1.2
-ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json
+ENV SCRIPTS_BRANCH develop
+ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/system.json
 
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
@@ -30,7 +30,8 @@ RUN git clone -b $SCRIPTS_BRANCH $SCRIPTS_REPO_URL /genesis-scripts
 COPY scripts.config.sh /genesis-scripts/.env
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip && apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
-RUN pip3 install setuptools
+RUN pip3 install -U pip
+RUN pip3 install setuptools wheel
 RUN pip3 install -r /genesis-scripts/requirements.txt
 
 RUN apt-get remove -y build-essential && apt-get autoremove -y && \
