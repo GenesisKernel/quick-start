@@ -1,4 +1,4 @@
-## Upcoming Version 0.7.0 / 2018-Oct-12 09:41
+## Version 0.7.0 / 2018-Oct-12 12:04
 * Update golang to v1.11
 * Switch scripts to develop branch
 * Swithc demo apps to master branch
