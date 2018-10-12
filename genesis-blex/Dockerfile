@@ -1,7 +1,7 @@
 FROM debian:stretch-slim
 
 ENV BLEX_REPO_URL https://github.com/GenesisKernel/blockexplorer
-ENV BLEX_BRANCH develop
+ENV BLEX_BRANCH v0.2.6
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
 ENV SCRIPTS_BRANCH develop
 
@@ -14,6 +14,7 @@ RUN set -ex; apt-get update -y && \
 RUN git clone -b $BLEX_BRANCH $BLEX_REPO_URL /genesis-blex
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends python3 python3-dev python3-pip python3-venv virtualenvwrapper && apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
+RUN pip3 install -U pip
 RUN pip3 install setuptools wheel
 RUN pip3 install -r /genesis-blex/requirements.txt
 
@@ -22,6 +23,7 @@ RUN apt-get remove -y build-essential && apt-get autoremove -y && \
 
 RUN git clone -b $SCRIPTS_BRANCH $SCRIPTS_REPO_URL /genesis-scripts
 COPY scripts.config.sh /genesis-scripts/.env
+COPY config.py /genesis-blex/
 
 COPY start_blockexplorer.sh /
 COPY supervisor/supervisord.conf /etc/supervisor/
