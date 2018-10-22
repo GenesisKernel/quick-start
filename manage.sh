@@ -18,11 +18,11 @@ GOLANG_VER="1.10.3"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="hotfix/1103-rollback"
+    BACKEND_BRANCH="0.9.7"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json"
 else
-    BACKEND_BRANCH="hotfix/1103-rollback"
+    BACKEND_BRANCH="0.9.7"
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
     DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/quick-start-0.9.16/quick-start.json"
 fi
@@ -51,7 +51,7 @@ else
     CENT_URL="http://genesis-cf:8000"
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 fi
-BLEX_BRANCH="0.1.0"
+BLEX_BRANCH="v0.2.6"
 
 BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
