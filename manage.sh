@@ -1242,7 +1242,7 @@ start_blex_cont() {
                 image_name="$BLEX_CONT_IMAGE"
             fi
             echo "Creating a new block explorer container from image '$image_name' ..."
-            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT --link $DB_CONT_NAME:$DB_CONT_NAME -t $image_name
+            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT --link $DB_CONT_NAME:$DB_CONT_NAME --link $BF_CONT_NAME:$BF_CONT_NAME -t $image_name
             ;;
         2)
             echo "Starting block explorer container (host port: $blexp) ..."
@@ -3483,19 +3483,6 @@ start_install() {
     wait_centrifugo_status || return 21
     echo
 
-    start_blex_cont $blexp
-
-    wait_cont_proc $BLEX_CONT_NAME supervisord 15
-    [ $? -ne 0 ] \
-        && echo "Block explorer's supervisord isn't available" && return 21 \
-        || echo "Block explorer's supervisord ready"
-
-    setup_blex $num
-    [ $? -ne 0 ] \
-        && echo "Block explorer setup isn't completed" && return 23 \
-        || echo "Block explorer setup is completed"
-    echo
-
     start_bf_cont $num $wps $cps
 
     wait_cont_proc $BF_CONT_NAME supervisord 15
@@ -3507,6 +3494,19 @@ start_install() {
     [ $? -ne 0 ] \
         && echo "Frontend's nginx isn't available" && return 22 \
         || echo "Frontend's nginx ready"
+    echo
+
+    start_blex_cont $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
+
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
     echo
 
     ### Update ### 20180405 ### 08fad ### begin ###
@@ -3634,17 +3634,7 @@ start_all() {
         || echo "Centrifugo ready"
     echo
 
-    start_blex_cont $blexp
-
-    wait_cont_proc $BLEX_CONT_NAME supervisord 15
-    [ $? -ne 0 ] \
-        && echo "Block explorer's supervisord isn't available" && return 21 \
-        || echo "Block explorer's supervisord ready"
-
-    setup_blex $num
-    [ $? -ne 0 ] \
-        && echo "Block explorer setup isn't completed" && return 23 \
-        || echo "Block explorer setup is completed"
+    wait_centrifugo_status || return 5
     echo
 
     start_bf_cont $num $wps $cps
@@ -3660,7 +3650,17 @@ start_all() {
         || echo "Backend's nginx ready"
     echo
 
-    wait_centrifugo_status || return 5
+    start_blex_cont $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
+
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
     echo
 
     keep_restart_be_apps_on_error $num 503 10 || return 2
@@ -3675,7 +3675,7 @@ start_all() {
     echo "Restarting Block Explorer ..."
     restart_blex
     echo
-
+    
     check_host_side $num $wps $cps $dbp
     [ $? -ne 2 ] && start_clients $num $wps $cps
     # FIXME: Add $cfp param
