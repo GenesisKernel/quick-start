@@ -25,11 +25,11 @@ else
     BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
 fi
 
-APPS_URLS[0]="https://raw.githubusercontent.com/GenesisKernel/apps/master/system.json"
-APPS_URLS[1]="https://raw.githubusercontent.com/GenesisKernel/apps/master/conditions.json"
-APPS_URLS[2]="https://raw.githubusercontent.com/GenesisKernel/apps/master/basic.json"
-APPS_URLS[3]="https://raw.githubusercontent.com/GenesisKernel/apps/master/lang_res.json"
-DEMO_APPS_URL="https://raw.githubusercontent.com/GenesisKernel/apps/master/system.json"
+APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
+APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/conditions.json"
+APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/basic.json"
+APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/lang_res.json"
+DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
 
 DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
 DEV_BE_BRANCH="master"

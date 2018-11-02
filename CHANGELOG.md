@@ -1,7 +1,10 @@
+## Version 0.7.1 / 2018-Nov-02 23:55
+* Switch demo apps to tag v1.0.0
+
 ## Version 0.7.0 / 2018-Oct-12 12:04
 * Update golang to v1.11
 * Switch scripts to develop branch
-* Swithc demo apps to master branch
+* Switch demo apps to master branch
 * Update frontend to 0.9.2
 * Update backend to 1.0.4
 * Update Block Explorer to 0.2.6
