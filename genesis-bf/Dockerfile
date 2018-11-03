@@ -10,7 +10,7 @@ ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH v0.9.2
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
 ENV SCRIPTS_BRANCH develop
-ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/system.json
+ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json
 
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
