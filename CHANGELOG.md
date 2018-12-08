@@ -1,3 +1,8 @@
+## Version 0.7.2 / 2018-Dec-07 13:11
+* Upgrade PostgreSQL to version 11.x
+* Add Redis Queue container/image
+* Upgrade Block Explorer to the latest development version
+
 ## Version 0.7.1 / 2018-Nov-03 04:57
 * Switch demo apps to tag v1.0.0
 

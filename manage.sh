@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.7.0"
-VERSION="0.7.1"
+PREV_VERSION="0.7.1"
+VERSION="0.7.2"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -55,7 +55,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CENT_URL="http://apla-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="v0.2.6"
+    BLEX_BRANCH="feature/add-blex-db"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
@@ -67,7 +67,7 @@ else
     CENT_URL="http://genesis-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="v0.2.6"
+    BLEX_BRANCH="feature/add-blex-db"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
@@ -208,6 +208,20 @@ else
     FE_CONT_BUILD_DIR="genesis-fe"
 fi
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
+
+if [ "$USE_PRODUCT" = "apla" ]; then
+    RQ_CONT_NAME="apla-rq"
+    RQ_CONT_IMAGE="str16071985/apla-rq:$VERSION"
+    RQ_CONT_PREV_IMAGE="str16071985/apla-rq:$PREV_VERSION"
+    RQ_CONT_BUILD_DIR="apla-rq"
+else
+    RQ_CONT_NAME="genesis-rq"
+    RQ_CONT_IMAGE="str16071985/genesis-rq:$VERSION"
+    RQ_CONT_PREV_IMAGE="str16071985/genesis-rq:$PREV_VERSION"
+    RQ_CONT_BUILD_DIR="genesis-rq"
+fi
+TRY_LOCAL_RQ_CONT_NAME_ON_RUN="yes"
+
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
@@ -1248,6 +1262,41 @@ start_db_cont() {
 ### DB container #### end ####
 
 
+### RQ container ### begin ###
+
+start_rq_cont() {
+    #local blexp; blexp="$1"
+    #[ -z "$blexp" ] && blexp=$BLEX_PORT
+    check_cont $RQ_CONT_NAME > /dev/null
+    case $? in
+        1)  
+            local image_name
+            if [ "$TRY_LOCAL_RQ_CONT_NAME_ON_RUN" = "yes" ]; then
+                local loc; loc=$(docker images --format "{{.Repository}}" -f "reference=$RQ_CONT_NAME")
+                [ -n "$loc" ] && image_name="$RQ_CONT_NAME" \
+                    || image_name="$RQ_CONT_IMAGE"
+            else
+                image_name="$RQ_CONT_IMAGE"
+            fi
+            echo "Creating a new Redis Queue container from image '$image_name' ..."
+            docker run -d --restart always --name $RQ_CONT_NAME -t $image_name
+            ;;
+        2)
+            echo "Starting Redis Queue container ..."
+            docker start $RQ_CONT_NAME &
+            ;;
+        0)
+            echo "Redis Queue container is already running"
+            ;;
+        *)
+            echo "Unknown Redis Queue container status"
+            ;;
+    esac
+}
+
+### RQ container #### end ####
+
+
 ### BLEX container ### begin ###
 
 start_blex_cont() {
@@ -1265,7 +1314,7 @@ start_blex_cont() {
                 image_name="$BLEX_CONT_IMAGE"
             fi
             echo "Creating a new block explorer container from image '$image_name' ..."
-            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT --link $DB_CONT_NAME:$DB_CONT_NAME --link $BF_CONT_NAME:$BF_CONT_NAME -t $image_name
+            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT --link $DB_CONT_NAME:$DB_CONT_NAME --link $RQ_CONT_NAME:$RQ_CONT_NAME --link $BF_CONT_NAME:$BF_CONT_NAME -t $image_name
             ;;
         2)
             echo "Starting block explorer container (host port: $blexp) ..."
@@ -3676,6 +3725,13 @@ start_install() {
         || echo "Frontend's nginx ready"
     echo
 
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
     start_blex_cont $blexp
 
     wait_cont_proc $BLEX_CONT_NAME supervisord 15
@@ -3830,6 +3886,13 @@ start_all() {
         || echo "Backend's nginx ready"
     echo
 
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
     start_blex_cont $blexp
 
     wait_cont_proc $BLEX_CONT_NAME supervisord 15
@@ -3903,21 +3966,22 @@ show_status() {
 
 show_all_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_IMAGE%%:*} ${DB_CONT_IMAGE%%:*} ${CF_CONT_IMAGE%%:*} ${BLEX_CONT_IMAGE%%:*}; do
+    for img_name in ${BF_CONT_IMAGE%%:*} ${DB_CONT_IMAGE%%:*} ${RQ_CONT_IMAGE%%:*} ${CF_CONT_IMAGE%%:*} ${BLEX_CONT_IMAGE%%:*}; do
+        echo "img_name: $img_name"
         docker images -f reference="$img_name:*" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
 
 show_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_IMAGE} ${DB_CONT_IMAGE} ${CF_CONT_IMAGE} ${BLEX_CONT_IMAGE}; do
+    for img_name in ${BF_CONT_IMAGE} ${DB_CONT_IMAGE} ${RQ_CONT_IMAGE} ${CF_CONT_IMAGE} ${BLEX_CONT_IMAGE}; do
         docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
 
 show_prev_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_PREV_IMAGE} ${DB_CONT_PREV_IMAGE} ${CF_CONT_PREV_IMAGE} ${BLEX_CONT_PREV_IMAGE}; do
+    for img_name in ${BF_CONT_PREV_IMAGE} ${DB_CONT_PREV_IMAGE} ${RQ_CONT_IMAGE} ${CF_CONT_PREV_IMAGE} ${BLEX_CONT_PREV_IMAGE}; do
         docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
@@ -4229,6 +4293,9 @@ show_detailed_help() {
     echo "  build-cf-image"
     echo "    Build centrifugo container image"
     echo
+    echo "  build-rq-image"
+    echo "    Build redis queue container image"
+    echo
     echo "  build-blex-image"
     echo "    Build block explorer container image"
     echo
@@ -4347,6 +4414,38 @@ pre_command() {
         ;;
 
     ### Docker #### end ####
+
+
+    ### Common Container ### begin ###
+
+    wait-cont-proc)
+        wait_cont_proc $2 $3 $4 && echo "OK"
+        ;;
+
+    delete-all-docker-cont*)
+        docker ps -a --format '{{.ID}}' | xargs docker rm -f
+        ;;
+
+    ### Common Container #### end ####
+
+
+    ### Common Volume ### begin ###
+
+    delete-all-docker-volumes)
+        docker volume ls --format '{{.Name}}' | xargs docker volume rm
+        ;;
+
+    ### Common Volume #### end ####
+
+
+    ### Common Images ### begin ###
+
+    delete-all-docker-images)
+        docker ps -a --format '{{.ID}}' | xargs docker rm -f
+        docker images -a --format '{{.ID}}' | xargs docker rmi -f
+        ;;
+
+    ### Common Images #### end ####
 
 
     ### Host ports ### begin ###
@@ -4701,7 +4800,7 @@ pre_command() {
     up-prev-bf-image)
         check_run_as_root
         docker pull $BF_CONT_PREV_IMAGE
-        docker tag $BF_CONT_PREV_IMAGE $CF_CONT_IMAGE
+        docker tag $BF_CONT_PREV_IMAGE $BF_CONT_IMAGE
         echo
         echo -n "Are you sure to push '$BF_CONT_IMAGE' image to docker hub [y/n]? "
         read -n 1 answ
@@ -4811,6 +4910,105 @@ pre_command() {
         ;;
 
     ### CF Image #### end ####
+
+
+    ### RQ container ### begin ###
+
+    start-rq-cont)
+        check_run_as_root
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_rq_cont
+        ;;
+
+    stop-rq-cont)
+        check_run_as_root
+        docker stop $RQ_CONT_NAME
+        ;;
+
+    restart-rq-cont)
+        check_run_as_root
+        docker stop $RQ_CONT_NAME
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_rq_cont $num $wps $cps
+        ;;
+
+    prep-rq-cont)
+        check_run_as_root
+        prep_cont_for_inspect_centos7 $RQ_CONT_NAME
+        ;;
+
+    rq-cont-bash|rq-cont-sh|rq-cont-shell)
+        check_run_as_root
+        cont_bash $RQ_CONT_NAME
+        ;;
+
+    delete-rq-cont)
+        check_run_as_root
+        remove_cont $RQ_CONT_NAME
+        ;;
+        
+    ### RQ Container #### end ####
+
+
+    ### RQ Image ### begin ###
+
+    build-rq-image)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $RQ_CONT_NAME -f $RQ_CONT_BUILD_DIR/Dockerfile $RQ_CONT_BUILD_DIR/.)
+        ;;
+
+    delete-rq-image)
+        check_run_as_root
+        docker rmi -f $RQ_CONT_IMAGE
+        ;;
+
+    delete-prev-rq-image)
+        check_run_as_root
+        docker rmi -f $RQ_CONT_PREV_IMAGE
+        ;;
+
+    pull-rq-image)
+        check_run_as_root
+        docker pull $RQ_CONT_IMAGE
+        ;;
+        
+    pull-prev-rq-image)
+        check_run_as_root
+        docker pull $RQ_CONT_PREV_IMAGE
+        ;;
+
+    tag-local-rq-image)
+        check_run_as_root
+        docker tag $RQ_CONT_NAME $RQ_CONT_IMAGE
+        ;;
+
+    tag-prev-rq-image)
+        check_run_as_root
+        docker tag $RQ_CONT_PREV_IMAGE $RQ_CONT_IMAGE
+        ;;
+
+    push-rq-image)
+        check_run_as_root
+        docker push $RQ_CONT_IMAGE
+        ;;
+
+    up-prev-rq-image)
+        check_run_as_root
+        docker pull $RQ_CONT_PREV_IMAGE
+        docker tag $RQ_CONT_PREV_IMAGE $RQ_CONT_IMAGE
+        echo
+        echo -n "Are you sure to push '$RQ_CONT_IMAGE' image to docker hub? [y/n] "
+        read -n 1 answ
+        case $answ in
+            y|Y) docker push $RQ_CONT_IMAGE ;;
+            *) echo; echo "OK, skipping the pushing ..." ;;
+        esac
+        ;;
+
+    ### RQ Image #### end ####
 
 
     ### BLEX container ### begin ###
@@ -5400,6 +5598,8 @@ pre_command() {
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
             && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $RQ_CONT_NAME -f $RQ_CONT_BUILD_DIR/Dockerfile $RQ_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
