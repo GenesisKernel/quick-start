@@ -25,8 +25,8 @@ RUN git clone -b $SCRIPTS_BRANCH $SCRIPTS_REPO_URL /genesis-scripts
 COPY scripts.config.sh /genesis-scripts/.env
 COPY config.py /genesis-blex/
 
-COPY start_blockexplorer.sh /
+#COPY start_blockexplorer.sh /
 COPY supervisor/supervisord.conf /etc/supervisor/
-COPY supervisor/conf.d/blockexplorer.conf /etc/supervisor/conf.d/
+#COPY supervisor/conf.d/blockexplorer.conf /etc/supervisor/conf.d/
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
