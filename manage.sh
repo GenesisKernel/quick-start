@@ -26,9 +26,21 @@ else
 fi
 
 APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
+APPS_IMPORT_TIMEOUT_SECS[0]=200
+APPS_IMPORT_MAX_TRIES[0]=200
+
 APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/conditions.json"
+APPS_IMPORT_TIMEOUT_SECS[1]=150
+APPS_IMPORT_MAX_TRIES[1]=150
+
 APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/basic.json"
+APPS_IMPORT_TIMEOUT_SECS[2]=400
+APPS_IMPORT_MAX_TRIES[2]=400
+
 APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/lang_res.json"
+APPS_IMPORT_TIMEOUT_SECS[3]=250
+APPS_IMPORT_MAX_TRIES[3]=250
+
 DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
 
 DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
@@ -55,7 +67,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CENT_URL="http://apla-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="feature/add-blex-db"
+    BLEX_BRANCH="develop"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
@@ -67,7 +79,7 @@ else
     CENT_URL="http://genesis-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="feature/add-blex-db"
+    BLEX_BRANCH="develop"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
@@ -2163,6 +2175,11 @@ run_mblex_cmd() {
     docker exec -ti $BLEX_CONT_NAME bash $rmt_path $@
 }
 
+reread_blex_supervisor() {
+    check_cont $BLEX_CONT_NAME > /dev/null \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl reread"
+}
+
 update_blex_supervisor() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl update"
@@ -2171,19 +2188,22 @@ update_blex_supervisor() {
 restart_blex() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && echo "Restarting blockexplorer ..." \
-    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl restart blockexplorer"
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl restart blockexplorer" \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl restart blockexplorer-worker"
 }
 
 start_blex() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && echo "Starting blockexplorer ..." \
-    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl start blockexplorer"
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl start blockexplorer" \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl start blockexplorer-worker"
 }
 
 stop_blex() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && echo "Stopping blockexplorer ..." \
-    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer"
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer" \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer-worker"
 }
 
 create_blex_dbs() {
@@ -2204,7 +2224,9 @@ setup_blex() {
     num="$1"; [ -z "$2" ] && blexp="$CONT_BLEX_PORT" || blexp="$2"
     create_blex_dbs $num
     run_mblex_cmd config $num $blexp
-    update_blex_supervisor && restart_blex
+    run_mblex_cmd create-sv-conf
+    run_mblex_cmd create-wrk-sv-conf
+    reread_blex_supervisor && update_blex_supervisor && restart_blex
 }
 
 setup_be_apps() {
@@ -3284,6 +3306,7 @@ delete_install() {
     remove_cont $BF_CONT_NAME
     remove_cont $CF_CONT_NAME
     remove_cont $DB_CONT_NAME
+    remove_cont $RQ_CONT_NAME
     remove_cont $BLEX_CONT_NAME
 }
 
@@ -3467,69 +3490,16 @@ copy_update_sys_params_scripts() {
     fi
 }
 
-start_import_demo_apps_old() {
-    echo "Preparing for importing of demo apps ..."
-    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
-        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
-
-    local rmt_path
-
-    copy_import_demo_apps_scripts || return 2
-    copy_import_demo_apps_data_files || return 3
-    check_update_mbs_script || return $?
-    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
-
-    local up_da; up_da=1
-
-    local da_path; da_path="$APPS_DIR/demo_apps.json"
-    docker exec -t $BF_CONT_NAME bash -c "[ -e $da_path ]" 
-    if [ $? -ne 0 ]; then
-        up_da=0
-    fi
-
-    local result
-    local da_url; da_url="$DEMO_APPS_URL"
-    local dau_path; dau_path="$APPS_DIR/demo_apps.url"
-
-    docker exec -t $BF_CONT_NAME bash -c "[ -e $dau_path ]" 
-    if [ $? -eq 0 ]; then
-        local da_url_c; da_url_c="$(docker exec -t $BF_CONT_NAME bash -c "head -n 1 $dau_path")" 
-        da_url_c="${da_url_c%\\n}"
-        [ "$da_url" != "$da_url_c" ] \
-            && echo "Demo apps URL '$da_url_c' from '$dau_path' @ container '$BF_CONT_NAME' isn't equal to '$da_url'. Update required ..." \
-            && up_da=0
-    else
-        echo "'$dau_path' not found @ container '$BF_CONT_NAME'"
-        up_da=0
-    fi
-    
-    if [ $up_da -eq 0 ]; then
-        echo "Updating '$da_path' @ container '$BF_CONT_NAME' by data from '$da_url' ..."
-        docker exec -t "$BF_CONT_NAME" bash -c "curl -L -o $da_path $da_url"; result=$?
-        [ $result -ne 0 ] && echo "Can't download '$da_url' to '$da_path' @ container '$BF_CONT_NAME'" && return 3
-        echo "Updating '$dau_path' @ container '$BF_CONT_NAME' by URL '$da_url' ..."
-        docker exec -t "$BF_CONT_NAME" bash -c "echo -n '$da_url' > '$dau_path'"; result=$?
-        [ $result -ne 0 ] && echo "Can't update $dau_path' @ container '$BF_CONT_NAME'" && return 4
-    else
-        echo "'$da_path' is up to date"
-    fi
-
-    echo "Starting importing of demo apps with a data from '$da_url' ..."
-    docker exec -ti $BF_CONT_NAME bash $SCRIPTS_DIR/manage_bf_set.sh import-demo-apps
-    [ $? -ne 0 ] \
-        && echo "Demo apps importing isn't completed" && return 3
-    echo "Demo apps importing is completed"
-    return 0
-}
-
 import_from_file() {
     echo "Preparing for importing ..."
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
-    local loc_path rmt_path
+    local loc_path rmt_path timeout
     loc_path="$1"
     [ ! -e "$loc_path" ] && echo "Path '$loc_path' doesn't exist" && return 2
+    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="150"
+    [ -n "$3" ] && max_tries="$3" || max_tries="150"
 
     copy_import_demo_apps_scripts || return 3
     copy_import_demo_apps_data_files || return 4
@@ -3542,7 +3512,7 @@ import_from_file() {
     docker cp "$loc_path" "$BF_CONT_NAME:$rmt_path"
     [ $? -ne 0 ] && echo "Can't copy '$loc_path' to '$rmt_path'" && return 6
 
-    run_mbs_cmd import-from-file "$rmt_path"
+    run_mbs_cmd import-from-file "$rmt_path" "$timeout_secs" "$max_tries"
 }
 
 import_from_url() {
@@ -3553,20 +3523,21 @@ import_from_url() {
     local url
     url="$1"
     [ -z "$url" ] && echo "URL isn't set" && return 2
+    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="150"
+    [ -n "$2" ] && max_tries="$2" || max_tries="150"
 
     copy_import_demo_apps_scripts || return 3
     copy_import_demo_apps_data_files || return 4
     check_update_mbs_script || return $?
 
-    run_mbs_cmd import-from-url "$url"
+    run_mbs_cmd import-from-url "$url" "$timeout_sesc" "$max_tries"
 }
 
 start_import_demo_apps() {
     echo "Preparing for importing of demo apps ..."
 
     for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do
-        echo "url: ${APPS_URLS[$i]}"
-        run_mbs_cmd import-from-url "${APPS_URLS[$i]}"
+        run_mbs_cmd import-from-url "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
     done
 }
 
@@ -3582,7 +3553,7 @@ import_uspr() {
     check_update_mbs_script || return $?
 
     rmt_path="$SCRIPTS_DIR/UpdateSysParamRaw.json"
-    run_mbs_cmd import-from-file "$rmt_path"
+    run_mbs_cmd import-from-file "$rmt_path" 150 150
 }
 
 import_ukr() {
@@ -3597,7 +3568,7 @@ import_ukr() {
     check_update_mbs_script || return $?
 
     rmt_path="$SCRIPTS_DIR/UpdateKeysRaw.json"
-    run_mbs_cmd import-from-file "$rmt_path"
+    run_mbs_cmd import-from-file "$rmt_path" 150 150
 }
 
 
@@ -5456,13 +5427,13 @@ pre_command() {
     import-from-file)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        import_from_file "$2"
+        import_from_file "$2" $3 $4
         ;;
 
     import-from-url)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        import_from_url "$2"
+        import_from_url "$2" $3 $4
         ;;
 
     demo-apps-ver)
@@ -5643,6 +5614,9 @@ pre_command() {
         && "$0" build-db-image \
             && "$0" tag-local-db-image \
             && "$0" push-db-image \
+        && "$0" build-rq-image \
+            && "$0" tag-local-rq-image \
+            && "$0" push-rq-image \
         && "$0" build-blex-image \
             && "$0" tag-local-blex-image \
             && "$0" push-blex-image \

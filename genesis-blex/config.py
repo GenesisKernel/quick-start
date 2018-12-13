@@ -15,7 +15,7 @@ REDIS_URL = 'redis://localhost:6379/0'
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-SQLALCHEMY_DATABASE_URI = 'sqlite:///tmp/genesis-blex/default.sqlite')
+SQLALCHEMY_DATABASE_URI = 'sqlite:///tmp/genesis-blex/default.sqlite'
 SQLALCHEMY_BINDS = {
 }
 

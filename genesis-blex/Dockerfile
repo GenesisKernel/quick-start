@@ -1,7 +1,7 @@
 FROM debian:stretch-slim
 
 ENV BLEX_REPO_URL https://github.com/GenesisKernel/blockexplorer
-ENV BLEX_BRANCH feature/add-blex-db
+ENV BLEX_BRANCH develop
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
 ENV SCRIPTS_BRANCH develop
 
