@@ -3439,7 +3439,7 @@ start_update_full_nodes_new() {
     return 0
 }
 
-start_update_keys() {
+start_update_keys_orig() {
     local num rmt_path
     num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
@@ -3458,7 +3458,7 @@ start_update_keys() {
     return 0
 }
 
-start_update_keys_dis() {
+start_update_keys() {
     echo "Update keys DISABLED"
 }
 
@@ -3645,7 +3645,7 @@ import_from_url() {
     run_mbs_cmd import-from-url "$url" "$timeout_sesc" "$max_tries"
 }
 
-start_import_demo_apps() {
+start_import_demo_apps_orig() {
     echo "Preparing for importing of demo apps ..."
 
     for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do
@@ -3653,7 +3653,7 @@ start_import_demo_apps() {
     done
 }
 
-start_import_demo_apps_dis() {
+start_import_demo_apps() {
     echo "Import demo apps DISABLED"
 } 
 
@@ -5530,28 +5530,16 @@ pre_command() {
         safe_restore_be_dbs_and_data_dirs $2
         ;;
 
-    update-keys-old)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 21
-        start_update_keys_old $num
-        ;;
-
     update-keys)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_update_keys $num
+        start_update_keys_orig $num
         ;;
 
     update-full-nodes)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_update_full_nodes $num
-        ;;
-
-    update-full-nodes-new)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 21
-        start_update_full_nodes_new $num
+        start_update_full_nodes_orig $num
         ;;
 
     demo-page-url)
@@ -5561,7 +5549,7 @@ pre_command() {
     import-demo-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_import_demo_apps
+        start_import_demo_apps_orig
         ;;
 
     import-uspr)
