@@ -1886,11 +1886,94 @@ get_priv_keys() {
     cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && priv_key_path=\"$BE_ROOT_DATA_DIR/node\$i/PrivateKey\" && [ -e \"\$priv_key_path\" ]  && cat \"\$priv_key_path\" && echo; done'"
 }
 
+get_key_id() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    local keyd_id_path; key_id_path="$BE_ROOT_DATA_DIR/node$1/KeyID"; local result
+    cont_exec $BF_CONT_NAME "bash -c '[ -e \"$key_id_path\" ] && cat \"$key_id_path\"'"
+    result=$?
+    [ $result -ne 0 ] && echo "File '$key_id_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
+    echo
+}
+
+get_key_ids() {
+    if [ -n "$1" ]; then 
+        get_key_id $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && key_id_path=\"$BE_ROOT_DATA_DIR/node\$i/KeyID\" && [ -e \"\$key_id_path\" ]  && cat \"\$key_id_path\" && echo; done'"
+}
+
+get_pub_key() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    local pub_key_path; pub_key_path="$BE_ROOT_DATA_DIR/node$1/NodePublicKey"; local result
+    cont_exec $BF_CONT_NAME "bash -c '[ -e \"$pub_key_path\" ] && cat \"$pub_key_path\"'"
+    result=$?
+    [ $result -ne 0 ] && echo "File '$pub_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
+    echo
+}
+
+get_pub_keys() {
+    if [ -n "$1" ]; then 
+        get_pub_key $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/NodePublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
+}
+
+
+
 check_http_priv_key() {
     local result; local out; out=$(get_http_priv_key $@) > /dev/null; result=$?
     [ $result -ne 0 ] && ([ -n "$out" ] && echo "$out" || :) && return $result
     echo "ok"
 }
+
+get_api_url() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+    local c_port
+    c_port=$(expr $idx + $cps)
+    echo "http://127.0.0.1:$c_port/api/v2"
+}
+
+get_api_urls() {
+    if [ -n "$1" ]; then 
+        get_api_url $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+
+    local c_port
+    for i in $(seq 1 $num); do
+        c_port=$(expr $i + $cps)
+        echo "http://127.0.0.1:$c_port/api/v2"
+    done
+}
+
+check_http_priv_key() {
+    local result; local out; out=$(get_http_priv_key $@) > /dev/null; result=$?
+    [ $result -ne 0 ] && ([ -n "$out" ] && echo "$out" || :) && return $result
+    echo "ok"
+}
+
 
 wait_http_priv_key() {
     local url_tpl; url_tpl="$1"
@@ -2246,9 +2329,11 @@ init_be_dbs() {
     local suffix num
     [ -z "$1" ] && echo "Number of backends isnt' set" && return 1 || num=$1
     [ "$EMPTY_ENV_VARS" = "yes" ] && suffix="-eev" || suffix=""
-    backend_apps_ctl "$num" "stop" \
+    stop_blex \
+        && backend_apps_ctl "$num" "stop" \
         && run_mbs_cmd init-dbs$suffix $num \
-        && backend_apps_ctl "$num" "start"
+        && backend_apps_ctl "$num" "start" \
+        && start_blex
 }
 
 # FIXIT: BACKEND: fix backend to get back to normal start without restartes
@@ -2660,6 +2745,25 @@ safe_dump_be_dbs() {
     esac
 }
 
+fast_safe_dump_be_dbs() {
+    local num wps cps dbp cfp blexp dst_dir ind app_name
+    read_install_params_to_vars || return $? 
+
+    dst_dir="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_blex \
+        && stop_be_apps $num \
+        && dump_be_dbs \
+        && start_be_apps $num \
+        && start_blex
+}
+
 drop_be_db() {
     local ind db_name
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1
@@ -2865,6 +2969,27 @@ safe_restore_be_dbs() {
             ;;
         *) echo; echo "OK, canceling dbs restore process ..." ;;
     esac
+}
+
+fast_safe_restore_be_dbs() {
+    local num wps cps dbp cfp blexp src_dir ind
+    read_install_params_to_vars || return $? 
+
+    src_dir="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_blex \
+       && stop_be_apps $num \
+       && drop_be_dbs \
+       && create_be_dbs \
+       && restore_be_dbs "$src_dir" \
+       && start_be_apps $num \
+       && start_blex 
 }
 
 dump_be_data_dir() {
@@ -3335,7 +3460,26 @@ start_update_full_nodes() {
     echo "Update Full Nodes DISABLED"
 }
 
-start_update_keys_orig() {
+start_update_full_nodes_new() {
+    local num rmt_path
+    num=$1
+    ([ -z "$num" ] || [ $num -lt 1 ]) \
+        && echo "The number of backends is not set or wrong: '$num'" \
+        && return 1
+    check_update_mbs_script || return $?
+    copy_update_sys_params_scripts || return $?
+    import_uspr
+    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
+
+    echo "NEW Starting 'update full nodes NEW' ..."
+    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-by-voting $num
+    [ $? -ne 0 ] \
+        && echo "Full nodes updating isn't completed" && return 3
+    echo "Full nodes updating is completed"
+    return 0
+}
+
+start_update_keys() {
     local num rmt_path
     num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
@@ -3354,8 +3498,8 @@ start_update_keys_orig() {
     return 0
 }
 
-start_update_keys() {
-    echo "Updating Keys DISABLED"
+start_update_keys_dis() {
+    echo "Update keys DISABLED"
 }
 
 ### Update ### 20180405 ### 08fad #### end ####
@@ -3548,6 +3692,10 @@ start_import_demo_apps() {
         run_mbs_cmd import-from-url "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
     done
 }
+
+start_import_demo_apps_dis() {
+    echo "Import demo apps DISABLED"
+} 
 
 import_uspr() {
     local rmt_path
@@ -5009,7 +5157,7 @@ pre_command() {
         docker stop $BLEX_CONT_NAME
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
-        start_blex_cont $blexp
+        restart_blex_cont $blexp
         ;;
 
     prep-blex-cont)
@@ -5171,6 +5319,48 @@ pre_command() {
     ### Database #### end ####
 
 
+    ### BLEX ### begin ###
+
+    create-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        create_blex_dbs $num
+        ;;
+
+    setup-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        setup_blex $num
+        ;;
+
+    setop-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_blex
+        ;;
+
+
+    start-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_blex
+        ;;
+
+    stop-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        stop_blex
+        ;;
+
+    restart-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        restart_blex
+        ;;
+
+    ### BLEX #### end ####
+
+
     ### Backend ### begin ###
 
     touch-file)
@@ -5222,29 +5412,36 @@ pre_command() {
         get_priv_keys $2
         ;;
 
+    key-id)
+        get_key_id $2
+        ;;
+
+    key-ids)
+        get_key_ids $2
+        ;;
+
+    pub-key)
+        get_pub_key $2
+        ;;
+
+    pub-keys)
+        get_pub_keys $2
+        ;;
+
+    api-url)
+        get_api_url $2
+        ;;
+
+    api-urls)
+        get_api_urls $2
+        ;;
+
     setup-be-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         setup_be_apps $num
         ;;
 
-    create-blex-dbs)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 19
-        create_blex_dbs $num
-        ;;
-
-    setup-blex)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 19
-        setup_blex $num
-        ;;
-
-    restart-blex)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 19
-        restart_blex
-        ;;
 
     start-be-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
@@ -5342,6 +5539,10 @@ pre_command() {
         safe_dump_be_dbs $2
         ;;
 
+    fast-safe-dump-be-dbs|fdump)
+        fast_safe_dump_be_dbs $2
+        ;;
+
     drop-be-db)
         drop_be_db $2
         ;;
@@ -5368,6 +5569,10 @@ pre_command() {
 
     safe-restore-be-dbs)
         safe_restore_be_dbs $2
+        ;;
+
+    fast-safe-restore-be-dbs|frest)
+        fast_safe_restore_be_dbs $2
         ;;
 
     dump-be-data-dir)
@@ -5407,7 +5612,7 @@ pre_command() {
     update-full-nodes)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_update_full_nodes $num
+        start_update_full_nodes_orig $num
         ;;
 
     demo-page-url)
