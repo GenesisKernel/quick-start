@@ -1964,7 +1964,62 @@ get_api_urls() {
     local c_port
     for i in $(seq 1 $num); do
         c_port=$(expr $i + $cps)
-        echo "http://127.0.0.1:$c_port/api/v2"
+        echo "$i: http://127.0.0.1:$c_port/api/v2"
+    done
+}
+
+get_int_api_url() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    cps=7000
+    local c_port
+    c_port=$(expr $idx + $cps)
+    echo "$i: http://127.0.0.1:$c_port/api/v2"
+}
+
+get_int_api_urls() {
+    if [ -n "$1" ]; then 
+        get_int_api_url $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cps=7000
+    local c_port
+    for i in $(seq 1 $num); do
+        c_port=$(expr $i + $cps)
+        echo "$i: http://127.0.0.1:$c_port/api/v2"
+    done
+}
+
+get_int_tcp_addr() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    if [ $idx -eq 1 ]; then
+        echo "127.0.0.1:7078"
+    else
+        cps=7010
+        local c_port
+        c_port=$(expr $idx + $cps)
+        echo "127.0.0.1:$c_port"
+    fi
+}
+
+get_int_tcp_addrs() {
+    if [ -n "$1" ]; then 
+        get_int_tcp_addr $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    for i in $(seq 1 $num); do
+        echo "$i: $(get_int_tcp_addr $i)"
     done
 }
 
@@ -2773,17 +2828,31 @@ drop_be_db() {
 
     db_name="$DB_NAME_PREFIX$ind"
 
+    check_db_exists "$db_name"
+    [ $? -eq 3 ] && return 0
+
     echo "Dropping database '$db_name' @ container '$DB_CONT_NAME' ..."
     docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD dropdb -h localhost -U $DB_USER $db_name"
 }
 
 drop_be_dbs() {
-    local num wps cps dbp cfp blexp
+    local num wps cps dbp cfp blexp max_tries res
 
     read_install_params_to_vars || return $? 
 
+    max_tries=10
     for i in $(seq $num); do
-        drop_be_db $i
+        cnt=1
+        while true; do
+            echo "Dropping DB (try $cnt/$max_tries) ... "
+            drop_be_db $i; res=$?
+            [ $res -eq 0 ] && echo "DB has been successfully dropped" \
+                && break
+            [ $cnt -ge $max_tries ] \
+                && echo "Error: Dropping DB max tries exceeded" && return 1
+            sleep 1
+            cnt=$(expr $cnt + 1)
+        done
     done
 }
 
@@ -5434,6 +5503,22 @@ pre_command() {
 
     api-urls)
         get_api_urls $2
+        ;;
+
+    api-int-url|int-api-url)
+        get_int_api_url $2
+        ;;
+
+    api-int-urls|int-api-urls)
+        get_int_api_urls $2
+        ;;
+
+    tcp-int-addr|int-tcp-addr)
+        get_int_tcp_addr $2
+        ;;
+
+    tcp-int-addrs|int-tcp-addrs)
+        get_int_tcp_addrs $2
         ;;
 
     setup-be-apps)
