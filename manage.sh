@@ -14,34 +14,34 @@ else
     PRODUCT_BRAND_NAME="Genesis"
 fi
 
-GOLANG_VER="1.11"
+GOLANG_VER="1.11.4"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.0.4"
-    BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+    BACKEND_BRANCH="1.1.7"
+    BACKEND_GO_URL="https://github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.0.4" 
-    BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+    BACKEND_BRANCH="1.1.7" 
+    BACKEND_GO_URL="https://github.com/AplaProject/go-apla"
 fi
 
-APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
+APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
 APPS_IMPORT_TIMEOUT_SECS[0]=200
 APPS_IMPORT_MAX_TRIES[0]=200
 
-APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/conditions.json"
+APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/conditions.json"
 APPS_IMPORT_TIMEOUT_SECS[1]=150
 APPS_IMPORT_MAX_TRIES[1]=150
 
-APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/basic.json"
+APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/basic.json"
 APPS_IMPORT_TIMEOUT_SECS[2]=400
 APPS_IMPORT_MAX_TRIES[2]=400
 
-APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/lang_res.json"
+APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=250
 APPS_IMPORT_MAX_TRIES[3]=250
 
-DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
+DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
 
 DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
 DEV_BE_BRANCH="master"
@@ -57,7 +57,7 @@ fi
 FRONTEND_BRANCH="v0.9.2"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="develop"
+SCRIPTS_BRANCH="feature/full-nodes-voting"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -240,7 +240,7 @@ FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
 FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="no"
 FORCE_COPY_UPDATE_KEYS_SCRIPTS="no"
 FORCE_REQUIREMENTS_INSTALL="no"
-FORCE_COPY_MBS_SCRIPT="no"
+FORCE_COPY_MBS_SCRIPT="yes"
 FORCE_COPY_MBLEX_SCRIPT="no"
 
 EMPTY_ENV_VARS="yes"
@@ -2258,6 +2258,12 @@ check_update_mbs_script() {
     srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/manage_bf_set.sh"
     dsts[0]="$SCRIPTS_DIR/manage_bf_set.sh"
 
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/full_nodes_voting.py"
+    dsts[1]="$SCRIPTS_DIR/full_nodes_voting.py"
+
+    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/edit_raw_sys_params.py"
+    dsts[2]="$SCRIPTS_DIR/edit_raw_sys_params.py"
+
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
         docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
@@ -2376,6 +2382,7 @@ setup_be_apps() {
         && run_mbs_cmd gen-keys$suffix $1 \
         && run_mbs_cmd gen-first-block$suffix $1 \
         && run_mbs_cmd init-dbs$suffix $1 \
+        && start_raw_sys_params_tweaks \
         && run_mbs_cmd setup-sv-configs$suffix $1 \
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
 }
@@ -2387,6 +2394,7 @@ init_be_dbs() {
     stop_blex \
         && backend_apps_ctl "$num" "stop" \
         && run_mbs_cmd init-dbs$suffix $num \
+        && start_raw_sys_params_tweaks \
         && backend_apps_ctl "$num" "start" \
         && start_blex
 }
@@ -3525,11 +3533,11 @@ start_update_full_nodes_orig() {
     return 0
 }
 
-start_update_full_nodes() {
-    echo "Update Full Nodes DISABLED"
+start_update_full_nodes_dis() {
+    echo "Full nodes update DISABLED"
 }
 
-start_update_full_nodes_new() {
+start_update_full_nodes() {
     local num rmt_path
     num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
@@ -3537,15 +3545,55 @@ start_update_full_nodes_new() {
         && return 1
     check_update_mbs_script || return $?
     copy_update_sys_params_scripts || return $?
-    import_uspr
+    #import_ukr
     rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
 
-    echo "NEW Starting 'update full nodes NEW' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-by-voting $num
+    local priv_keys keys_ids pub_keys int_api_urls api_urls
+
+    priv_keys=$(get_priv_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PRIV_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    key_ids=$(get_key_ids | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_KEY_ID=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    pub_keys=$(get_pub_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PUB_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    int_api_urls=$(get_int_api_urls | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_INT_API_URL=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    api_urls=$(get_int_api_urls | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_API_URL=\2/' | tr -d '\r' | tr '\n' ' ')
+
+    tcp_addrs=$(get_int_tcp_addrs | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_TCP_ADDR=\2/' | tr -d '\r' | tr '\n' ' ')
+
+    int_tcp_addrs=$(get_int_tcp_addrs | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_INT_TCP_ADDR=\2/' | tr -d '\r' | tr '\n' ' ')
+
+    echo "Starting full nodes voting ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR NUM_OF_NODES=$num $priv_keys $key_ids $pub_keys $int_api_urls $api_urls $int_tcp_addrs python3 $SCRIPTS_DIR/full_nodes_voting.py"
     [ $? -ne 0 ] \
-        && echo "Full nodes updating isn't completed" && return 3
-    echo "Full nodes updating is completed"
+        && echo "Full nodes voting isn't completed" && return 3
     return 0
+}
+
+start_raw_sys_params_tweaks() {
+    :
+}
+
+start_raw_sys_params_tweaks_orig() {
+    local num rmt_path wps cps dbp cfp blexp dsn
+    read_install_params_to_vars || return 2
+
+    check_update_mbs_script || return $?
+    copy_update_sys_params_scripts || return $?
+
+    echo "Starting raw system parameters tweaks ..."
+    for i in $(seq 1 $num); do
+        echo "Updating backend #$i system parameters ..."
+        dsn="postgresql://${DB_USER}:$DB_PASSWORD@${DB_HOST}/${DB_NAME_PREFIX}$i"
+        docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/edit_raw_sys_params.py --dsn=$dsn --do=set --name=max_block_generation_time --value=4000"
+        [ $? -ne 0 ] \
+            && echo "Error: can't update sys param" && return 3
+        docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/edit_raw_sys_params.py --dsn=$dsn --do=set --name=gap_between_blocks --value=3"
+        [ $? -ne 0 ] \
+            && echo "Error: can't update sys param" && return 4
+        echo
+    done
 }
 
 start_update_keys() {
@@ -3972,10 +4020,10 @@ start_install() {
     start_update_keys $num || return 26
     echo
 
-    start_update_full_nodes $num || return 25
+    start_import_demo_apps || return 27
     echo
 
-    start_import_demo_apps || return 27
+    start_update_full_nodes $num || return 25
     echo
 
     stop_be_apps
@@ -5694,10 +5742,14 @@ pre_command() {
         start_update_keys $num
         ;;
 
+    sys-tweaks)
+        start_raw_sys_params_tweaks
+        ;;
+
     update-full-nodes)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_update_full_nodes_orig $num
+        start_update_full_nodes $num
         ;;
 
     demo-page-url)

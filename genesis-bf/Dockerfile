@@ -2,15 +2,15 @@ FROM debian:stretch-slim
 
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV GOLANG_VER 1.11
+ENV GOLANG_VER 1.11.4
 ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
-ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
-ENV BACKEND_BRANCH 1.0.4
+ENV BACKEND_GO_URL https://github.com/AplaProject/go-apla
+ENV BACKEND_BRANCH 1.1.7
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH v0.9.2
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH develop
-ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json
+ENV SCRIPTS_BRANCH feature/full-nodes-voting
+ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json
 
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
