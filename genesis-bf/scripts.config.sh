@@ -7,7 +7,7 @@ CENT_URL="http://genesis-cf:8000"
 BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 BLEX_BRANCH="develop"
 
-ENV_VARS_PREFIX="APLA"
+ENV_VARS_PREFIX="GENESIS"
 
 BE_BIN_BASENAME="go-apla"
 BE_ROOT_LOG_DIR="/var/log/$BE_BIN_BASENAME"
@@ -18,3 +18,12 @@ SUPERVISOR_BASE_CONF_DIR="/etc/supervisor"
 SUPERVISOR_CONF_D_DIR="$SUPERVISOR_BASE_CONF_DIR/conf.d"
 SUPERVISOR_CONF_PATH="$SUPERVISOR_BASE_CONF_DIR/supervisord.conf"
 SUPERVISOR_BE_NODE1_CONF_PATH="$SUPERVISOR_CONF_D_DIR/$BE_BIN_BASENAME.conf"
+
+read -r -d '' SUPERVISOR_BE_NODE1_CONF << EOM
+[program:$BE_BIN_BASENAME]
+command=$BE_BIN_PATH start --config=$BE_ROOT_DATA_DIR/node1/config.toml
+user = root
+stdout_events_enabled = true
+stderr_events_enabled = true
+autorestart = true
+EOM
