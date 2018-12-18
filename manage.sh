@@ -19,31 +19,36 @@ NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     BACKEND_BRANCH="1.1.7"
-    BACKEND_GO_URL="https://github.com/AplaProject/go-apla"
+    BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
     BACKEND_BRANCH="1.1.7" 
-    BACKEND_GO_URL="https://github.com/AplaProject/go-apla"
+    BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
 APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
+#APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
 APPS_IMPORT_TIMEOUT_SECS[0]=200
 APPS_IMPORT_MAX_TRIES[0]=200
 
 APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/conditions.json"
+#APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/conditions.json"
 APPS_IMPORT_TIMEOUT_SECS[1]=150
 APPS_IMPORT_MAX_TRIES[1]=150
 
 APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/basic.json"
+#APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/basic.json"
 APPS_IMPORT_TIMEOUT_SECS[2]=400
 APPS_IMPORT_MAX_TRIES[2]=400
 
 APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/lang_res.json"
+#APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=250
 APPS_IMPORT_MAX_TRIES[3]=250
 
 DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
+#DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
 
-DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
+DEV_BE_GO_URL="github.com/AplaProject/go-apla"
 DEV_BE_BRANCH="master"
 DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK="yes"
 DEV_BE_GO_URL_VENDOR_SRC="github.com/blitzstern5"
@@ -90,7 +95,8 @@ BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
 BE_ROOT_DATA_DIR="$BE_ROOT/data"
 BE_BIN_DIR="$BE_ROOT/bin"
-BE_BIN_BASENAME="go-genesis"
+#BE_BIN_BASENAME="go-genesis"
+BE_BIN_BASENAME="go-apla"
 BE_BIN_PATH="$BE_BIN_DIR/$BE_BIN_BASENAME"
 
 FE_SRC_DIR="/genesis-front"
@@ -2423,7 +2429,8 @@ keep_restart_be_apps_on_error() {
                 echo
                 echo "        found backend #$i is in 503-error state, restarting ..."
                 result=1
-                [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+                [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+                    || app_name="$BE_BIN_BASENAME$i"
                 docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
             fi
         done
@@ -4361,6 +4368,10 @@ update_be_dockerfile_content() {
 
     be_br_esc="$(echo "$BACKEND_BRANCH" | $SED_E 's/\//\\\//g')"
     sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_BRANCH[ ]+)([^ ]+)[ ]*$/\1$be_br_esc/' $df"
+    eval "$sed_cmd"
+
+    be_bin_bn_esc="$(echo "$BE_BIN_BASENAME" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BE_BIN_BASENAME[ ]+)([^ ]+)[ ]*$/\1$be_bin_bn_esc/' $df"
     eval "$sed_cmd"
 
     sc_repo_url_esc="$(echo "$SCRIPTS_REPO_URL" | $SED_E 's/\//\\\//g')"

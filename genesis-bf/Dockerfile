@@ -4,8 +4,9 @@ ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV GOLANG_VER 1.11.4
 ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
-ENV BACKEND_GO_URL https://github.com/AplaProject/go-apla
+ENV BACKEND_GO_URL github.com/AplaProject/go-apla
 ENV BACKEND_BRANCH 1.1.7
+ENV BE_BIN_BASENAME go-apla
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH v0.9.2
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
@@ -20,7 +21,7 @@ RUN set -ex; apt-get update -y && \
 
 RUN curl -L -o /go$GOLANG_VER.linux-amd64.tar.gz https://dl.google.com/go/go$GOLANG_VER.linux-amd64.tar.gz && tar xvf /go$GOLANG_VER.linux-amd64.tar.gz && mv /go /usr/local/ && find /go$GOLANG_VER.linux-amd64.tar.gz -delete
 
-RUN go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git rev-parse --abbrev-ref HEAD  > /genesis-back/bin/go-genesis.git_branch && git rev-parse HEAD > /genesis-back/bin/go-genesis.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/go-genesis /genesis-back/bin/go-genesis && rm -rf /go
+RUN go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git rev-parse --abbrev-ref HEAD  > /genesis-back/bin/$BE_BIN_BASENAME.git_branch && git rev-parse HEAD > /genesis-back/bin/$BE_BIN_BASENAME.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/$BE_BIN_BASENAME /genesis-back/bin/$BE_BIN_BASENAME && rm -rf /go
 
 RUN mkdir /genesis-apps && \
     echo -n "$DEMO_APPS_URL" > /genesis-apps/demo_apps.url
