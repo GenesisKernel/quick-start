@@ -1,4 +1,6 @@
-## Version 0.7.2 / 2018-Dec-07 13:11
+## Version 0.7.2 / 2018-Dec-18 07:58
+* Upgrade backend to version 1.1.8
+* Change Full Nodes update to by voting update
 * Upgrade PostgreSQL to version 11.x
 * Add Redis Queue container/image
 * Upgrade Block Explorer to the latest development version

@@ -18,10 +18,10 @@ GOLANG_VER="1.11.4"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.1.7"
+    BACKEND_BRANCH="1.1.8"
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.1.7" 
+    BACKEND_BRANCH="1.1.8" 
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
@@ -95,7 +95,6 @@ BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
 BE_ROOT_DATA_DIR="$BE_ROOT/data"
 BE_BIN_DIR="$BE_ROOT/bin"
-#BE_BIN_BASENAME="go-genesis"
 BE_BIN_BASENAME="go-apla"
 BE_BIN_PATH="$BE_BIN_DIR/$BE_BIN_BASENAME"
 
@@ -246,7 +245,7 @@ FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
 FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="no"
 FORCE_COPY_UPDATE_KEYS_SCRIPTS="no"
 FORCE_REQUIREMENTS_INSTALL="no"
-FORCE_COPY_MBS_SCRIPT="yes"
+FORCE_COPY_MBS_SCRIPT="no"
 FORCE_COPY_MBLEX_SCRIPT="no"
 
 EMPTY_ENV_VARS="yes"
@@ -2269,6 +2268,10 @@ check_update_mbs_script() {
 
     srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/edit_raw_sys_params.py"
     dsts[2]="$SCRIPTS_DIR/edit_raw_sys_params.py"
+
+    srcs[3]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
+    dsts[3]="$SCRIPTS_DIR/.env"
+
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
