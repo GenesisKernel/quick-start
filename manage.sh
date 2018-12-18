@@ -3548,7 +3548,9 @@ start_update_full_nodes_dis() {
 }
 
 start_update_full_nodes() {
-    local num rmt_path
+    local priv_keys keys_ids pub_keys int_api_urls api_urls tcp_addrs
+    local num rmt_path int_tcp_addrs
+
     num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
@@ -3557,8 +3559,6 @@ start_update_full_nodes() {
     copy_update_sys_params_scripts || return $?
     #import_ukr
     rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
-
-    local priv_keys keys_ids pub_keys int_api_urls api_urls
 
     priv_keys=$(get_priv_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PRIV_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
     
