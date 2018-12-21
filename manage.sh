@@ -61,7 +61,7 @@ fi
 FRONTEND_BRANCH="v0.9.2"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="feature/update-sys-params"
+SCRIPTS_BRANCH="develop"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
