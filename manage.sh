@@ -450,6 +450,7 @@ check_host_ports() {
     local d_port; d_port=$4; [ -z "$d_port" ] && d_port=$DB_PORT
     local cfp; cfp=$CF_PORT # FIXME: Change to argument
     local blexp; blexp=$BLEX_PORT # FIXME: Change to argument
+    local redisp; redisp=$REDIS_HOST_PORT # FIXME: Change to argument
 
     local result; result=0
 
@@ -465,6 +466,14 @@ check_host_ports() {
     if [ -n "$(get_host_port_proc $cfp)" ]; then
         echo "BUSY"
         result=5
+    else
+        echo "FREE"
+    fi
+
+    echo -n "Checking redis port $redisp: "
+    if [ -n "$(get_host_port_proc $redisp)" ]; then
+        echo "BUSY"
+        result=2
     else
         echo "FREE"
     fi
@@ -1301,7 +1310,7 @@ start_rq_cont() {
             docker run -d --restart always --name $RQ_CONT_NAME -p $REDIS_HOST_PORT:$REDIS_CONT_PORT -t $image_name
             ;;
         2)
-            echo "Starting Redis Queue container ..."
+            echo "Starting Redis Queue container (host port $REDIS_HOST_PORT) ..."
             docker start $RQ_CONT_NAME &
             ;;
         0)
