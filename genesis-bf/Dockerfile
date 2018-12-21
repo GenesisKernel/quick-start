@@ -10,7 +10,7 @@ ENV BE_BIN_BASENAME go-apla
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH v0.9.2
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH feature/full-nodes-voting
+ENV SCRIPTS_BRANCH feature/update-sys-params
 ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json
 
 RUN set -ex; apt-get update -y && \
