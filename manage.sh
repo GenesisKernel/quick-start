@@ -25,28 +25,27 @@ else
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
-APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
-#APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
+INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.2.1/init_qs.json"
+INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=200
+INITIAL_APPS_IMPORT_MAX_TRIES[0]=200
+
+APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/system.json"
 APPS_IMPORT_TIMEOUT_SECS[0]=200
 APPS_IMPORT_MAX_TRIES[0]=200
 
-APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/conditions.json"
-#APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/conditions.json"
+APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/conditions.json"
 APPS_IMPORT_TIMEOUT_SECS[1]=150
 APPS_IMPORT_MAX_TRIES[1]=150
 
-APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/basic.json"
-#APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/basic.json"
+APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/basic.json"
 APPS_IMPORT_TIMEOUT_SECS[2]=400
 APPS_IMPORT_MAX_TRIES[2]=400
 
-APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/lang_res.json"
-#APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/lang_res.json"
+APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=250
 APPS_IMPORT_MAX_TRIES[3]=250
 
 DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
-#DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
 
 DEV_BE_GO_URL="github.com/AplaProject/go-apla"
 DEV_BE_BRANCH="master"
@@ -62,7 +61,7 @@ fi
 FRONTEND_BRANCH="v0.9.2"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="feature/full-nodes-voting"
+SCRIPTS_BRANCH="feature/update-sys-params"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -114,6 +113,9 @@ CONT_CF_PORT=8000
 CONT_BLEX_PORT=8000
 CONT_WEB_PORT_SHIFT=80
 CONT_CLIENT_PORT_SHIFT=7000
+
+REDIS_HOST_PORT=16379
+REDIS_CONT_PORT=6379
 
 DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
 APPLICATIONS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
@@ -1296,7 +1298,7 @@ start_rq_cont() {
                 image_name="$RQ_CONT_IMAGE"
             fi
             echo "Creating a new Redis Queue container from image '$image_name' ..."
-            docker run -d --restart always --name $RQ_CONT_NAME -t $image_name
+            docker run -d --restart always --name $RQ_CONT_NAME -p $REDIS_HOST_PORT:$REDIS_CONT_PORT -t $image_name
             ;;
         2)
             echo "Starting Redis Queue container ..."
@@ -1564,6 +1566,33 @@ do_db_query() {
         comn|*) docker exec -ti $DB_CONT_NAME bash -c \
             "sudo -u postgres psql -U postgres -d $db_name -c '$query_esc'"
             ;;
+    esac
+}
+
+get_pg_major_ver_from_dockerfile() {
+    local df_path ver
+    df_path="$SCRIPT_DIR/$DB_CONT_BUILD_DIR/Dockerfile"
+    [ ! -e "$df_path" ] && return 1
+    ver="$($SED_E -n 's/^ENV PG_MAJOR (.*)$/\1/p' "$df_path" | tail -n 1)"
+    [ -n "$ver" ] && echo "$ver" || return 2
+}
+
+get_pgdata_var_value_from_dockerfile() {
+    local df_path ver
+    df_path="$SCRIPT_DIR/$DB_CONT_BUILD_DIR/Dockerfile"
+    [ ! -e "$df_path" ] && return 1
+    ver="$($SED_E -n 's/^ENV PGDATA (.*)$/\1/p' "$df_path" | tail -n 1)"
+    [ -n "$ver" ] && echo "$ver" || return 2
+}
+
+restart_db_server() {
+    local rmt_pg_ctl_path rmt_pgdata
+    rmt_pg_ctl_path="/usr/lib/postgresql/$(get_pg_major_ver_from_dockerfile)/bin/pg_ctl"
+    rmt_pgdata="$(get_pgdata_var_value_from_dockerfile)"
+    echo "Restarting DB Server ..."
+    docker exec -ti $DB_CONT_NAME su - postgres -c "PGDATA=$rmt_pgdata $rmt_pg_ctl_path -w restart"
+    case $? in
+        0|137) echo ""; return 0 ;;
     esac
 }
 
@@ -1982,7 +2011,7 @@ get_int_api_url() {
     cps=7000
     local c_port
     c_port=$(expr $idx + $cps)
-    echo "$i: http://127.0.0.1:$c_port/api/v2"
+    echo "http://127.0.0.1:$c_port/api/v2"
 }
 
 get_int_api_urls() {
@@ -2266,12 +2295,8 @@ check_update_mbs_script() {
     srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/full_nodes_voting.py"
     dsts[1]="$SCRIPTS_DIR/full_nodes_voting.py"
 
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/edit_raw_sys_params.py"
-    dsts[2]="$SCRIPTS_DIR/edit_raw_sys_params.py"
-
-    srcs[3]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
-    dsts[3]="$SCRIPTS_DIR/.env"
-
+    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
+    dsts[2]="$SCRIPTS_DIR/.env"
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
@@ -2379,7 +2404,7 @@ setup_blex() {
     run_mblex_cmd config $num $blexp
     run_mblex_cmd create-sv-conf
     run_mblex_cmd create-wrk-sv-conf
-    reread_blex_supervisor && update_blex_supervisor && restart_blex
+    reread_blex_supervisor && update_blex_supervisor
 }
 
 setup_be_apps() {
@@ -2391,7 +2416,6 @@ setup_be_apps() {
         && run_mbs_cmd gen-keys$suffix $1 \
         && run_mbs_cmd gen-first-block$suffix $1 \
         && run_mbs_cmd init-dbs$suffix $1 \
-        && start_raw_sys_params_tweaks \
         && run_mbs_cmd setup-sv-configs$suffix $1 \
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl update"
 }
@@ -2403,7 +2427,6 @@ init_be_dbs() {
     stop_blex \
         && backend_apps_ctl "$num" "stop" \
         && run_mbs_cmd init-dbs$suffix $num \
-        && start_raw_sys_params_tweaks \
         && backend_apps_ctl "$num" "start" \
         && start_blex
 }
@@ -2450,13 +2473,15 @@ start_be_apps() {
 
     echo "Starting backend applications ..."
     for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+            || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
     keep_restart_be_apps_on_error $num 503 10
     #echo "Restarting backend applications ..."
     #for i in $(seq 1 $num); do
-    #    [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+    #    [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+    #       || app_name="$BE_BIN_BASENAME$i"
     #    docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
     #done
     wait_backend_apps_status $num || return 2
@@ -2470,7 +2495,8 @@ start_be_apps_normal() {
 
     echo "Starting backend applications ..."
     for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+            || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
     wait_backend_apps_status $num || return 2
@@ -2481,7 +2507,8 @@ stop_be_app() {
     [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
     ind="$1"
     echo "Stopping backend #$ind ..."
-    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$ind"
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl stop $app_name"
 }
 
@@ -2490,7 +2517,8 @@ start_be_app() {
     [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
     ind="$1"
     echo "Starting backend #$ind ..."
-    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$ind"
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
 }
 
@@ -2499,7 +2527,8 @@ restart_be_app() {
     [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
     ind="$1"
     echo "Restarting backend #$ind ..."
-    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$ind"
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
 }
 
@@ -2508,7 +2537,8 @@ stop_be_apps() {
     echo "Stopping backend applications ..."
     local app_name
     for i in $(seq 1 $1); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+            || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl stop $app_name"
     done
 }
@@ -2780,6 +2810,7 @@ safe_dump_be_db() {
             stop_clients \
                 && stop_blex \
                 && stop_be_app $ind \
+                && restart_db_server \
                 && dump_be_db $ind "$dst_path" \
                 && start_be_app $ind \
                 && start_blex \
@@ -2809,6 +2840,7 @@ safe_dump_be_dbs() {
             stop_clients \
                 && stop_blex \
                 && stop_be_apps $num \
+                && restart_db_server \
                 && dump_be_dbs \
                 && start_be_apps $num \
                 && start_blex \
@@ -2832,6 +2864,7 @@ fast_safe_dump_be_dbs() {
     echo
     stop_blex \
         && stop_be_apps $num \
+        && restart_db_server \
         && dump_be_dbs \
         && start_be_apps $num \
         && start_blex
@@ -2995,6 +3028,7 @@ safe_restore_be_db() {
             stop_clients \
                 && stop_blex \
                 && stop_be_app $ind \
+                && restart_db_server \
                 && drop_be_db $ind \
                 && create_be_db $ind \
                 && restore_be_db $ind "$src_path" \
@@ -3047,6 +3081,7 @@ safe_restore_be_dbs() {
             stop_clients \
                 && stop_blex \
                 && stop_be_apps $num \
+                && restart_db_server \
                 && drop_be_dbs \
                 && create_be_dbs \
                 && restore_be_dbs "$src_dir" \
@@ -3072,6 +3107,7 @@ fast_safe_restore_be_dbs() {
     echo
     stop_blex \
        && stop_be_apps $num \
+       && restart_db_server \
        && drop_be_dbs \
        && create_be_dbs \
        && restore_be_dbs "$src_dir" \
@@ -3185,6 +3221,7 @@ safe_restore_be_data_dir() {
             echo
             stop_clients \
                 && stop_be_app $ind \
+                && restart_db_server \
                 && restore_be_data_dir $ind "$src_path" \
                 && start_be_app $ind \
                 && start_clients
@@ -3212,6 +3249,7 @@ safe_restore_be_data_dirs() {
             echo
             stop_clients \
                 && stop_be_apps $num \
+                && restart_db_server \
                 && restore_be_data_dirs "$src_dir" \
                 && start_be_apps $num \
                 && stop_clients
@@ -3247,6 +3285,7 @@ safe_dump_be_dbs_and_data_dirs() {
                 && get_versions > "$dst_dir/versions" \
                 && cp_be_logs "$dst_dir/logs" \
                 && dump_be_data_dirs "$dst_dir/data-dirs" \
+                && restart_db_server \
                 && dump_be_dbs "$dst_dir/db-dumps" \
                 && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
                 && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :) \
@@ -3294,6 +3333,7 @@ safe_restore_be_dbs_and_data_dirs() {
                 && stop_blex \
                 && stop_be_apps $num \
                 && restore_be_data_dirs "$src_dir/data-dirs" \
+                && restart_db_server \
                 && drop_be_dbs \
                 && create_be_dbs \
                 && restore_be_dbs "$src_dir/db-dumps" \
@@ -3524,32 +3564,34 @@ delete_install() {
 
 ### Update ### 20180405 ### 08fad ### begin ###
 
-start_update_full_nodes_orig() {
-    local num rmt_path
-    num=$1
-    ([ -z "$num" ] || [ $num -lt 1 ]) \
-        && echo "The number of backends is not set or wrong: '$num'" \
-        && return 1
+start_update_full_nodes() {
+    local priv_key api_url key_ids api_urls tcp_addrs pub_keys
+
     check_update_mbs_script || return $?
     copy_update_sys_params_scripts || return $?
-    import_uspr
-    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
 
-    echo "Starting 'update full nodes' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-nodes-v2 $num
+    priv_key="$(get_priv_key 1)"
+    
+    api_url="$(get_int_api_url 1)"
+    
+    key_ids=$(get_key_ids | sed -E 's/([0-9]+): (.*)$/--node-key-id=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    api_urls=$(get_int_api_urls | sed -E 's/([0-9]+): (.*)$/--node-api-url=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    tcp_addrs=$(get_int_tcp_addrs | sed -E 's/([0-9]+): (.*)$/--node-tcp-addr=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    pub_keys=$(get_pub_keys | sed -E 's/([0-9]+): (.*)$/--node-pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    echo "Starting full nodes update ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_full_nodes.py --call-priv-key=$priv_key --call-api-url=$api_url $key_ids $api_urls $tcp_addrs $pub_keys"
     [ $? -ne 0 ] \
-        && echo "Full nodes updating isn't completed" && return 3
-    echo "Full nodes updating is completed"
+        && echo "Full nodes voting isn't completed" && return 3
     return 0
 }
 
-start_update_full_nodes_dis() {
-    echo "Full nodes update DISABLED"
-}
-
-start_update_full_nodes() {
+start_update_full_nodes_by_voting() {
     local priv_keys keys_ids pub_keys int_api_urls api_urls tcp_addrs
-    local num rmt_path int_tcp_addrs
+    local num int_tcp_addrs
 
     num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
@@ -3557,8 +3599,6 @@ start_update_full_nodes() {
         && return 1
     check_update_mbs_script || return $?
     copy_update_sys_params_scripts || return $?
-    #import_ukr
-    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
 
     priv_keys=$(get_priv_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PRIV_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
     
@@ -3581,32 +3621,20 @@ start_update_full_nodes() {
     return 0
 }
 
-start_raw_sys_params_tweaks() {
-    :
-}
-
-start_raw_sys_params_tweaks_orig() {
-    local num rmt_path wps cps dbp cfp blexp dsn
+start_sys_params_tweaks() {
+    local api_url priv_key
     read_install_params_to_vars || return 2
 
     check_update_mbs_script || return $?
     copy_update_sys_params_scripts || return $?
 
-    echo "Starting raw system parameters tweaks ..."
-    for i in $(seq 1 $num); do
-        echo "Updating backend #$i system parameters ..."
-        dsn="postgresql://${DB_USER}:$DB_PASSWORD@${DB_HOST}/${DB_NAME_PREFIX}$i"
-        docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/edit_raw_sys_params.py --dsn=$dsn --do=set --name=max_block_generation_time --value=4000"
-        [ $? -ne 0 ] \
-            && echo "Error: can't update sys param" && return 3
-        docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/edit_raw_sys_params.py --dsn=$dsn --do=set --name=gap_between_blocks --value=3"
-        [ $? -ne 0 ] \
-            && echo "Error: can't update sys param" && return 4
-        echo
-    done
+    priv_key="$(get_priv_key 1)"
+    api_url="$(get_int_api_url 1)"
+
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --name=max_block_generation_time --value=4000 --name=gap_between_blocks --value=3"
 }
 
-start_update_keys() {
+start_update_keys_old() {
     local num rmt_path
     num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
@@ -3625,8 +3653,26 @@ start_update_keys() {
     return 0
 }
 
-start_update_keys_dis() {
-    echo "Update keys DISABLED"
+start_update_keys() {
+    local rmt_path priv_key api_url key_ids pub_keys amount
+    read_install_params_to_vars || return 2
+    check_update_mbs_script || return $?
+    copy_update_sys_params_scripts || return $?
+
+    import_ukr
+
+    priv_key="$(get_priv_key 1)"
+    
+    api_url="$(get_int_api_url 1)"
+    
+    key_ids=$(get_key_ids |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--key-id=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    pub_keys=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
+
+    echo "Starting keys update ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_keys_raw.py --priv-key=$priv_key --api-url=$api_url $key_ids $pub_keys $amounts"
 }
 
 ### Update ### 20180405 ### 08fad #### end ####
@@ -3741,6 +3787,15 @@ copy_update_sys_params_scripts() {
     srcs[4]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
     dsts[4]="$SCRIPTS_DIR/thread_pool.py"
 
+    srcs[5]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_sys_param.py"
+    dsts[5]="$SCRIPTS_DIR/update_sys_param.py"
+
+    srcs[6]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_sys_params.py"
+    dsts[6]="$SCRIPTS_DIR/update_sys_params.py"
+
+    srcs[7]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_full_nodes.py"
+    dsts[7]="$SCRIPTS_DIR/update_full_nodes.py"
+
     local do_copy
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
@@ -3791,7 +3846,7 @@ import_from_file() {
     docker cp "$loc_path" "$BF_CONT_NAME:$rmt_path"
     [ $? -ne 0 ] && echo "Can't copy '$loc_path' to '$rmt_path'" && return 6
 
-    run_mbs_cmd import-from-file "$rmt_path" "$timeout_secs" "$max_tries"
+    run_mbs_cmd import-from-file2 "$rmt_path" "$timeout_secs" "$max_tries"
 }
 
 import_from_url() {
@@ -3803,26 +3858,30 @@ import_from_url() {
     url="$1"
     [ -z "$url" ] && echo "URL isn't set" && return 2
     [ -n "$2" ] && timeout_secs="$2" || timeout_secs="150"
-    [ -n "$2" ] && max_tries="$2" || max_tries="150"
+    [ -n "$3" ] && max_tries="$3" || max_tries="150"
 
     copy_import_demo_apps_scripts || return 3
     copy_import_demo_apps_data_files || return 4
     check_update_mbs_script || return $?
 
-    run_mbs_cmd import-from-url "$url" "$timeout_sesc" "$max_tries"
+    run_mbs_cmd import-from-url2 "$url" "$timeout_secs" "$max_tries"
+}
+
+start_import_initial_apps() {
+    echo "Starting importing of initial apps ..."
+
+    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do
+        run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}"
+    done
 }
 
 start_import_demo_apps() {
     echo "Preparing for importing of demo apps ..."
 
     for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
+        run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
     done
 }
-
-start_import_demo_apps_dis() {
-    echo "Import demo apps DISABLED"
-} 
 
 import_uspr() {
     local rmt_path
@@ -3851,7 +3910,7 @@ import_ukr() {
     check_update_mbs_script || return $?
 
     rmt_path="$SCRIPTS_DIR/UpdateKeysRaw.json"
-    run_mbs_cmd import-from-file "$rmt_path" 150 150
+    run_mbs_cmd import-from-file2 "$rmt_path" 150 150
 }
 
 
@@ -3998,6 +4057,7 @@ start_install() {
         && echo "Block explorer setup isn't completed" && return 23 \
         || echo "Block explorer setup is completed"
     echo
+    stop_blex &
 
     ### Update ### 20180405 ### 08fad ### begin ###
 
@@ -4027,13 +4087,21 @@ start_install() {
         || echo "Fronend applications are ready"
     echo
 
-    start_update_keys $num || return 26
+    start_import_initial_apps || return 26
+    echo
+
+    start_sys_params_tweaks || return 26
+    echo
+
+    start_update_full_nodes || return 25
+    echo
+
+    start_update_keys || return 26
     echo
 
     start_import_demo_apps || return 27
     echo
 
-    start_update_full_nodes $num || return 25
     echo
 
     stop_be_apps
@@ -4159,6 +4227,7 @@ start_all() {
         && echo "Block explorer setup isn't completed" && return 23 \
         || echo "Block explorer setup is completed"
     echo
+    stop_blex &
 
     keep_restart_be_apps_on_error $num 503 10 || return 2
     echo 
@@ -5447,6 +5516,18 @@ pre_command() {
         wait_keys_sync $num
         ;;
 
+    pg-ver)
+        get_pg_major_ver_from_dockerfile
+        ;;
+
+    pgdata)
+        get_pgdata_var_value_from_dockerfile
+        ;;
+
+    restart-db-server|restart-db-srv)
+        restart_db_server
+        ;;
+
     ### Database #### end ####
 
 
@@ -5757,7 +5838,7 @@ pre_command() {
         ;;
 
     sys-tweaks)
-        start_raw_sys_params_tweaks
+        start_sys_params_tweaks
         ;;
 
     update-full-nodes)
@@ -5768,6 +5849,12 @@ pre_command() {
 
     demo-page-url)
         get_demo_page_url_from_dockerfile
+        ;;
+
+    import-init-apps|import-initial-aps)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        start_import_initial_apps
         ;;
 
     import-demo-apps)
