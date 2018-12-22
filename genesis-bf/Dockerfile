@@ -3,14 +3,14 @@ FROM debian:stretch-slim
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV GOLANG_VER 1.11.4
-ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
+ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_10.x
 ENV BACKEND_GO_URL github.com/AplaProject/go-apla
 ENV BACKEND_BRANCH 1.1.8
 ENV BE_BIN_BASENAME go-apla
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
-ENV FRONTEND_BRANCH v0.9.2
+ENV FRONTEND_BRANCH v0.11.1
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH feature/update-sys-params
+ENV SCRIPTS_BRANCH develop
 ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json
 
 RUN set -ex; apt-get update -y && \
@@ -41,7 +41,7 @@ RUN apt-get remove -y build-essential && apt-get autoremove -y && \
 COPY supervisor/supervisord.conf /etc/supervisor/
 
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends nginx curl git gnupg2 && \
+    apt-get install -y --no-install-recommends nginx curl git gnupg2  build-essential && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
 RUN curl -sL $NODEJS_SETUP_SCRIPT_URL | bash - && \
@@ -56,7 +56,7 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
 RUN git clone --recursive $FRONTEND_REPO_URL genesis-front && cd /genesis-front && git checkout $FRONT_BRANCH && git pull origin $FRONT_BRANCH && git rev-parse --abbrev-ref HEAD > /genesis-front.git_branch && git rev-parse HEAD > /genesis-front.git_commit && yarn install && yarn build && find /genesis-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY genesis-front/settings.json /genesis-front/build/
 
-RUN apt-get remove -y gnupg2 && \
+RUN apt-get remove -y gnupg2  build-essential && \
     apt-get autoremove -y && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
