@@ -672,7 +672,7 @@ install_linux_docker() {
         [Ff][Ee][Dd][Oo][Rr][Aa])
             dnf -y install dnf-plugins-core
             dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-            dnf -y install docker-ce
+            dnf -y install docker-ce lsof
             systemctl start docker && systemctl enable docker
             ;;
 
@@ -694,7 +694,7 @@ install_linux_docker() {
                 $(lsb_release -cs) \
                 stable"
             apt-get update -y
-            apt-get install docker-ce -y
+            apt-get install docker-ce lsof -y
             systemctl start docker &&  systemctl enable docker
             ;;
 
@@ -712,7 +712,7 @@ install_linux_docker() {
                 $(lsb_release -cs) \
                 stable"
             apt-get update -y
-            apt-get install docker-ce -y
+            apt-get install docker-ce lsof -y
             systemctl start docker &&  systemctl enable docker
             ;;
 
@@ -723,7 +723,7 @@ install_linux_docker() {
             apt-add-repository \
                 'deb https://apt.dockerproject.org/repo ubuntu-xenial main'
             apt-get update -y
-            apt-get install docker.io -y
+            apt-get install docker.io lsof -y
             systemctl start docker &&  systemctl enable docker
             ;;
     esac
