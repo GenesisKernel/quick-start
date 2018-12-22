@@ -122,7 +122,7 @@ APPLICATIONS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_APP_NAME="Docker"
 #DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
-DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/24312/Docker.dmg"
+DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/29211/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 DOCKER_MAC_APP_DIR_SIZE_M=1248 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
