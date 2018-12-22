@@ -15,7 +15,7 @@ else
 fi
 
 GOLANG_VER="1.11.4"
-NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
+NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
     BACKEND_BRANCH="1.1.8"
@@ -58,7 +58,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
 else
     FRONTEND_REPO_URL="https://github.com/GenesisKernel/genesis-front"
 fi
-FRONTEND_BRANCH="v0.9.2"
+FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
 SCRIPTS_BRANCH="develop"
@@ -132,20 +132,20 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CLIENT_MAC_PROCESS_NAME="Apla"
     CLIENT_LINUX_PROCESS_NAME="apla-front"
     CLIENT_APP_NAME="Apla"
-    CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.9.2/Apla-0.9.2.dmg"
-    CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
+    CLIENT_DMG_DL_URL=""
+    CLIENT_MAC_APP_DIR_SIZE_M=246 # to update run 'du -sm /Applications/Genesis.app'
     CLIENT_MAC_APP_DIR="/Applications/Apla.app"
     CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
-    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.9.2/apla-front-0.9.2-x86_64.AppImage"
+    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/apla-front-0.11.1-x86_64.AppImage"
 else
-    CLIENT_MAC_PROCESS_NAME="Genesis"
-    CLIENT_LINUX_PROCESS_NAME="genesis-front"
-    CLIENT_APP_NAME="Genesis"
-    CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.9.2/Genesis-0.9.2.dmg"
-    CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
-    CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
-    CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-    CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.9.2/genesis-front-0.9.2-x86_64.AppImage"
+    CLIENT_MAC_PROCESS_NAME="Apla"
+    CLIENT_LINUX_PROCESS_NAME="apla-front"
+    CLIENT_APP_NAME="Apla"
+    CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/Apla-0.11.1.dmg"
+    CLIENT_MAC_APP_DIR_SIZE_M=246 # to update run 'du -sm /Applications/Genesis.app'
+    CLIENT_MAC_APP_DIR="/Applications/Apla.app"
+    CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
+    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/apla-front-0.11.1-x86_64.AppImage"
 fi
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
@@ -1034,6 +1034,7 @@ start_mac_clients() {
         c_port=$(expr $i + $cps)
         echo "Starting client $i (web port: $w_port; client port: $c_port) ..."
         run_cmd="open -n $CLIENT_MAC_APP_DIR --args --disable-full-nodes-sync=true --full-node http://127.0.0.1:$c_port --private-key $priv_key --socket-url http://127.0.0.1:$cfp --offset-x $offset_x --offset-y $offset_y --dry"
+        echo "run_cmd: $run_cmd"
         eval "$run_cmd"
         offset_x=$(expr $offset_x + 50) 
         offset_y=$(expr $offset_y + 50) 
@@ -2609,6 +2610,14 @@ check_host_side() {
         || (echo "error" && cf_result=1)
     echo
 
+    local rq_result; rq_result=0
+    echo "  Redis port: $REDIS_HOST_PORT" 
+    echo -n "    checking: "
+    [ -n "$(get_host_port_proc $REDIS_HOST_PORT)" ] && echo "ok" \
+        || (echo "error" && rq_result=1)
+    echo
+
+
     local blex_result; blex_result=0
     echo "  Block explorer port: $blexp" 
     echo -n "    checking: "
@@ -2641,6 +2650,7 @@ check_host_side() {
     local result; result=0
     [ $d_result -ne 0 ] || [ $w_result -ne 0 ] && result=1
     [ $cf_result -ne 0 ] || [ $cf_result -ne 0 ] && result=3
+    [ $rq_result -ne 0 ] || [ $rq_result -ne 0 ] && result=3
     [ $blex_result -ne 0 ] || [ $blex_result -ne 0 ] && result=5
     [ $c_result -ne 0 ] && result=2
     echo -n "Total check result: "
@@ -3957,6 +3967,11 @@ start_install() {
         && echo "Centrifugo container already exists. " \
         && tot_cont_res=1
 
+    local rq_cont_res; check_cont $RQ_CONT_NAME > /dev/null; rq_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Redis queue container already exists. " \
+        && tot_cont_res=1
+
     local blex_cont_res; check_cont $BLEX_CONT_NAME > /dev/null; blex_cont_res=$? 
     [ $blex_cont_res -ne 1 ] \
         && echo "Block explorer container already exists. " \
@@ -4133,6 +4148,7 @@ start_install() {
     echo
 
     check_host_side $num $wps $cps $dbp
+    stop_clients
     [ $? -ne 2 ] && start_clients $num $wps $cps
     # FIXME: add cfp
 }
@@ -4272,6 +4288,8 @@ show_status() {
     get_cont_status $DB_CONT_NAME; cont_status=$?
     echo -n "Centrifugo container status: "
     get_cont_status $CF_CONT_NAME; cont_status=$?
+    echo -n "Redis queue container status: "
+    get_cont_status $RQ_CONT_NAME; cont_status=$?
     echo -n "Block explorer container status: "
     get_cont_status $BLEX_CONT_NAME; cont_status=$?
     echo -n "Backends/Frontends container status: "
