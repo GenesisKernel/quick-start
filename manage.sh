@@ -56,7 +56,7 @@ DEV_BE_GO_URL_VENDOR_DST="github.com/GenesisKernel"
 if [ "$USE_PRODUCT" = "apla" ]; then
     FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
 else
-    FRONTEND_REPO_URL="https://github.com/GenesisKernel/genesis-front"
+    FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
 fi
 FRONTEND_BRANCH="v0.11.1"
 
