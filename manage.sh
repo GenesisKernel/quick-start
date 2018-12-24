@@ -243,9 +243,8 @@ TRY_LOCAL_RQ_CONT_NAME_ON_RUN="yes"
 
 
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
-FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
 FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="no"
-FORCE_COPY_UPDATE_KEYS_SCRIPTS="no"
+FORCE_COPY_UPDATE_KEYS_SCRIPTS="yes"
 FORCE_REQUIREMENTS_INSTALL="no"
 FORCE_COPY_MBS_SCRIPT="no"
 FORCE_COPY_MBLEX_SCRIPT="no"
@@ -2302,11 +2301,8 @@ check_update_mbs_script() {
     srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/manage_bf_set.sh"
     dsts[0]="$SCRIPTS_DIR/manage_bf_set.sh"
 
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/full_nodes_voting.py"
-    dsts[1]="$SCRIPTS_DIR/full_nodes_voting.py"
-
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
-    dsts[2]="$SCRIPTS_DIR/.env"
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
+    dsts[1]="$SCRIPTS_DIR/.env"
 
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
@@ -3586,7 +3582,6 @@ delete_install() {
 start_update_full_nodes() {
     local priv_key api_url key_ids api_urls tcp_addrs pub_keys
 
-    check_update_mbs_script || return $?
     copy_update_sys_params_scripts || return $?
 
     priv_key="$(get_priv_key 1)"
@@ -3616,7 +3611,7 @@ start_update_full_nodes_by_voting() {
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
-    check_update_mbs_script || return $?
+
     copy_update_sys_params_scripts || return $?
 
     priv_keys=$(get_priv_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PRIV_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
@@ -3644,7 +3639,6 @@ start_sys_params_tweaks() {
     local api_url priv_key
     read_install_params_to_vars || return 2
 
-    check_update_mbs_script || return $?
     copy_update_sys_params_scripts || return $?
 
     priv_key="$(get_priv_key 1)"
@@ -3659,7 +3653,7 @@ start_update_keys_old() {
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
-    check_update_mbs_script || return $?
+
     copy_update_sys_params_scripts || return $?
     import_ukr
     rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
@@ -3672,10 +3666,10 @@ start_update_keys_old() {
     return 0
 }
 
-start_update_keys() {
+start_update_keys_old2() {
     local rmt_path priv_key api_url key_ids pub_keys amount
     read_install_params_to_vars || return 2
-    check_update_mbs_script || return $?
+
     copy_update_sys_params_scripts || return $?
 
     import_ukr
@@ -3694,6 +3688,27 @@ start_update_keys() {
     docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_keys_raw.py --priv-key=$priv_key --api-url=$api_url $key_ids $pub_keys $amounts"
 }
 
+start_update_keys() {
+    local rmt_path priv_key api_url key_ids pub_keys amount
+    read_install_params_to_vars || return 2
+
+    copy_update_keys_scripts || return $?
+
+    priv_key="$(get_priv_key 1)"
+    
+    api_url="$(get_int_api_url 1)"
+    
+    key_ids=$(get_key_ids |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--key-id=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    pub_keys=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
+
+    echo "Starting keys update ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_user.py --priv-key=$priv_key --api-url=$api_url $key_ids $pub_keys $amounts"
+}
+
+
 ### Update ### 20180405 ### 08fad #### end ####
 
 get_demo_apps_url_from_dockerfile() {
@@ -3708,23 +3723,12 @@ copy_import_demo_apps_scripts() {
 
     local srcs; local dsts;
 
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/genesis_api_client.py"
-    dsts[0]="$SCRIPTS_DIR/genesis_api_client.py"
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
+    dsts[0]="$SCRIPTS_DIR/requirements.txt"
 
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_demo_apps.py"
-    dsts[1]="$SCRIPTS_DIR/import_demo_apps.py"
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_dapp_from_file.py"
+    dsts[1]="$SCRIPTS_DIR/import_dapp_from_file.py"
 
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
-    dsts[2]="$SCRIPTS_DIR/thread_pool.py"
-
-    srcs[3]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
-    dsts[3]="$SCRIPTS_DIR/requirements.txt"
-
-    srcs[4]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/UpdateSysParamRaw.json"
-    dsts[4]="$SCRIPTS_DIR/UpdateSysParamRaw.json"
-
-    srcs[5]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/UpdateKeysRaw.json"
-    dsts[5]="$SCRIPTS_DIR/UpdateKeysRaw.json"
 
     local do_copy
 
@@ -3751,69 +3755,21 @@ copy_import_demo_apps_scripts() {
         #docker exec -ti $BF_CONT_NAME sh -c 'apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install -U pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install wheel'
-        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[3]}'" 
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-tools'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-api-client'
+        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[0]}'" 
     fi
-}
-
-copy_import_demo_apps_data_files() {
-
-    local srcs; local dsts;
-    
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$APPS_DIR/demo_apps.json"
-    dsts[0]="$APPS_DIR/demo_apps.json"
-
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$APPS_DIR/demo_apps.url"
-    dsts[1]="$APPS_DIR/demo_apps.url"
-
-    local do_copy
-
-    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
-        do_copy="no"
-        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
-        if [ $? -ne 0 ]; then
-            do_copy="yes"
-        fi
-        if [ "$do_copy" = "yes" ] \
-            || [ "$FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES" = "yes" ]; then
-
-            if [ -e "${srcs[$i]}" ]; then
-                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
-                docker exec -ti $BF_CONT_NAME bash "[ ! -e '$APPS_DIR' ] && mkdir -p '$APPS_DIR'"
-                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
-            else
-                echo "No '${srcs[$i]}' @ host system. Skipping it ..."
-            fi
-        fi
-    done
 }
 
 copy_update_sys_params_scripts() {
 
     local srcs; local dsts;
 
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/genesis_api_client.py"
-    dsts[0]="$SCRIPTS_DIR/genesis_api_client.py"
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
+    dsts[0]="$SCRIPTS_DIR/requirements.txt"
 
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/newValToFullNodes.py"
-    dsts[1]="$SCRIPTS_DIR/newValToFullNodes.py"
-
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/updateKeys.py"
-    dsts[2]="$SCRIPTS_DIR/updateKeys.py"
-
-    srcs[3]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
-    dsts[3]="$SCRIPTS_DIR/requirements.txt"
-
-    srcs[4]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
-    dsts[4]="$SCRIPTS_DIR/thread_pool.py"
-
-    srcs[5]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_sys_param.py"
-    dsts[5]="$SCRIPTS_DIR/update_sys_param.py"
-
-    srcs[6]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_sys_params.py"
-    dsts[6]="$SCRIPTS_DIR/update_sys_params.py"
-
-    srcs[7]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_full_nodes.py"
-    dsts[7]="$SCRIPTS_DIR/update_full_nodes.py"
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_sys_params.py"
+    dsts[1]="$SCRIPTS_DIR/update_sys_params.py"
 
     local do_copy
 
@@ -3839,7 +3795,49 @@ copy_update_sys_params_scripts() {
         #docker exec -ti $BF_CONT_NAME sh -c 'apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install -U pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install wheel'
-        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[3]}'" 
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-tools'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-api-client'
+        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[0]}'" 
+    fi
+}
+
+copy_update_keys_scripts() {
+
+    local srcs; local dsts;
+
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
+    dsts[0]="$SCRIPTS_DIR/requirements.txt"
+
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/new_users.py"
+    dsts[1]="$SCRIPTS_DIR/new_users.py"
+
+    local do_copy
+
+    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
+        do_copy="no"
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
+        if [ $? -ne 0 ]; then
+            do_copy="yes"
+        fi
+        if [ "$do_copy" = "yes" ] \
+            || [ "$FORCE_COPY_UPDATE_KEYS_SCRIPTS" = "yes" ]; then
+
+            if [ -e "${srcs[$i]}" ]; then
+                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
+                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
+            else
+                echo "No '${srcs[$i]}' @ host system. Please create it first." \
+                    && return 1
+            fi
+        fi
+    done
+    if [ $FORCE_REQUIREMENTS_INSTALL == "yes" ]; then
+        #docker exec -ti $BF_CONT_NAME sh -c 'apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 install -U pip'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 install wheel'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-tools'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-api-client'
+        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[0]}'" 
     fi
 }
 
@@ -3855,8 +3853,6 @@ import_from_file() {
     [ -n "$3" ] && max_tries="$3" || max_tries="150"
 
     copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
 
     rmt_path="$(docker exec -ti "$BF_CONT_NAME" sh -c "mktemp")"
     docker exec -ti "$BF_CONT_NAME" sh -c "echo 'test' > $rmt_path"
@@ -3880,8 +3876,6 @@ import_from_url() {
     [ -n "$3" ] && max_tries="$3" || max_tries="150"
 
     copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
 
     run_mbs_cmd import-from-url2 "$url" "$timeout_secs" "$max_tries"
 }
@@ -3910,8 +3904,6 @@ import_uspr() {
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
     copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
 
     rmt_path="$SCRIPTS_DIR/UpdateSysParamRaw.json"
     run_mbs_cmd import-from-file "$rmt_path" 150 150
@@ -3925,8 +3917,6 @@ import_ukr() {
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
     copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
 
     rmt_path="$SCRIPTS_DIR/UpdateKeysRaw.json"
     run_mbs_cmd import-from-file2 "$rmt_path" 150 150
@@ -4120,11 +4110,12 @@ start_install() {
     start_update_full_nodes || return 25
     echo
 
+    start_import_demo_apps || return 27
+    echo
+
     start_update_keys || return 26
     echo
 
-    start_import_demo_apps || return 27
-    echo
 
     echo
 
