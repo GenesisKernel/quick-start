@@ -3657,14 +3657,12 @@ start_update_keys() {
     
     api_url="$(get_int_api_url 1)"
     
-    key_ids=$(get_key_ids |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--key-id=\2/' | tr -d '\r' | tr '\n' ' ')
-    
     pub_keys=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
     
     amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
 
     echo "Starting keys update ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $key_ids $pub_keys $amounts"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts"
 }
 
 
