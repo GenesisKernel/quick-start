@@ -245,7 +245,7 @@ TRY_LOCAL_RQ_CONT_NAME_ON_RUN="yes"
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
 FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="no"
 FORCE_COPY_UPDATE_KEYS_SCRIPTS="yes"
-FORCE_REQUIREMENTS_INSTALL="no"
+FORCE_REQUIREMENTS_INSTALL="yes"
 FORCE_COPY_MBS_SCRIPT="no"
 FORCE_COPY_MBLEX_SCRIPT="no"
 
@@ -3647,47 +3647,6 @@ start_sys_params_tweaks() {
     docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --name=max_block_generation_time --value=4000 --name=gap_between_blocks --value=3"
 }
 
-start_update_keys_old() {
-    local num rmt_path
-    num=$1
-    ([ -z "$num" ] || [ $num -lt 1 ]) \
-        && echo "The number of backends is not set or wrong: '$num'" \
-        && return 1
-
-    copy_update_sys_params_scripts || return $?
-    import_ukr
-    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
-
-    echo "Starting 'update keys' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-keys $num
-    [ $? -ne 0 ] \
-        && echo "Keys updating isn't completed" && return 3
-    echo "Keys updating is completed"
-    return 0
-}
-
-start_update_keys_old2() {
-    local rmt_path priv_key api_url key_ids pub_keys amount
-    read_install_params_to_vars || return 2
-
-    copy_update_sys_params_scripts || return $?
-
-    import_ukr
-
-    priv_key="$(get_priv_key 1)"
-    
-    api_url="$(get_int_api_url 1)"
-    
-    key_ids=$(get_key_ids |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--key-id=\2/' | tr -d '\r' | tr '\n' ' ')
-    
-    pub_keys=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
-    
-    amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
-
-    echo "Starting keys update ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_keys_raw.py --priv-key=$priv_key --api-url=$api_url $key_ids $pub_keys $amounts"
-}
-
 start_update_keys() {
     local rmt_path priv_key api_url key_ids pub_keys amount
     read_install_params_to_vars || return 2
@@ -3705,7 +3664,7 @@ start_update_keys() {
     amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
 
     echo "Starting keys update ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_user.py --priv-key=$priv_key --api-url=$api_url $key_ids $pub_keys $amounts"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $key_ids $pub_keys $amounts"
 }
 
 
@@ -3895,33 +3854,6 @@ start_import_demo_apps() {
         run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
     done
 }
-
-import_uspr() {
-    local rmt_path
-
-    echo "Preparing for importing ..."
-    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
-        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
-
-    copy_import_demo_apps_scripts || return 3
-
-    rmt_path="$SCRIPTS_DIR/UpdateSysParamRaw.json"
-    run_mbs_cmd import-from-file "$rmt_path" 150 150
-}
-
-import_ukr() {
-    local rmt_path
-
-    echo "Preparing for importing ..."
-    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
-        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
-
-    copy_import_demo_apps_scripts || return 3
-
-    rmt_path="$SCRIPTS_DIR/UpdateKeysRaw.json"
-    run_mbs_cmd import-from-file2 "$rmt_path" 150 150
-}
-
 
 get_demo_apps_ver() {
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
@@ -4114,9 +4046,6 @@ start_install() {
     echo
 
     start_update_keys || return 26
-    echo
-
-
     echo
 
     stop_be_apps
@@ -5879,18 +5808,6 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_demo_apps
-        ;;
-
-    import-uspr)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 21
-        import_uspr
-        ;;
-
-    import-ukr)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 21
-        import_ukr
         ;;
 
     import-from-file)
