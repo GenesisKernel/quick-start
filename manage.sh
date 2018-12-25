@@ -42,8 +42,8 @@ APPS_IMPORT_TIMEOUT_SECS[2]=400
 APPS_IMPORT_MAX_TRIES[2]=400
 
 APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/lang_res.json"
-APPS_IMPORT_TIMEOUT_SECS[3]=250
-APPS_IMPORT_MAX_TRIES[3]=250
+APPS_IMPORT_TIMEOUT_SECS[3]=350
+APPS_IMPORT_MAX_TRIES[3]=350
 
 DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
 
