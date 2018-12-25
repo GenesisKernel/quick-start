@@ -2390,18 +2390,17 @@ stop_blex() {
     && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer-worker"
 }
 
-create_blex_dbs() {
-    local num db_name
-    num="$1"
-    [ -z "$num" ] && echo "The number of backends isn't set" && return 1
-    check_cont $DB_CONT_NAME > /dev/null \
-    run_mblex_cmd create-dbs $num
-    for i in $(seq 1 $num); do
-        db_name="$BLEX_DB_NAME_PREFIX$i"
-        echo "Creating '$db_name' database @ '$DB_CONT_NAME' ..."
-        docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
-    done
-}
+#create_blex_dbs() {
+#    local num wps cps dbp cfp blexp db_name
+#    read_install_params_to_vars || return $? 
+#    check_cont $DB_CONT_NAME > /dev/null \
+#    run_mblex_cmd create-dbs $num
+#    for i in $(seq 1 $num); do
+#        db_name="$BLEX_DB_NAME_PREFIX$i"
+#        echo "Creating '$db_name' database @ '$DB_CONT_NAME' ..."
+#        docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
+#    done
+#}
 
 setup_blex() {
     local num blexp
@@ -2883,6 +2882,65 @@ fast_safe_dump_be_dbs() {
         && dump_be_dbs \
         && start_be_apps $num \
         && start_blex
+}
+
+drop_blex_db() {
+    local ind db_name
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    install_postgresql_dump_requirements || return $?
+
+    db_name="$BLEX_DB_NAME_PREFIX$ind"
+
+    check_db_exists "$db_name"
+    [ $? -eq 3 ] && return 0
+
+    echo "Dropping database '$db_name' @ container '$DB_CONT_NAME' ..."
+    docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD dropdb -h localhost -U $DB_USER $db_name"
+}
+
+drop_blex_dbs() {
+    local num wps cps dbp cfp blexp max_tries res
+    read_install_params_to_vars || return $? 
+
+    max_tries=10
+    for i in $(seq $num); do
+        cnt=1
+        while true; do
+            echo "Dropping DB (try $cnt/$max_tries) ... "
+            drop_blex_db $i; res=$?
+            [ $res -eq 0 ] && echo "DB has been successfully dropped" \
+                && break
+            [ $cnt -ge $max_tries ] \
+                && echo "Error: Dropping DB max tries exceeded" && return 1
+            sleep 1
+            cnt=$(expr $cnt + 1)
+        done
+    done
+}
+
+create_blex_db() {
+    local ind db_name
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    install_postgresql_dump_requirements || return $?
+
+    db_name="$BLEX_DB_NAME_PREFIX$ind"
+
+    echo "Creating database '$db_name' @ container '$DB_CONT_NAME' ..."
+    docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD createdb -h localhost -U $DB_USER -O $DB_USER $db_name"
+}
+
+create_blex_dbs() {
+    local num wps cps dbp cfp blexp
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        create_blex_db $i
+    done
 }
 
 drop_be_db() {
@@ -5716,12 +5774,36 @@ pre_command() {
         fast_safe_dump_be_dbs $2
         ;;
 
+    drop-blex-db)
+        drop_blex_db $2
+        ;;
+
+    drop-blex-dbs)
+        drop_blex_dbs
+        ;;
+
+    create-blex-db)
+        create_blex_db $2
+        ;;
+
+    create-blex-dbs)
+        create_blex_dbs
+        ;;
+
     drop-be-db)
         drop_be_db $2
         ;;
 
+    drop-be-dbs)
+        drop_be_dbs
+        ;;
+
     create-be-db)
         create_be_db $2
+        ;;
+
+    create-be-dbs)
+        create_be_dbs
         ;;
 
     safe-recreate-be-db)
