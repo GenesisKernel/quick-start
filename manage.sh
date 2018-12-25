@@ -18,10 +18,10 @@ GOLANG_VER="1.11.4"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.1.8"
+    BACKEND_BRANCH="1.1.9"
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.1.8" 
+    BACKEND_BRANCH="1.1.9" 
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 

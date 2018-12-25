@@ -7,7 +7,7 @@ ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_10.x
 ENV BACKEND_GO_URL github.com/AplaProject/go-apla
 ENV BACKEND_BRANCH 1.1.8
 ENV BE_BIN_BASENAME go-apla
-ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
+ENV FRONTEND_REPO_URL https://github.com/AplaProject/apla-front
 ENV FRONTEND_BRANCH v0.11.1
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
 ENV SCRIPTS_BRANCH develop
