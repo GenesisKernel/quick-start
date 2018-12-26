@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.7.0"
-VERSION="0.7.1"
+PREV_VERSION="0.7.1"
+VERSION="0.7.2"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -14,24 +14,40 @@ else
     PRODUCT_BRAND_NAME="Genesis"
 fi
 
-GOLANG_VER="1.11"
-NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_8.x"
+GOLANG_VER="1.11.4"
+NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.0.4"
-    BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+    BACKEND_BRANCH="1.1.10"
+    BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.0.4" 
-    BACKEND_GO_URL="github.com/GenesisKernel/go-genesis"
+    BACKEND_BRANCH="1.1.10" 
+    BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
-APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
-APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/conditions.json"
-APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/basic.json"
-APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/lang_res.json"
-DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json"
+INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.2.1/init_qs.json"
+INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=200
+INITIAL_APPS_IMPORT_MAX_TRIES[0]=200
 
-DEV_BE_GO_URL="github.com/blitzstern5/go-genesis"
+APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/system.json"
+APPS_IMPORT_TIMEOUT_SECS[0]=200
+APPS_IMPORT_MAX_TRIES[0]=200
+
+APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/conditions.json"
+APPS_IMPORT_TIMEOUT_SECS[1]=150
+APPS_IMPORT_MAX_TRIES[1]=150
+
+APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/basic.json"
+APPS_IMPORT_TIMEOUT_SECS[2]=400
+APPS_IMPORT_MAX_TRIES[2]=400
+
+APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/lang_res.json"
+APPS_IMPORT_TIMEOUT_SECS[3]=350
+APPS_IMPORT_MAX_TRIES[3]=350
+
+DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
+
+DEV_BE_GO_URL="github.com/AplaProject/go-apla"
 DEV_BE_BRANCH="master"
 DEV_BE_CREATE_GO_URL_VENDOR_SYMLINK="yes"
 DEV_BE_GO_URL_VENDOR_SRC="github.com/blitzstern5"
@@ -42,10 +58,10 @@ if [ "$USE_PRODUCT" = "apla" ]; then
 else
     FRONTEND_REPO_URL="https://github.com/GenesisKernel/genesis-front"
 fi
-FRONTEND_BRANCH="v0.9.2"
+FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="develop"
+SCRIPTS_BRANCH="v0.2.0"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -55,7 +71,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CENT_URL="http://apla-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="v0.2.6"
+    BLEX_BRANCH="v0.3.0"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
@@ -67,7 +83,7 @@ else
     CENT_URL="http://genesis-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="v0.2.6"
+    BLEX_BRANCH="v0.3.0"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
@@ -78,7 +94,7 @@ BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
 BE_ROOT_DATA_DIR="$BE_ROOT/data"
 BE_BIN_DIR="$BE_ROOT/bin"
-BE_BIN_BASENAME="go-genesis"
+BE_BIN_BASENAME="go-apla"
 BE_BIN_PATH="$BE_BIN_DIR/$BE_BIN_BASENAME"
 
 FE_SRC_DIR="/genesis-front"
@@ -94,16 +110,19 @@ CLIENT_PORT_SHIFT=17300
 
 CONT_DB_PORT=5432
 CONT_CF_PORT=8000
-CONT_BLEX_PORT=80
+CONT_BLEX_PORT=8000
 CONT_WEB_PORT_SHIFT=80
 CONT_CLIENT_PORT_SHIFT=7000
+
+REDIS_HOST_PORT=16379
+REDIS_CONT_PORT=6379
 
 DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
 APPLICATIONS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_APP_NAME="Docker"
 #DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
-DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/24312/Docker.dmg"
+DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/29211/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 DOCKER_MAC_APP_DIR_SIZE_M=1248 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
@@ -113,20 +132,20 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CLIENT_MAC_PROCESS_NAME="Apla"
     CLIENT_LINUX_PROCESS_NAME="apla-front"
     CLIENT_APP_NAME="Apla"
-    CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.9.2/Apla-0.9.2.dmg"
-    CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
+    CLIENT_DMG_DL_URL=""
+    CLIENT_MAC_APP_DIR_SIZE_M=246 # to update run 'du -sm /Applications/Genesis.app'
     CLIENT_MAC_APP_DIR="/Applications/Apla.app"
     CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
-    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.9.2/apla-front-0.9.2-x86_64.AppImage"
+    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/apla-front-0.11.1-x86_64.AppImage"
 else
     CLIENT_MAC_PROCESS_NAME="Genesis"
     CLIENT_LINUX_PROCESS_NAME="genesis-front"
     CLIENT_APP_NAME="Genesis"
-    CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.9.2/Genesis-0.9.2.dmg"
-    CLIENT_MAC_APP_DIR_SIZE_M=239 # to update run 'du -sm /Applications/Genesis.app'
+    CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.11.1/Genesis-0.11.1.dmg"
+    CLIENT_MAC_APP_DIR_SIZE_M=246 # to update run 'du -sm /Applications/Genesis.app'
     CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
     CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
-    CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.9.2/genesis-front-0.9.2-x86_64.AppImage"
+    CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.11.1/genesis-front-0.11.1-x86_64.AppImage"
 fi
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
@@ -209,8 +228,21 @@ else
 fi
 TRY_LOCAL_FE_CONT_NAME_ON_RUN="yes"
 
+if [ "$USE_PRODUCT" = "apla" ]; then
+    RQ_CONT_NAME="apla-rq"
+    RQ_CONT_IMAGE="str16071985/apla-rq:$VERSION"
+    RQ_CONT_PREV_IMAGE="str16071985/apla-rq:$PREV_VERSION"
+    RQ_CONT_BUILD_DIR="apla-rq"
+else
+    RQ_CONT_NAME="genesis-rq"
+    RQ_CONT_IMAGE="str16071985/genesis-rq:$VERSION"
+    RQ_CONT_PREV_IMAGE="str16071985/genesis-rq:$PREV_VERSION"
+    RQ_CONT_BUILD_DIR="genesis-rq"
+fi
+TRY_LOCAL_RQ_CONT_NAME_ON_RUN="yes"
+
+
 FORCE_COPY_IMPORT_DEMO_APPS_SCRIPTS="no"
-FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES="no"
 FORCE_COPY_UPDATE_SYS_PARAMS_SCRIPTS="no"
 FORCE_COPY_UPDATE_KEYS_SCRIPTS="no"
 FORCE_REQUIREMENTS_INSTALL="no"
@@ -417,6 +449,7 @@ check_host_ports() {
     local d_port; d_port=$4; [ -z "$d_port" ] && d_port=$DB_PORT
     local cfp; cfp=$CF_PORT # FIXME: Change to argument
     local blexp; blexp=$BLEX_PORT # FIXME: Change to argument
+    local redisp; redisp=$REDIS_HOST_PORT # FIXME: Change to argument
 
     local result; result=0
 
@@ -432,6 +465,14 @@ check_host_ports() {
     if [ -n "$(get_host_port_proc $cfp)" ]; then
         echo "BUSY"
         result=5
+    else
+        echo "FREE"
+    fi
+
+    echo -n "Checking redis port $redisp: "
+    if [ -n "$(get_host_port_proc $redisp)" ]; then
+        echo "BUSY"
+        result=2
     else
         echo "FREE"
     fi
@@ -630,7 +671,7 @@ install_linux_docker() {
         [Ff][Ee][Dd][Oo][Rr][Aa])
             dnf -y install dnf-plugins-core
             dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-            dnf -y install docker-ce
+            dnf -y install docker-ce lsof
             systemctl start docker && systemctl enable docker
             ;;
 
@@ -652,7 +693,7 @@ install_linux_docker() {
                 $(lsb_release -cs) \
                 stable"
             apt-get update -y
-            apt-get install docker-ce -y
+            apt-get install docker-ce lsof -y
             systemctl start docker &&  systemctl enable docker
             ;;
 
@@ -670,7 +711,7 @@ install_linux_docker() {
                 $(lsb_release -cs) \
                 stable"
             apt-get update -y
-            apt-get install docker-ce -y
+            apt-get install docker-ce lsof -y
             systemctl start docker &&  systemctl enable docker
             ;;
 
@@ -681,7 +722,7 @@ install_linux_docker() {
             apt-add-repository \
                 'deb https://apt.dockerproject.org/repo ubuntu-xenial main'
             apt-get update -y
-            apt-get install docker.io -y
+            apt-get install docker.io lsof -y
             systemctl start docker &&  systemctl enable docker
             ;;
     esac
@@ -1147,7 +1188,7 @@ cont_exec() {
 
 prep_cont_for_inspect() {
     #cont_exec $1 "bash -c \"apt update --fix-missing; apt install -y tmux telnet net-tools vim nano links procps\""
-    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet iputils-ping net-tools vim nano links screen procps mc build-essential; echo \"Installing delve ...\"; go get -u github.com/derekparker/delve/cmd/dlv'"
+    cont_exec $1 "bash -c 'apt update --fix-missing; apt install -y tmux telnet iputils-ping net-tools vim nano links screen procps mc build-essential; (command -v go && echo \"Installing delve ...\" && go get -u github.com/derekparker/delve/cmd/dlv)'"
 }
 
 prep_cont_for_inspect_centos7() {
@@ -1248,6 +1289,41 @@ start_db_cont() {
 ### DB container #### end ####
 
 
+### RQ container ### begin ###
+
+start_rq_cont() {
+    #local blexp; blexp="$1"
+    #[ -z "$blexp" ] && blexp=$BLEX_PORT
+    check_cont $RQ_CONT_NAME > /dev/null
+    case $? in
+        1)  
+            local image_name
+            if [ "$TRY_LOCAL_RQ_CONT_NAME_ON_RUN" = "yes" ]; then
+                local loc; loc=$(docker images --format "{{.Repository}}" -f "reference=$RQ_CONT_NAME")
+                [ -n "$loc" ] && image_name="$RQ_CONT_NAME" \
+                    || image_name="$RQ_CONT_IMAGE"
+            else
+                image_name="$RQ_CONT_IMAGE"
+            fi
+            echo "Creating a new Redis Queue container from image '$image_name' ..."
+            docker run -d --restart always --name $RQ_CONT_NAME -p $REDIS_HOST_PORT:$REDIS_CONT_PORT -t $image_name
+            ;;
+        2)
+            echo "Starting Redis Queue container (host port $REDIS_HOST_PORT) ..."
+            docker start $RQ_CONT_NAME &
+            ;;
+        0)
+            echo "Redis Queue container is already running"
+            ;;
+        *)
+            echo "Unknown Redis Queue container status"
+            ;;
+    esac
+}
+
+### RQ container #### end ####
+
+
 ### BLEX container ### begin ###
 
 start_blex_cont() {
@@ -1265,7 +1341,7 @@ start_blex_cont() {
                 image_name="$BLEX_CONT_IMAGE"
             fi
             echo "Creating a new block explorer container from image '$image_name' ..."
-            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT --link $DB_CONT_NAME:$DB_CONT_NAME --link $BF_CONT_NAME:$BF_CONT_NAME -t $image_name
+            docker run -d --restart always --name $BLEX_CONT_NAME -p $blexp:$CONT_BLEX_PORT --link $DB_CONT_NAME:$DB_CONT_NAME --link $RQ_CONT_NAME:$RQ_CONT_NAME --link $BF_CONT_NAME:$BF_CONT_NAME -t $image_name
             ;;
         2)
             echo "Starting block explorer container (host port: $blexp) ..."
@@ -1498,6 +1574,33 @@ do_db_query() {
         comn|*) docker exec -ti $DB_CONT_NAME bash -c \
             "sudo -u postgres psql -U postgres -d $db_name -c '$query_esc'"
             ;;
+    esac
+}
+
+get_pg_major_ver_from_dockerfile() {
+    local df_path ver
+    df_path="$SCRIPT_DIR/$DB_CONT_BUILD_DIR/Dockerfile"
+    [ ! -e "$df_path" ] && return 1
+    ver="$($SED_E -n 's/^ENV PG_MAJOR (.*)$/\1/p' "$df_path" | tail -n 1)"
+    [ -n "$ver" ] && echo "$ver" || return 2
+}
+
+get_pgdata_var_value_from_dockerfile() {
+    local df_path ver
+    df_path="$SCRIPT_DIR/$DB_CONT_BUILD_DIR/Dockerfile"
+    [ ! -e "$df_path" ] && return 1
+    ver="$($SED_E -n 's/^ENV PGDATA (.*)$/\1/p' "$df_path" | tail -n 1)"
+    [ -n "$ver" ] && echo "$ver" || return 2
+}
+
+restart_db_server() {
+    local rmt_pg_ctl_path rmt_pgdata
+    rmt_pg_ctl_path="/usr/lib/postgresql/$(get_pg_major_ver_from_dockerfile)/bin/pg_ctl"
+    rmt_pgdata="$(get_pgdata_var_value_from_dockerfile)"
+    echo "Restarting DB Server ..."
+    docker exec -ti $DB_CONT_NAME su - postgres -c "PGDATA=$rmt_pgdata $rmt_pg_ctl_path -w restart"
+    case $? in
+        0|137) echo ""; return 0 ;;
     esac
 }
 
@@ -1825,11 +1928,171 @@ get_priv_keys() {
     cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && priv_key_path=\"$BE_ROOT_DATA_DIR/node\$i/PrivateKey\" && [ -e \"\$priv_key_path\" ]  && cat \"\$priv_key_path\" && echo; done'"
 }
 
+get_key_id() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    local keyd_id_path; key_id_path="$BE_ROOT_DATA_DIR/node$1/KeyID"; local result
+    cont_exec $BF_CONT_NAME "bash -c '[ -e \"$key_id_path\" ] && cat \"$key_id_path\"'"
+    result=$?
+    [ $result -ne 0 ] && echo "File '$key_id_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
+    echo
+}
+
+get_key_ids() {
+    if [ -n "$1" ]; then 
+        get_key_id $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && key_id_path=\"$BE_ROOT_DATA_DIR/node\$i/KeyID\" && [ -e \"\$key_id_path\" ]  && cat \"\$key_id_path\" && echo; done'"
+}
+
+get_pub_key() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    local pub_key_path; pub_key_path="$BE_ROOT_DATA_DIR/node$1/PublicKey"; local result
+    cont_exec $BF_CONT_NAME "bash -c '[ -e \"$pub_key_path\" ] && cat \"$pub_key_path\"'"
+    result=$?
+    [ $result -ne 0 ] && echo "File '$pub_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
+    echo
+}
+
+get_pub_keys() {
+    if [ -n "$1" ]; then 
+        get_pub_key $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/PublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
+}
+
+get_node_pub_key() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    local pub_key_path; pub_key_path="$BE_ROOT_DATA_DIR/node$1/NodePublicKey"; local result
+    cont_exec $BF_CONT_NAME "bash -c '[ -e \"$pub_key_path\" ] && cat \"$pub_key_path\"'"
+    result=$?
+    [ $result -ne 0 ] && echo "File '$pub_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
+    echo
+}
+
+get_node_pub_keys() {
+    if [ -n "$1" ]; then 
+        get_node_pub_key $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/NodePublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
+}
+
+
 check_http_priv_key() {
     local result; local out; out=$(get_http_priv_key $@) > /dev/null; result=$?
     [ $result -ne 0 ] && ([ -n "$out" ] && echo "$out" || :) && return $result
     echo "ok"
 }
+
+get_api_url() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+    local c_port
+    c_port=$(expr $idx + $cps)
+    echo "http://127.0.0.1:$c_port/api/v2"
+}
+
+get_api_urls() {
+    if [ -n "$1" ]; then 
+        get_api_url $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
+
+    local c_port
+    for i in $(seq 1 $num); do
+        c_port=$(expr $i + $cps)
+        echo "$i: http://127.0.0.1:$c_port/api/v2"
+    done
+}
+
+get_int_api_url() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    cps=7000
+    local c_port
+    c_port=$(expr $idx + $cps)
+    echo "http://127.0.0.1:$c_port/api/v2"
+}
+
+get_int_api_urls() {
+    if [ -n "$1" ]; then 
+        get_int_api_url $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cps=7000
+    local c_port
+    for i in $(seq 1 $num); do
+        c_port=$(expr $i + $cps)
+        echo "$i: http://127.0.0.1:$c_port/api/v2"
+    done
+}
+
+get_int_tcp_addr() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    if [ $idx -eq 1 ]; then
+        echo "127.0.0.1:7078"
+    else
+        cps=7010
+        local c_port
+        c_port=$(expr $idx + $cps)
+        echo "127.0.0.1:$c_port"
+    fi
+}
+
+get_int_tcp_addrs() {
+    if [ -n "$1" ]; then 
+        get_int_tcp_addr $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    for i in $(seq 1 $num); do
+        echo "$i: $(get_int_tcp_addr $i)"
+    done
+}
+
+check_http_priv_key() {
+    local result; local out; out=$(get_http_priv_key $@) > /dev/null; result=$?
+    [ $result -ne 0 ] && ([ -n "$out" ] && echo "$out" || :) && return $result
+    echo "ok"
+}
+
 
 wait_http_priv_key() {
     local url_tpl; url_tpl="$1"
@@ -2059,6 +2322,9 @@ check_update_mbs_script() {
     srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/manage_bf_set.sh"
     dsts[0]="$SCRIPTS_DIR/manage_bf_set.sh"
 
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR/scripts.config.sh"
+    dsts[1]="$SCRIPTS_DIR/.env"
+
     for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
         do_copy="no"
         docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
@@ -2114,6 +2380,11 @@ run_mblex_cmd() {
     docker exec -ti $BLEX_CONT_NAME bash $rmt_path $@
 }
 
+reread_blex_supervisor() {
+    check_cont $BLEX_CONT_NAME > /dev/null \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl reread"
+}
+
 update_blex_supervisor() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl update"
@@ -2122,40 +2393,44 @@ update_blex_supervisor() {
 restart_blex() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && echo "Restarting blockexplorer ..." \
-    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl restart blockexplorer"
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl restart blockexplorer" \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl restart blockexplorer-worker"
 }
 
 start_blex() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && echo "Starting blockexplorer ..." \
-    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl start blockexplorer"
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl start blockexplorer" \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl start blockexplorer-worker"
 }
 
 stop_blex() {
     check_cont $BLEX_CONT_NAME > /dev/null \
     && echo "Stopping blockexplorer ..." \
-    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer"
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer" \
+    && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer-worker"
 }
 
-create_blex_dbs() {
-    local num db_name
-    num="$1"
-    [ -z "$num" ] && echo "The number of backends isn't set" && return 1
-    check_cont $DB_CONT_NAME > /dev/null \
-    run_mblex_cmd create-dbs $num
-    for i in $(seq 1 $num); do
-        db_name="$BLEX_DB_NAME_PREFIX$i"
-        echo "Creating '$db_name' database @ '$DB_CONT_NAME' ..."
-        docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
-    done
-}
+#create_blex_dbs() {
+#    local num wps cps dbp cfp blexp db_name
+#    read_install_params_to_vars || return $? 
+#    check_cont $DB_CONT_NAME > /dev/null \
+#    run_mblex_cmd create-dbs $num
+#    for i in $(seq 1 $num); do
+#        db_name="$BLEX_DB_NAME_PREFIX$i"
+#        echo "Creating '$db_name' database @ '$DB_CONT_NAME' ..."
+#        docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
+#    done
+#}
 
 setup_blex() {
     local num blexp
     num="$1"; [ -z "$2" ] && blexp="$CONT_BLEX_PORT" || blexp="$2"
     create_blex_dbs $num
     run_mblex_cmd config $num $blexp
-    update_blex_supervisor && restart_blex
+    run_mblex_cmd create-sv-conf
+    run_mblex_cmd create-wrk-sv-conf
+    reread_blex_supervisor && update_blex_supervisor
 }
 
 setup_be_apps() {
@@ -2175,9 +2450,11 @@ init_be_dbs() {
     local suffix num
     [ -z "$1" ] && echo "Number of backends isnt' set" && return 1 || num=$1
     [ "$EMPTY_ENV_VARS" = "yes" ] && suffix="-eev" || suffix=""
-    backend_apps_ctl "$num" "stop" \
+    stop_blex \
+        && backend_apps_ctl "$num" "stop" \
         && run_mbs_cmd init-dbs$suffix $num \
-        && backend_apps_ctl "$num" "start"
+        && backend_apps_ctl "$num" "start" \
+        && start_blex
 }
 
 # FIXIT: BACKEND: fix backend to get back to normal start without restartes
@@ -2204,7 +2481,8 @@ keep_restart_be_apps_on_error() {
                 echo
                 echo "        found backend #$i is in 503-error state, restarting ..."
                 result=1
-                [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+                [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+                    || app_name="$BE_BIN_BASENAME$i"
                 docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
             fi
         done
@@ -2221,13 +2499,15 @@ start_be_apps() {
 
     echo "Starting backend applications ..."
     for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+            || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
     keep_restart_be_apps_on_error $num 503 10
     #echo "Restarting backend applications ..."
     #for i in $(seq 1 $num); do
-    #    [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+    #    [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+    #       || app_name="$BE_BIN_BASENAME$i"
     #    docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
     #done
     wait_backend_apps_status $num || return 2
@@ -2241,7 +2521,8 @@ start_be_apps_normal() {
 
     echo "Starting backend applications ..."
     for i in $(seq 1 $num); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+            || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
     wait_backend_apps_status $num || return 2
@@ -2252,7 +2533,8 @@ stop_be_app() {
     [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
     ind="$1"
     echo "Stopping backend #$ind ..."
-    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$ind"
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl stop $app_name"
 }
 
@@ -2261,7 +2543,8 @@ start_be_app() {
     [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
     ind="$1"
     echo "Starting backend #$ind ..."
-    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$ind"
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
 }
 
@@ -2270,7 +2553,8 @@ restart_be_app() {
     [ -z "$1" ] && echo "The backend index number isn't set"  && return 1
     ind="$1"
     echo "Restarting backend #$ind ..."
-    [ $ind -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$ind"
+    [ $ind -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+        || app_name="$BE_BIN_BASENAME$ind"
     docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
 }
 
@@ -2279,7 +2563,8 @@ stop_be_apps() {
     echo "Stopping backend applications ..."
     local app_name
     for i in $(seq 1 $1); do
-        [ $i -eq 1 ] && app_name="go-genesis" || app_name="go-genesis$i"
+        [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
+            || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl stop $app_name"
     done
 }
@@ -2341,6 +2626,14 @@ check_host_side() {
         || (echo "error" && cf_result=1)
     echo
 
+    local rq_result; rq_result=0
+    echo "  Redis port: $REDIS_HOST_PORT" 
+    echo -n "    checking: "
+    [ -n "$(get_host_port_proc $REDIS_HOST_PORT)" ] && echo "ok" \
+        || (echo "error" && rq_result=1)
+    echo
+
+
     local blex_result; blex_result=0
     echo "  Block explorer port: $blexp" 
     echo -n "    checking: "
@@ -2373,6 +2666,7 @@ check_host_side() {
     local result; result=0
     [ $d_result -ne 0 ] || [ $w_result -ne 0 ] && result=1
     [ $cf_result -ne 0 ] || [ $cf_result -ne 0 ] && result=3
+    [ $rq_result -ne 0 ] || [ $rq_result -ne 0 ] && result=3
     [ $blex_result -ne 0 ] || [ $blex_result -ne 0 ] && result=5
     [ $c_result -ne 0 ] && result=2
     echo -n "Total check result: "
@@ -2551,6 +2845,7 @@ safe_dump_be_db() {
             stop_clients \
                 && stop_blex \
                 && stop_be_app $ind \
+                && restart_db_server \
                 && dump_be_db $ind "$dst_path" \
                 && start_be_app $ind \
                 && start_blex \
@@ -2580,6 +2875,7 @@ safe_dump_be_dbs() {
             stop_clients \
                 && stop_blex \
                 && stop_be_apps $num \
+                && restart_db_server \
                 && dump_be_dbs \
                 && start_be_apps $num \
                 && start_blex \
@@ -2587,6 +2883,85 @@ safe_dump_be_dbs() {
             ;;
         *) echo; echo "OK, canceling dbs dump process ..." ;;
     esac
+}
+
+fast_safe_dump_be_dbs() {
+    local num wps cps dbp cfp blexp dst_dir ind app_name
+    read_install_params_to_vars || return $? 
+
+    dst_dir="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_blex \
+        && stop_be_apps $num \
+        && restart_db_server \
+        && dump_be_dbs \
+        && start_be_apps $num \
+        && start_blex
+}
+
+drop_blex_db() {
+    local ind db_name
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    install_postgresql_dump_requirements || return $?
+
+    db_name="$BLEX_DB_NAME_PREFIX$ind"
+
+    check_db_exists "$db_name"
+    [ $? -eq 3 ] && return 0
+
+    echo "Dropping database '$db_name' @ container '$DB_CONT_NAME' ..."
+    docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD dropdb -h localhost -U $DB_USER $db_name"
+}
+
+drop_blex_dbs() {
+    local num wps cps dbp cfp blexp max_tries res
+    read_install_params_to_vars || return $? 
+
+    max_tries=10
+    for i in $(seq $num); do
+        cnt=1
+        while true; do
+            echo "Dropping DB (try $cnt/$max_tries) ... "
+            drop_blex_db $i; res=$?
+            [ $res -eq 0 ] && echo "DB has been successfully dropped" \
+                && break
+            [ $cnt -ge $max_tries ] \
+                && echo "Error: Dropping DB max tries exceeded" && return 1
+            sleep 1
+            cnt=$(expr $cnt + 1)
+        done
+    done
+}
+
+create_blex_db() {
+    local ind db_name
+    [ -z "$1" ] && echo "Backend's number isn't set" && return 1
+    ind="$1"
+
+    install_postgresql_dump_requirements || return $?
+
+    db_name="$BLEX_DB_NAME_PREFIX$ind"
+
+    echo "Creating database '$db_name' @ container '$DB_CONT_NAME' ..."
+    docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD createdb -h localhost -U $DB_USER -O $DB_USER $db_name"
+}
+
+create_blex_dbs() {
+    local num wps cps dbp cfp blexp
+
+    read_install_params_to_vars || return $? 
+
+    for i in $(seq $num); do
+        create_blex_db $i
+    done
 }
 
 drop_be_db() {
@@ -2598,17 +2973,31 @@ drop_be_db() {
 
     db_name="$DB_NAME_PREFIX$ind"
 
+    check_db_exists "$db_name"
+    [ $? -eq 3 ] && return 0
+
     echo "Dropping database '$db_name' @ container '$DB_CONT_NAME' ..."
     docker exec -ti $DB_CONT_NAME bash -c "sudo -u postgres PGPASSWORD=$DB_PASSWORD dropdb -h localhost -U $DB_USER $db_name"
 }
 
 drop_be_dbs() {
-    local num wps cps dbp cfp blexp
+    local num wps cps dbp cfp blexp max_tries res
 
     read_install_params_to_vars || return $? 
 
+    max_tries=10
     for i in $(seq $num); do
-        drop_be_db $i
+        cnt=1
+        while true; do
+            echo "Dropping DB (try $cnt/$max_tries) ... "
+            drop_be_db $i; res=$?
+            [ $res -eq 0 ] && echo "DB has been successfully dropped" \
+                && break
+            [ $cnt -ge $max_tries ] \
+                && echo "Error: Dropping DB max tries exceeded" && return 1
+            sleep 1
+            cnt=$(expr $cnt + 1)
+        done
     done
 }
 
@@ -2733,6 +3122,7 @@ safe_restore_be_db() {
             stop_clients \
                 && stop_blex \
                 && stop_be_app $ind \
+                && restart_db_server \
                 && drop_be_db $ind \
                 && create_be_db $ind \
                 && restore_be_db $ind "$src_path" \
@@ -2785,6 +3175,7 @@ safe_restore_be_dbs() {
             stop_clients \
                 && stop_blex \
                 && stop_be_apps $num \
+                && restart_db_server \
                 && drop_be_dbs \
                 && create_be_dbs \
                 && restore_be_dbs "$src_dir" \
@@ -2794,6 +3185,28 @@ safe_restore_be_dbs() {
             ;;
         *) echo; echo "OK, canceling dbs restore process ..." ;;
     esac
+}
+
+fast_safe_restore_be_dbs() {
+    local num wps cps dbp cfp blexp src_dir ind
+    read_install_params_to_vars || return $? 
+
+    src_dir="$1"
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_blex \
+       && stop_be_apps $num \
+       && restart_db_server \
+       && drop_be_dbs \
+       && create_be_dbs \
+       && restore_be_dbs "$src_dir" \
+       && start_be_apps $num \
+       && start_blex 
 }
 
 dump_be_data_dir() {
@@ -2902,6 +3315,7 @@ safe_restore_be_data_dir() {
             echo
             stop_clients \
                 && stop_be_app $ind \
+                && restart_db_server \
                 && restore_be_data_dir $ind "$src_path" \
                 && start_be_app $ind \
                 && start_clients
@@ -2929,6 +3343,7 @@ safe_restore_be_data_dirs() {
             echo
             stop_clients \
                 && stop_be_apps $num \
+                && restart_db_server \
                 && restore_be_data_dirs "$src_dir" \
                 && start_be_apps $num \
                 && stop_clients
@@ -2964,6 +3379,7 @@ safe_dump_be_dbs_and_data_dirs() {
                 && get_versions > "$dst_dir/versions" \
                 && cp_be_logs "$dst_dir/logs" \
                 && dump_be_data_dirs "$dst_dir/data-dirs" \
+                && restart_db_server \
                 && dump_be_dbs "$dst_dir/db-dumps" \
                 && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
                 && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :) \
@@ -3011,6 +3427,7 @@ safe_restore_be_dbs_and_data_dirs() {
                 && stop_blex \
                 && stop_be_apps $num \
                 && restore_be_data_dirs "$src_dir/data-dirs" \
+                && restart_db_server \
                 && drop_be_dbs \
                 && create_be_dbs \
                 && restore_be_dbs "$src_dir/db-dumps" \
@@ -3235,48 +3652,98 @@ delete_install() {
     remove_cont $BF_CONT_NAME
     remove_cont $CF_CONT_NAME
     remove_cont $DB_CONT_NAME
+    remove_cont $RQ_CONT_NAME
     remove_cont $BLEX_CONT_NAME
 }
 
 ### Update ### 20180405 ### 08fad ### begin ###
 
 start_update_full_nodes() {
-    local num rmt_path
+    local priv_key api_url key_ids api_urls tcp_addrs pub_keys
+
+    copy_update_sys_params_scripts || return $?
+
+    priv_key="$(get_priv_key 1)"
+    
+    api_url="$(get_int_api_url 1)"
+    
+    key_ids=$(get_key_ids | sed -E 's/([0-9]+): (.*)$/--node-key-id=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    api_urls=$(get_int_api_urls | sed -E 's/([0-9]+): (.*)$/--node-api-url=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    tcp_addrs=$(get_int_tcp_addrs | sed -E 's/([0-9]+): (.*)$/--node-tcp-addr=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    pub_keys=$(get_node_pub_keys | sed -E 's/([0-9]+): (.*)$/--node-pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    echo "Starting full nodes update ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_full_nodes.py --call-priv-key=$priv_key --call-api-url=$api_url $key_ids $api_urls $tcp_addrs $pub_keys"
+    [ $? -ne 0 ] \
+        && echo "Full nodes voting isn't completed" && return 3
+    return 0
+}
+
+start_update_full_nodes_by_voting() {
+    local priv_keys keys_ids pub_keys int_api_urls api_urls tcp_addrs
+    local num int_tcp_addrs
+
     num=$1
     ([ -z "$num" ] || [ $num -lt 1 ]) \
         && echo "The number of backends is not set or wrong: '$num'" \
         && return 1
-    check_update_mbs_script || return $?
-    copy_update_sys_params_scripts || return $?
-    import_uspr
-    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
 
-    echo "Starting 'update full nodes' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-full-nodes-v2 $num
+    copy_update_sys_params_scripts || return $?
+
+    priv_keys=$(get_priv_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PRIV_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    key_ids=$(get_key_ids | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_KEY_ID=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    pub_keys=$(get_node_pub_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PUB_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    int_api_urls=$(get_int_api_urls | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_INT_API_URL=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    api_urls=$(get_int_api_urls | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_API_URL=\2/' | tr -d '\r' | tr '\n' ' ')
+
+    tcp_addrs=$(get_int_tcp_addrs | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_TCP_ADDR=\2/' | tr -d '\r' | tr '\n' ' ')
+
+    int_tcp_addrs=$(get_int_tcp_addrs | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_INT_TCP_ADDR=\2/' | tr -d '\r' | tr '\n' ' ')
+
+    echo "Starting full nodes voting ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR NUM_OF_NODES=$num $priv_keys $key_ids $pub_keys $int_api_urls $api_urls $int_tcp_addrs python3 $SCRIPTS_DIR/full_nodes_voting.py"
     [ $? -ne 0 ] \
-        && echo "Full nodes updating isn't completed" && return 3
-    echo "Full nodes updating is completed"
+        && echo "Full nodes voting isn't completed" && return 3
     return 0
+}
+
+start_sys_params_tweaks() {
+    local api_url priv_key
+    read_install_params_to_vars || return 2
+
+    copy_update_sys_params_scripts || return $?
+
+    priv_key="$(get_priv_key 1)"
+    api_url="$(get_int_api_url 1)"
+
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --name=max_block_generation_time --value=4000 --name=gap_between_blocks --value=3"
 }
 
 start_update_keys() {
-    local num rmt_path
-    num=$1
-    ([ -z "$num" ] || [ $num -lt 1 ]) \
-        && echo "The number of backends is not set or wrong: '$num'" \
-        && return 1
-    check_update_mbs_script || return $?
-    copy_update_sys_params_scripts || return $?
-    import_ukr
-    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
+    local rmt_path priv_key api_url key_ids pub_keys amount
+    read_install_params_to_vars || return 2
 
-    echo "Starting 'update keys' ..."
-    docker exec -t $BF_CONT_NAME bash $rmt_path update-keys $num
-    [ $? -ne 0 ] \
-        && echo "Keys updating isn't completed" && return 3
-    echo "Keys updating is completed"
-    return 0
+    copy_update_keys_scripts || return $?
+
+    priv_key="$(get_priv_key 1)"
+    
+    api_url="$(get_int_api_url 1)"
+    
+    pub_keys=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    
+    amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
+
+    echo "Starting keys update ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts"
 }
+
 
 ### Update ### 20180405 ### 08fad #### end ####
 
@@ -3292,23 +3759,12 @@ copy_import_demo_apps_scripts() {
 
     local srcs; local dsts;
 
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/genesis_api_client.py"
-    dsts[0]="$SCRIPTS_DIR/genesis_api_client.py"
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
+    dsts[0]="$SCRIPTS_DIR/requirements.txt"
 
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_demo_apps.py"
-    dsts[1]="$SCRIPTS_DIR/import_demo_apps.py"
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/import_dapp_from_file.py"
+    dsts[1]="$SCRIPTS_DIR/import_dapp_from_file.py"
 
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
-    dsts[2]="$SCRIPTS_DIR/thread_pool.py"
-
-    srcs[3]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
-    dsts[3]="$SCRIPTS_DIR/requirements.txt"
-
-    srcs[4]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/UpdateSysParamRaw.json"
-    dsts[4]="$SCRIPTS_DIR/UpdateSysParamRaw.json"
-
-    srcs[5]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/UpdateKeysRaw.json"
-    dsts[5]="$SCRIPTS_DIR/UpdateKeysRaw.json"
 
     local do_copy
 
@@ -3335,60 +3791,21 @@ copy_import_demo_apps_scripts() {
         #docker exec -ti $BF_CONT_NAME sh -c 'apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install -U pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install wheel'
-        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[3]}'" 
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-tools'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-api-client'
+        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[0]}'" 
     fi
-}
-
-copy_import_demo_apps_data_files() {
-
-    local srcs; local dsts;
-    
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$APPS_DIR/demo_apps.json"
-    dsts[0]="$APPS_DIR/demo_apps.json"
-
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$APPS_DIR/demo_apps.url"
-    dsts[1]="$APPS_DIR/demo_apps.url"
-
-    local do_copy
-
-    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
-        do_copy="no"
-        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
-        if [ $? -ne 0 ]; then
-            do_copy="yes"
-        fi
-        if [ "$do_copy" = "yes" ] \
-            || [ "$FORCE_COPY_IMPORT_DEMO_APPS_DATA_FILES" = "yes" ]; then
-
-            if [ -e "${srcs[$i]}" ]; then
-                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
-                docker exec -ti $BF_CONT_NAME bash "[ ! -e '$APPS_DIR' ] && mkdir -p '$APPS_DIR'"
-                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
-            else
-                echo "No '${srcs[$i]}' @ host system. Skipping it ..."
-            fi
-        fi
-    done
 }
 
 copy_update_sys_params_scripts() {
 
     local srcs; local dsts;
 
-    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/genesis_api_client.py"
-    dsts[0]="$SCRIPTS_DIR/genesis_api_client.py"
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
+    dsts[0]="$SCRIPTS_DIR/requirements.txt"
 
-    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/newValToFullNodes.py"
-    dsts[1]="$SCRIPTS_DIR/newValToFullNodes.py"
-
-    srcs[2]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/updateKeys.py"
-    dsts[2]="$SCRIPTS_DIR/updateKeys.py"
-
-    srcs[3]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
-    dsts[3]="$SCRIPTS_DIR/requirements.txt"
-
-    srcs[4]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/thread_pool.py"
-    dsts[4]="$SCRIPTS_DIR/thread_pool.py"
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/update_sys_params.py"
+    dsts[1]="$SCRIPTS_DIR/update_sys_params.py"
 
     local do_copy
 
@@ -3414,63 +3831,50 @@ copy_update_sys_params_scripts() {
         #docker exec -ti $BF_CONT_NAME sh -c 'apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install -U pip'
         docker exec -ti $BF_CONT_NAME sh -c 'pip3 install wheel'
-        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[3]}'" 
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-tools'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-api-client'
+        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[0]}'" 
     fi
 }
 
-start_import_demo_apps_old() {
-    echo "Preparing for importing of demo apps ..."
-    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
-        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
+copy_update_keys_scripts() {
 
-    local rmt_path
+    local srcs; local dsts;
 
-    copy_import_demo_apps_scripts || return 2
-    copy_import_demo_apps_data_files || return 3
-    check_update_mbs_script || return $?
-    rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
+    srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/requirements.txt"
+    dsts[0]="$SCRIPTS_DIR/requirements.txt"
 
-    local up_da; up_da=1
+    srcs[1]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/new_users.py"
+    dsts[1]="$SCRIPTS_DIR/new_users.py"
 
-    local da_path; da_path="$APPS_DIR/demo_apps.json"
-    docker exec -t $BF_CONT_NAME bash -c "[ -e $da_path ]" 
-    if [ $? -ne 0 ]; then
-        up_da=0
+    local do_copy
+
+    for i in $(seq 0 $(expr ${#srcs[@]} - 1)); do
+        do_copy="no"
+        docker exec -t $BF_CONT_NAME bash -c "[ -e '${dsts[$i]}' ]" 
+        if [ $? -ne 0 ]; then
+            do_copy="yes"
+        fi
+        if [ "$do_copy" = "yes" ] \
+            || [ "$FORCE_COPY_UPDATE_KEYS_SCRIPTS" = "yes" ]; then
+
+            if [ -e "${srcs[$i]}" ]; then
+                echo "Copying '${srcs[$i]}' to '${dsts[$i]}' @ '$BF_CONT_NAME' ..."
+                docker cp "${srcs[$i]}" $BF_CONT_NAME:${dsts[$i]}
+            else
+                echo "No '${srcs[$i]}' @ host system. Please create it first." \
+                    && return 1
+            fi
+        fi
+    done
+    if [ $FORCE_REQUIREMENTS_INSTALL == "yes" ]; then
+        #docker exec -ti $BF_CONT_NAME sh -c 'apt-get update -y && apt-get install -y --no-install-recommends python3 python3-pip'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 install -U pip'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 install wheel'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-tools'
+        docker exec -ti $BF_CONT_NAME sh -c 'pip3 uninstall -y genesis-blockchain-api-client'
+        docker exec -ti $BF_CONT_NAME sh -c "pip3 install -r '${dsts[0]}'" 
     fi
-
-    local result
-    local da_url; da_url="$DEMO_APPS_URL"
-    local dau_path; dau_path="$APPS_DIR/demo_apps.url"
-
-    docker exec -t $BF_CONT_NAME bash -c "[ -e $dau_path ]" 
-    if [ $? -eq 0 ]; then
-        local da_url_c; da_url_c="$(docker exec -t $BF_CONT_NAME bash -c "head -n 1 $dau_path")" 
-        da_url_c="${da_url_c%\\n}"
-        [ "$da_url" != "$da_url_c" ] \
-            && echo "Demo apps URL '$da_url_c' from '$dau_path' @ container '$BF_CONT_NAME' isn't equal to '$da_url'. Update required ..." \
-            && up_da=0
-    else
-        echo "'$dau_path' not found @ container '$BF_CONT_NAME'"
-        up_da=0
-    fi
-    
-    if [ $up_da -eq 0 ]; then
-        echo "Updating '$da_path' @ container '$BF_CONT_NAME' by data from '$da_url' ..."
-        docker exec -t "$BF_CONT_NAME" bash -c "curl -L -o $da_path $da_url"; result=$?
-        [ $result -ne 0 ] && echo "Can't download '$da_url' to '$da_path' @ container '$BF_CONT_NAME'" && return 3
-        echo "Updating '$dau_path' @ container '$BF_CONT_NAME' by URL '$da_url' ..."
-        docker exec -t "$BF_CONT_NAME" bash -c "echo -n '$da_url' > '$dau_path'"; result=$?
-        [ $result -ne 0 ] && echo "Can't update $dau_path' @ container '$BF_CONT_NAME'" && return 4
-    else
-        echo "'$da_path' is up to date"
-    fi
-
-    echo "Starting importing of demo apps with a data from '$da_url' ..."
-    docker exec -ti $BF_CONT_NAME bash $SCRIPTS_DIR/manage_bf_set.sh import-demo-apps
-    [ $? -ne 0 ] \
-        && echo "Demo apps importing isn't completed" && return 3
-    echo "Demo apps importing is completed"
-    return 0
 }
 
 import_from_file() {
@@ -3478,13 +3882,13 @@ import_from_file() {
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
 
-    local loc_path rmt_path
+    local loc_path rmt_path timeout
     loc_path="$1"
     [ ! -e "$loc_path" ] && echo "Path '$loc_path' doesn't exist" && return 2
+    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="150"
+    [ -n "$3" ] && max_tries="$3" || max_tries="150"
 
     copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
 
     rmt_path="$(docker exec -ti "$BF_CONT_NAME" sh -c "mktemp")"
     docker exec -ti "$BF_CONT_NAME" sh -c "echo 'test' > $rmt_path"
@@ -3493,7 +3897,7 @@ import_from_file() {
     docker cp "$loc_path" "$BF_CONT_NAME:$rmt_path"
     [ $? -ne 0 ] && echo "Can't copy '$loc_path' to '$rmt_path'" && return 6
 
-    run_mbs_cmd import-from-file "$rmt_path"
+    run_mbs_cmd import-from-file2 "$rmt_path" "$timeout_secs" "$max_tries"
 }
 
 import_from_url() {
@@ -3504,53 +3908,29 @@ import_from_url() {
     local url
     url="$1"
     [ -z "$url" ] && echo "URL isn't set" && return 2
+    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="150"
+    [ -n "$3" ] && max_tries="$3" || max_tries="150"
 
     copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
 
-    run_mbs_cmd import-from-url "$url"
+    run_mbs_cmd import-from-url2 "$url" "$timeout_secs" "$max_tries"
+}
+
+start_import_initial_apps() {
+    echo "Starting importing of initial apps ..."
+
+    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do
+        run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}"
+    done
 }
 
 start_import_demo_apps() {
     echo "Preparing for importing of demo apps ..."
 
     for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do
-        echo "url: ${APPS_URLS[$i]}"
-        run_mbs_cmd import-from-url "${APPS_URLS[$i]}"
+        run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
     done
 }
-
-import_uspr() {
-    local rmt_path
-
-    echo "Preparing for importing ..."
-    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
-        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
-
-    copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
-
-    rmt_path="$SCRIPTS_DIR/UpdateSysParamRaw.json"
-    run_mbs_cmd import-from-file "$rmt_path"
-}
-
-import_ukr() {
-    local rmt_path
-
-    echo "Preparing for importing ..."
-    check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
-        && echo "Container '$BF_CONT_NAME' isn't available " && return 1
-
-    copy_import_demo_apps_scripts || return 3
-    copy_import_demo_apps_data_files || return 4
-    check_update_mbs_script || return $?
-
-    rmt_path="$SCRIPTS_DIR/UpdateKeysRaw.json"
-    run_mbs_cmd import-from-file "$rmt_path"
-}
-
 
 get_demo_apps_ver() {
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
@@ -3584,6 +3964,11 @@ start_install() {
     local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
     [ $cf_cont_res -ne 1 ] \
         && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
+    local rq_cont_res; check_cont $RQ_CONT_NAME > /dev/null; rq_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Redis queue container already exists. " \
         && tot_cont_res=1
 
     local blex_cont_res; check_cont $BLEX_CONT_NAME > /dev/null; blex_cont_res=$? 
@@ -3676,6 +4061,13 @@ start_install() {
         || echo "Frontend's nginx ready"
     echo
 
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
     start_blex_cont $blexp
 
     wait_cont_proc $BLEX_CONT_NAME supervisord 15
@@ -3688,6 +4080,7 @@ start_install() {
         && echo "Block explorer setup isn't completed" && return 23 \
         || echo "Block explorer setup is completed"
     echo
+    stop_blex &
 
     ### Update ### 20180405 ### 08fad ### begin ###
 
@@ -3717,24 +4110,30 @@ start_install() {
         || echo "Fronend applications are ready"
     echo
 
-    start_update_keys $num || return 26
+    start_import_initial_apps || return 26
     echo
 
-    start_update_full_nodes $num || return 25
+    start_sys_params_tweaks || return 26
+    echo
+
+    start_update_full_nodes || return 25
     echo
 
     start_import_demo_apps || return 27
     echo
 
-    stop_be_apps
-    start_be_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Backend applications arn't available" && return 23 \
-        || echo "Backend applications ready"
+    start_update_keys || return 26
     echo
 
-    echo "Restarting Block Explorer ..."
-    restart_blex
+    #stop_be_apps $num
+    #start_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications arn't available" && return 23 \
+    #    || echo "Backend applications ready"
+    #echo
+
+    echo "Starting Block Explorer ..."
+    start_blex
     echo
 
     echo "Comparing backends 1_keys ..."
@@ -3746,6 +4145,7 @@ start_install() {
     echo
 
     check_host_side $num $wps $cps $dbp
+    stop_clients
     [ $? -ne 2 ] && start_clients $num $wps $cps
     # FIXME: add cfp
 }
@@ -3830,6 +4230,13 @@ start_all() {
         || echo "Backend's nginx ready"
     echo
 
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
     start_blex_cont $blexp
 
     wait_cont_proc $BLEX_CONT_NAME supervisord 15
@@ -3842,6 +4249,7 @@ start_all() {
         && echo "Block explorer setup isn't completed" && return 23 \
         || echo "Block explorer setup is completed"
     echo
+    stop_blex &
 
     keep_restart_be_apps_on_error $num 503 10 || return 2
     echo 
@@ -3877,6 +4285,8 @@ show_status() {
     get_cont_status $DB_CONT_NAME; cont_status=$?
     echo -n "Centrifugo container status: "
     get_cont_status $CF_CONT_NAME; cont_status=$?
+    echo -n "Redis queue container status: "
+    get_cont_status $RQ_CONT_NAME; cont_status=$?
     echo -n "Block explorer container status: "
     get_cont_status $BLEX_CONT_NAME; cont_status=$?
     echo -n "Backends/Frontends container status: "
@@ -3903,21 +4313,22 @@ show_status() {
 
 show_all_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_IMAGE%%:*} ${DB_CONT_IMAGE%%:*} ${CF_CONT_IMAGE%%:*} ${BLEX_CONT_IMAGE%%:*}; do
+    for img_name in ${BF_CONT_IMAGE%%:*} ${DB_CONT_IMAGE%%:*} ${RQ_CONT_IMAGE%%:*} ${CF_CONT_IMAGE%%:*} ${BLEX_CONT_IMAGE%%:*}; do
+        echo "img_name: $img_name"
         docker images -f reference="$img_name:*" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
 
 show_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_IMAGE} ${DB_CONT_IMAGE} ${CF_CONT_IMAGE} ${BLEX_CONT_IMAGE}; do
+    for img_name in ${BF_CONT_IMAGE} ${DB_CONT_IMAGE} ${RQ_CONT_IMAGE} ${CF_CONT_IMAGE} ${BLEX_CONT_IMAGE}; do
         docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
 
 show_prev_docker_images() {
     local img_name
-    for img_name in ${BF_CONT_PREV_IMAGE} ${DB_CONT_PREV_IMAGE} ${CF_CONT_PREV_IMAGE} ${BLEX_CONT_PREV_IMAGE}; do
+    for img_name in ${BF_CONT_PREV_IMAGE} ${DB_CONT_PREV_IMAGE} ${RQ_CONT_IMAGE} ${CF_CONT_PREV_IMAGE} ${BLEX_CONT_PREV_IMAGE}; do
         docker images -f reference="$img_name" --format '{{.ID}} {{.Repository}} {{.Tag}}'
     done
 }
@@ -4053,6 +4464,10 @@ update_be_dockerfile_content() {
 
     be_br_esc="$(echo "$BACKEND_BRANCH" | $SED_E 's/\//\\\//g')"
     sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BACKEND_BRANCH[ ]+)([^ ]+)[ ]*$/\1$be_br_esc/' $df"
+    eval "$sed_cmd"
+
+    be_bin_bn_esc="$(echo "$BE_BIN_BASENAME" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(ENV[ ]+BE_BIN_BASENAME[ ]+)([^ ]+)[ ]*$/\1$be_bin_bn_esc/' $df"
     eval "$sed_cmd"
 
     sc_repo_url_esc="$(echo "$SCRIPTS_REPO_URL" | $SED_E 's/\//\\\//g')"
@@ -4229,6 +4644,9 @@ show_detailed_help() {
     echo "  build-cf-image"
     echo "    Build centrifugo container image"
     echo
+    echo "  build-rq-image"
+    echo "    Build redis queue container image"
+    echo
     echo "  build-blex-image"
     echo "    Build block explorer container image"
     echo
@@ -4347,6 +4765,38 @@ pre_command() {
         ;;
 
     ### Docker #### end ####
+
+
+    ### Common Container ### begin ###
+
+    wait-cont-proc)
+        wait_cont_proc $2 $3 $4 && echo "OK"
+        ;;
+
+    delete-all-docker-cont*)
+        docker ps -a --format '{{.ID}}' | xargs docker rm -f
+        ;;
+
+    ### Common Container #### end ####
+
+
+    ### Common Volume ### begin ###
+
+    delete-all-docker-volumes)
+        docker volume ls --format '{{.Name}}' | xargs docker volume rm
+        ;;
+
+    ### Common Volume #### end ####
+
+
+    ### Common Images ### begin ###
+
+    delete-all-docker-images)
+        docker ps -a --format '{{.ID}}' | xargs docker rm -f
+        docker images -a --format '{{.ID}}' | xargs docker rmi -f
+        ;;
+
+    ### Common Images #### end ####
 
 
     ### Host ports ### begin ###
@@ -4701,7 +5151,7 @@ pre_command() {
     up-prev-bf-image)
         check_run_as_root
         docker pull $BF_CONT_PREV_IMAGE
-        docker tag $BF_CONT_PREV_IMAGE $CF_CONT_IMAGE
+        docker tag $BF_CONT_PREV_IMAGE $BF_CONT_IMAGE
         echo
         echo -n "Are you sure to push '$BF_CONT_IMAGE' image to docker hub [y/n]? "
         read -n 1 answ
@@ -4813,6 +5263,105 @@ pre_command() {
     ### CF Image #### end ####
 
 
+    ### RQ container ### begin ###
+
+    start-rq-cont)
+        check_run_as_root
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_rq_cont
+        ;;
+
+    stop-rq-cont)
+        check_run_as_root
+        docker stop $RQ_CONT_NAME
+        ;;
+
+    restart-rq-cont)
+        check_run_as_root
+        docker stop $RQ_CONT_NAME
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_rq_cont $num $wps $cps
+        ;;
+
+    prep-rq-cont)
+        check_run_as_root
+        prep_cont_for_inspect_centos7 $RQ_CONT_NAME
+        ;;
+
+    rq-cont-bash|rq-cont-sh|rq-cont-shell)
+        check_run_as_root
+        cont_bash $RQ_CONT_NAME
+        ;;
+
+    delete-rq-cont)
+        check_run_as_root
+        remove_cont $RQ_CONT_NAME
+        ;;
+        
+    ### RQ Container #### end ####
+
+
+    ### RQ Image ### begin ###
+
+    build-rq-image)
+        check_run_as_root
+        (cd "$SCRIPT_DIR" \
+            && docker build -t $RQ_CONT_NAME -f $RQ_CONT_BUILD_DIR/Dockerfile $RQ_CONT_BUILD_DIR/.)
+        ;;
+
+    delete-rq-image)
+        check_run_as_root
+        docker rmi -f $RQ_CONT_IMAGE
+        ;;
+
+    delete-prev-rq-image)
+        check_run_as_root
+        docker rmi -f $RQ_CONT_PREV_IMAGE
+        ;;
+
+    pull-rq-image)
+        check_run_as_root
+        docker pull $RQ_CONT_IMAGE
+        ;;
+        
+    pull-prev-rq-image)
+        check_run_as_root
+        docker pull $RQ_CONT_PREV_IMAGE
+        ;;
+
+    tag-local-rq-image)
+        check_run_as_root
+        docker tag $RQ_CONT_NAME $RQ_CONT_IMAGE
+        ;;
+
+    tag-prev-rq-image)
+        check_run_as_root
+        docker tag $RQ_CONT_PREV_IMAGE $RQ_CONT_IMAGE
+        ;;
+
+    push-rq-image)
+        check_run_as_root
+        docker push $RQ_CONT_IMAGE
+        ;;
+
+    up-prev-rq-image)
+        check_run_as_root
+        docker pull $RQ_CONT_PREV_IMAGE
+        docker tag $RQ_CONT_PREV_IMAGE $RQ_CONT_IMAGE
+        echo
+        echo -n "Are you sure to push '$RQ_CONT_IMAGE' image to docker hub? [y/n] "
+        read -n 1 answ
+        case $answ in
+            y|Y) docker push $RQ_CONT_IMAGE ;;
+            *) echo; echo "OK, skipping the pushing ..." ;;
+        esac
+        ;;
+
+    ### RQ Image #### end ####
+
+
     ### BLEX container ### begin ###
 
     start-blex-cont)
@@ -4832,7 +5381,7 @@ pre_command() {
         docker stop $BLEX_CONT_NAME
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 16
-        start_blex_cont $blexp
+        restart_blex_cont $blexp
         ;;
 
     prep-blex-cont)
@@ -4991,7 +5540,61 @@ pre_command() {
         wait_keys_sync $num
         ;;
 
+    pg-ver)
+        get_pg_major_ver_from_dockerfile
+        ;;
+
+    pgdata)
+        get_pgdata_var_value_from_dockerfile
+        ;;
+
+    restart-db-server|restart-db-srv)
+        restart_db_server
+        ;;
+
     ### Database #### end ####
+
+
+    ### BLEX ### begin ###
+
+    create-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        create_blex_dbs $num
+        ;;
+
+    setup-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        setup_blex $num
+        ;;
+
+    setop-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_blex
+        ;;
+
+
+    start-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        start_blex
+        ;;
+
+    stop-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        stop_blex
+        ;;
+
+    restart-blex)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 16
+        restart_blex
+        ;;
+
+    ### BLEX #### end ####
 
 
     ### Backend ### begin ###
@@ -5045,29 +5648,56 @@ pre_command() {
         get_priv_keys $2
         ;;
 
+    key-id)
+        get_key_id $2
+        ;;
+
+    key-ids)
+        get_key_ids $2
+        ;;
+
+    pub-key)
+        get_pub_key $2
+        ;;
+
+    pub-keys)
+        get_pub_keys $2
+        ;;
+
+    node-pub-keys)
+        get_node_pub_keys $2
+        ;;
+
+    api-url)
+        get_api_url $2
+        ;;
+
+    api-urls)
+        get_api_urls $2
+        ;;
+
+    api-int-url|int-api-url)
+        get_int_api_url $2
+        ;;
+
+    api-int-urls|int-api-urls)
+        get_int_api_urls $2
+        ;;
+
+    tcp-int-addr|int-tcp-addr)
+        get_int_tcp_addr $2
+        ;;
+
+    tcp-int-addrs|int-tcp-addrs)
+        get_int_tcp_addrs $2
+        ;;
+
     setup-be-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         setup_be_apps $num
         ;;
 
-    create-blex-dbs)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 19
-        create_blex_dbs $num
-        ;;
-
-    setup-blex)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 19
-        setup_blex $num
-        ;;
-
-    restart-blex)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 19
-        restart_blex
-        ;;
 
     start-be-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
@@ -5165,12 +5795,40 @@ pre_command() {
         safe_dump_be_dbs $2
         ;;
 
+    fast-safe-dump-be-dbs|fdump)
+        fast_safe_dump_be_dbs $2
+        ;;
+
+    drop-blex-db)
+        drop_blex_db $2
+        ;;
+
+    drop-blex-dbs)
+        drop_blex_dbs
+        ;;
+
+    create-blex-db)
+        create_blex_db $2
+        ;;
+
+    create-blex-dbs)
+        create_blex_dbs
+        ;;
+
     drop-be-db)
         drop_be_db $2
         ;;
 
+    drop-be-dbs)
+        drop_be_dbs
+        ;;
+
     create-be-db)
         create_be_db $2
+        ;;
+
+    create-be-dbs)
+        create_be_dbs
         ;;
 
     safe-recreate-be-db)
@@ -5191,6 +5849,10 @@ pre_command() {
 
     safe-restore-be-dbs)
         safe_restore_be_dbs $2
+        ;;
+
+    fast-safe-restore-be-dbs|frest)
+        fast_safe_restore_be_dbs $2
         ;;
 
     dump-be-data-dir)
@@ -5227,6 +5889,10 @@ pre_command() {
         start_update_keys $num
         ;;
 
+    sys-tweaks)
+        start_sys_params_tweaks
+        ;;
+
     update-full-nodes)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
@@ -5237,34 +5903,28 @@ pre_command() {
         get_demo_page_url_from_dockerfile
         ;;
 
+    import-init-apps|import-initial-aps)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        start_import_initial_apps
+        ;;
+
     import-demo-apps)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_demo_apps
         ;;
 
-    import-uspr)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 21
-        import_uspr
-        ;;
-
-    import-ukr)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 21
-        import_ukr
-        ;;
-
     import-from-file)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        import_from_file "$2"
+        import_from_file "$2" $3 $4
         ;;
 
     import-from-url)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        import_from_url "$2"
+        import_from_url "$2" $3 $4
         ;;
 
     demo-apps-ver)
@@ -5401,6 +6061,8 @@ pre_command() {
         (cd "$SCRIPT_DIR" \
             && docker build -t $CF_CONT_NAME -f $CF_CONT_BUILD_DIR/Dockerfile $CF_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
+            && docker build -t $RQ_CONT_NAME -f $RQ_CONT_BUILD_DIR/Dockerfile $RQ_CONT_BUILD_DIR/.)
+        (cd "$SCRIPT_DIR" \
             && docker build -t $DB_CONT_NAME -f $DB_CONT_BUILD_DIR/Dockerfile $DB_CONT_BUILD_DIR/.)
         (cd "$SCRIPT_DIR" \
             && docker build -t $BLEX_CONT_NAME -f $BLEX_CONT_BUILD_DIR/Dockerfile $BLEX_CONT_BUILD_DIR/.)
@@ -5443,6 +6105,9 @@ pre_command() {
         && "$0" build-db-image \
             && "$0" tag-local-db-image \
             && "$0" push-db-image \
+        && "$0" build-rq-image \
+            && "$0" tag-local-rq-image \
+            && "$0" push-rq-image \
         && "$0" build-blex-image \
             && "$0" tag-local-blex-image \
             && "$0" push-blex-image \
