@@ -4103,15 +4103,15 @@ start_install() {
     start_update_keys || return 26
     echo
 
-    stop_be_apps
-    start_be_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Backend applications arn't available" && return 23 \
-        || echo "Backend applications ready"
-    echo
+    #stop_be_apps $num
+    #start_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications arn't available" && return 23 \
+    #    || echo "Backend applications ready"
+    #echo
 
-    echo "Restarting Block Explorer ..."
-    restart_blex
+    echo "Starting Block Explorer ..."
+    start_blex
     echo
 
     echo "Comparing backends 1_keys ..."
