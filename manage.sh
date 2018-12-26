@@ -1957,7 +1957,7 @@ get_pub_key() {
     local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 2
     [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
-    local pub_key_path; pub_key_path="$BE_ROOT_DATA_DIR/node$1/NodePublicKey"; local result
+    local pub_key_path; pub_key_path="$BE_ROOT_DATA_DIR/node$1/PublicKey"; local result
     cont_exec $BF_CONT_NAME "bash -c '[ -e \"$pub_key_path\" ] && cat \"$pub_key_path\"'"
     result=$?
     [ $result -ne 0 ] && echo "File '$pub_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
@@ -1971,9 +1971,31 @@ get_pub_keys() {
     fi
     local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 10
-    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/NodePublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/PublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
 }
 
+get_node_pub_key() {
+    [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
+    local idx; idx="$1"
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 2
+    [ $idx -gt $num ] && echo "The total number of backends is $num" && return 3
+    local pub_key_path; pub_key_path="$BE_ROOT_DATA_DIR/node$1/NodePublicKey"; local result
+    cont_exec $BF_CONT_NAME "bash -c '[ -e \"$pub_key_path\" ] && cat \"$pub_key_path\"'"
+    result=$?
+    [ $result -ne 0 ] && echo "File '$pub_key_path' doesn't exist @ container '$BF_CONT_NAME'" && return $result
+    echo
+}
+
+get_node_pub_keys() {
+    if [ -n "$1" ]; then 
+        get_node_pub_key $1
+        return $?
+    fi
+    local num; local wps; local cps; local dbp; local cfp; local blexp
+    read_install_params_to_vars || return 10
+    cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/NodePublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
+}
 
 
 check_http_priv_key() {
@@ -3651,7 +3673,7 @@ start_update_full_nodes() {
     
     tcp_addrs=$(get_int_tcp_addrs | sed -E 's/([0-9]+): (.*)$/--node-tcp-addr=\2/' | tr -d '\r' | tr '\n' ' ')
     
-    pub_keys=$(get_pub_keys | sed -E 's/([0-9]+): (.*)$/--node-pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    pub_keys=$(get_node_pub_keys | sed -E 's/([0-9]+): (.*)$/--node-pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
     
     echo "Starting full nodes update ..."
     docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_full_nodes.py --call-priv-key=$priv_key --call-api-url=$api_url $key_ids $api_urls $tcp_addrs $pub_keys"
@@ -3675,7 +3697,7 @@ start_update_full_nodes_by_voting() {
     
     key_ids=$(get_key_ids | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_KEY_ID=\2/' | tr -d '\r' | tr '\n' ' ')
     
-    pub_keys=$(get_pub_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PUB_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
+    pub_keys=$(get_node_pub_keys | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_OWNER_PUB_KEY=\2/' | tr -d '\r' | tr '\n' ' ')
     
     int_api_urls=$(get_int_api_urls | sed -E 's/([0-9]+): (.*)$/APLA_NODE\1_INT_API_URL=\2/' | tr -d '\r' | tr '\n' ' ')
     
@@ -5640,6 +5662,10 @@ pre_command() {
 
     pub-keys)
         get_pub_keys $2
+        ;;
+
+    node-pub-keys)
+        get_node_pub_keys $2
         ;;
 
     api-url)
