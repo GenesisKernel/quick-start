@@ -56,7 +56,7 @@ DEV_BE_GO_URL_VENDOR_DST="github.com/GenesisKernel"
 if [ "$USE_PRODUCT" = "apla" ]; then
     FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
 else
-    FRONTEND_REPO_URL="https://github.com/AplaProject/apla-front"
+    FRONTEND_REPO_URL="https://github.com/GenesisKernel/genesis-front"
 fi
 FRONTEND_BRANCH="v0.11.1"
 
@@ -138,14 +138,14 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
     CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/apla-front-0.11.1-x86_64.AppImage"
 else
-    CLIENT_MAC_PROCESS_NAME="Apla"
-    CLIENT_LINUX_PROCESS_NAME="apla-front"
-    CLIENT_APP_NAME="Apla"
-    CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/Apla-0.11.1.dmg"
+    CLIENT_MAC_PROCESS_NAME="Genesis"
+    CLIENT_LINUX_PROCESS_NAME="genesis-front"
+    CLIENT_APP_NAME="Genesis"
+    CLIENT_DMG_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.11.1/Genesis-0.11.1.dmg"
     CLIENT_MAC_APP_DIR_SIZE_M=246 # to update run 'du -sm /Applications/Genesis.app'
-    CLIENT_MAC_APP_DIR="/Applications/Apla.app"
-    CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
-    CLIENT_APPIMAGE_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/apla-front-0.11.1-x86_64.AppImage"
+    CLIENT_MAC_APP_DIR="/Applications/Genesis.app"
+    CLIENT_MAC_APP_BIN="/Applications/Genesis.app/Contents/MacOS/Genesis"
+    CLIENT_APPIMAGE_DL_URL="https://github.com/GenesisKernel/genesis-front/releases/download/v0.11.1/genesis-front-0.11.1-x86_64.AppImage"
 fi
 CLIENT_DMG_BASENAME="$(basename "$(echo "$CLIENT_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 CLIENT_APPIMAGE_BASENAME="$(basename "$(echo "$CLIENT_APPIMAGE_DL_URL" | $SED_E -n 's/^(.*\.AppImage)(\?[^?]*)?$/\1/gp')")"
