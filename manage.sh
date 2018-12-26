@@ -18,10 +18,10 @@ GOLANG_VER="1.11.4"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.1.9"
+    BACKEND_BRANCH="1.1.10"
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.1.9" 
+    BACKEND_BRANCH="1.1.10" 
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
@@ -61,7 +61,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="develop"
+SCRIPTS_BRANCH="v0.2.0"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -71,7 +71,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CENT_URL="http://apla-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="develop"
+    BLEX_BRANCH="v0.3.0"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
@@ -83,7 +83,7 @@ else
     CENT_URL="http://genesis-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="develop"
+    BLEX_BRANCH="v0.3.0"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"

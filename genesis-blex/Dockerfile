@@ -1,9 +1,9 @@
 FROM debian:stretch-slim
 
 ENV BLEX_REPO_URL https://github.com/GenesisKernel/blockexplorer
-ENV BLEX_BRANCH develop
+ENV BLEX_BRANCH v0.3.0
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
-ENV SCRIPTS_BRANCH develop
+ENV SCRIPTS_BRANCH v0.2.0
 
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
