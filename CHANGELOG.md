@@ -1,12 +1,14 @@
-## Version 0.7.2 / 2018-Dec-22 04:35
+## Version 0.7.2 / 2018-Dec-26 12:46
 * Upgrade mac docker to version Community Edition 2.0.0.0-mac81 2018-12-07
-* Upgrade backend to version 1.1.8
-* Upgrade applications to version 1.2.0
+* Upgrade backend to version 1.1.9
+* Upgrade applications to version 1.2.1
 * Upgrade frontend to version 0.11.1
+* Switch to NodeJS 10.x when building frontend
 * Upgrade scripts to the latest development version
 * Upgrade PostgreSQL to version 11.x
 * Add Redis Queue container/image
 * Upgrade Block Explorer to the latest development version
+* Fix issues in the management script
 
 ## Version 0.7.1 / 2018-Nov-03 04:57
 * Switch demo apps to tag v1.0.0
