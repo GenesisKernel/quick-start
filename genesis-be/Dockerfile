@@ -5,6 +5,7 @@ ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr
 ENV GOLANG_VER 1.11
 ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
 ENV BACKEND_BRANCH 1.0.4
+ENV BE_BIN_BASENAME go-genesis
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
 ENV SCRIPTS_BRANCH develop
 ENV DEMO_APPS_URL https://raw.githubusercontent.com/GenesisKernel/apps/master/system.json

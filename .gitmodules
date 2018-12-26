@@ -1,12 +1,12 @@
 [submodule "genesis-be/genesis-scripts"]
 	path = genesis-be/genesis-scripts
-	url = https://github.com/blitzstern5/genesis-scripts
-    branch = master
+	url = git@blitzstern5.github.com:blitzstern5/genesis-scripts
+    branch = develop
 [submodule "genesis-bf/genesis-scripts"]
 	path = genesis-bf/genesis-scripts
-	url = https://github.com/blitzstern5/genesis-scripts
-    branch = master
+	url = git@blitzstern5.github.com:blitzstern5/genesis-scripts
+    branch = develop
 [submodule "genesis-blex/genesis-scripts"]
 	path = genesis-blex/genesis-scripts
-	url = https://github.com/blitzstern5/genesis-scripts
-    branch = master
+	url = git@blitzstern5.github.com:blitzstern5/genesis-scripts
+    branch = develop

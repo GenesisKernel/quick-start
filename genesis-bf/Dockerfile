@@ -2,15 +2,16 @@ FROM debian:stretch-slim
 
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV GOLANG_VER 1.11
-ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_8.x
-ENV BACKEND_GO_URL github.com/GenesisKernel/go-genesis
-ENV BACKEND_BRANCH 1.0.4
-ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
-ENV FRONTEND_BRANCH v0.9.2
+ENV GOLANG_VER 1.11.4
+ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_10.x
+ENV BACKEND_GO_URL github.com/AplaProject/go-apla
+ENV BACKEND_BRANCH 1.1.9
+ENV BE_BIN_BASENAME go-apla
+ENV FRONTEND_REPO_URL https://github.com/AplaProject/apla-front
+ENV FRONTEND_BRANCH v0.11.1
 ENV SCRIPTS_REPO_URL https://github.com/blitzstern5/genesis-scripts
 ENV SCRIPTS_BRANCH develop
-ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.0.0/system.json
+ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json
 
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
@@ -20,7 +21,7 @@ RUN set -ex; apt-get update -y && \
 
 RUN curl -L -o /go$GOLANG_VER.linux-amd64.tar.gz https://dl.google.com/go/go$GOLANG_VER.linux-amd64.tar.gz && tar xvf /go$GOLANG_VER.linux-amd64.tar.gz && mv /go /usr/local/ && find /go$GOLANG_VER.linux-amd64.tar.gz -delete
 
-RUN go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git rev-parse --abbrev-ref HEAD  > /genesis-back/bin/go-genesis.git_branch && git rev-parse HEAD > /genesis-back/bin/go-genesis.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/go-genesis /genesis-back/bin/go-genesis && rm -rf /go
+RUN go get -d $BACKEND_GO_URL && cd /go/src/$BACKEND_GO_URL && git checkout $BACKEND_BRANCH && go get $BACKEND_GO_URL && mkdir -p /genesis-back/bin && git rev-parse --abbrev-ref HEAD  > /genesis-back/bin/$BE_BIN_BASENAME.git_branch && git rev-parse HEAD > /genesis-back/bin/$BE_BIN_BASENAME.git_commit && mkdir -p /genesis-back/data/node1 && mv $GOPATH/bin/$BE_BIN_BASENAME /genesis-back/bin/$BE_BIN_BASENAME && rm -rf /go
 
 RUN mkdir /genesis-apps && \
     echo -n "$DEMO_APPS_URL" > /genesis-apps/demo_apps.url
@@ -40,7 +41,7 @@ RUN apt-get remove -y build-essential && apt-get autoremove -y && \
 COPY supervisor/supervisord.conf /etc/supervisor/
 
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends nginx curl git gnupg2 && \
+    apt-get install -y --no-install-recommends nginx curl git gnupg2  build-essential && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
 RUN curl -sL $NODEJS_SETUP_SCRIPT_URL | bash - && \
@@ -55,7 +56,7 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
 RUN git clone --recursive $FRONTEND_REPO_URL genesis-front && cd /genesis-front && git checkout $FRONT_BRANCH && git pull origin $FRONT_BRANCH && git rev-parse --abbrev-ref HEAD > /genesis-front.git_branch && git rev-parse HEAD > /genesis-front.git_commit && yarn install && yarn build && find /genesis-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY genesis-front/settings.json /genesis-front/build/
 
-RUN apt-get remove -y gnupg2 && \
+RUN apt-get remove -y gnupg2  build-essential && \
     apt-get autoremove -y && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
