@@ -1,4 +1,4 @@
-## Version 0.7.2 / 2018-Dec-26 12:46
+## Version 0.7.2 / 2018-Dec-26 15:24
 * Upgrade mac docker to version Community Edition 2.0.0.0-mac81 2018-12-07
 * Upgrade backend to version 1.1.9
 * Upgrade applications to version 1.2.1
@@ -9,6 +9,7 @@
 * Add Redis Queue container/image
 * Upgrade Block Explorer to the latest development version
 * Fix issues in the management script
+* Fix errors in README
 
 ## Version 0.7.1 / 2018-Nov-03 04:57
 * Switch demo apps to tag v1.0.0
