@@ -74,8 +74,9 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     BLEX_BRANCH="v0.3.0"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
-    BLEX_DB_NAME_PREFIX="genesis_blex_"
+    BLEX_DB_NAME_PREFIX="apla_blex_"
     BLEX_DB_PASSWORD="$DB_PASSWORD"
+    BLEX_REDIS_URL="redis://apla-rq:6379/0"
 else
     DB_NAME_PREFIX="genesis"
     DB_HOST="genesis-db"
@@ -88,6 +89,7 @@ else
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
     BLEX_DB_PASSWORD="$DB_PASSWORD"
+    BLEX_REDIS_URL="redis://genesis-rq:6379/0"
 fi
 
 BE_ROOT="/genesis-back"
@@ -4358,8 +4360,16 @@ update_scripts_config_content() {
     sed_cmd="$sed_i_cmd -e 's/(PRODUCT_BRAND_NAME=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
     eval "$sed_cmd"
 
+    val_esc="$(echo "$BLEX_DB_NAME_PREFIX" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/^(BLEX_DB_NAME_PREFIX=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
     val_esc="$(echo "$DB_NAME_PREFIX" | $SED_E 's/\//\\\//g')"
-    sed_cmd="$sed_i_cmd -e 's/(DB_NAME_PREFIX=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    sed_cmd="$sed_i_cmd -e 's/^(DB_NAME_PREFIX=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$BLEX_REDIS_URL" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/^(BLEX_REDIS_URL=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
     eval "$sed_cmd"
 
     val_esc="$(echo "$DB_USER" | $SED_E 's/\//\\\//g')"
