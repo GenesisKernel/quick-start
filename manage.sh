@@ -76,6 +76,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
     BLEX_DB_PASSWORD="$DB_PASSWORD"
+    BE_API_URL_PREFIX="http://apla-bf"
 else
     DB_NAME_PREFIX="genesis"
     DB_HOST="genesis-db"
@@ -88,6 +89,7 @@ else
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
     BLEX_DB_PASSWORD="$DB_PASSWORD"
+    BE_API_URL_PREFIX="http://genesis-bf"
 fi
 
 BE_ROOT="/genesis-back"
@@ -4368,6 +4370,10 @@ update_scripts_config_content() {
 
     val_esc="$(echo "$DB_HOST" | $SED_E 's/\//\\\//g')"
     sed_cmd="$sed_i_cmd -e 's/(DB_HOST=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
+    eval "$sed_cmd"
+
+    val_esc="$(echo "$BE_API_URL_PREFIX" | $SED_E 's/\//\\\//g')"
+    sed_cmd="$sed_i_cmd -e 's/(BE_API_URL_PREFIX=)([^ ]+)[ ]*$/\1\"$val_esc\"/' $cf"
     eval "$sed_cmd"
 
     val_esc="$(echo "$DB_PASSWORD" | $SED_E 's/\//\\\//g')"
