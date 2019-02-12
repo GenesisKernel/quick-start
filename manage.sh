@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.7.1"
-VERSION="0.7.2"
+PREV_VERSION="0.7.2"
+VERSION="0.7.3"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -14,38 +14,38 @@ else
     PRODUCT_BRAND_NAME="Genesis"
 fi
 
-GOLANG_VER="1.11.4"
+GOLANG_VER="1.11.5"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.1.10"
+    BACKEND_BRANCH="1.2.4"
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.1.10" 
+    BACKEND_BRANCH="1.2.4" 
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
-INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.2.1/init_qs.json"
+INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.3.0/init_qs.json"
 INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=200
 INITIAL_APPS_IMPORT_MAX_TRIES[0]=200
 
-APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/system.json"
+APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/system.json"
 APPS_IMPORT_TIMEOUT_SECS[0]=200
 APPS_IMPORT_MAX_TRIES[0]=200
 
-APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/conditions.json"
+APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/conditions.json"
 APPS_IMPORT_TIMEOUT_SECS[1]=150
 APPS_IMPORT_MAX_TRIES[1]=150
 
-APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/basic.json"
+APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/basic.json"
 APPS_IMPORT_TIMEOUT_SECS[2]=400
 APPS_IMPORT_MAX_TRIES[2]=400
 
-APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.2.1/lang_res.json"
+APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=350
 APPS_IMPORT_MAX_TRIES[3]=350
 
-DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.2.0/system.json"
+DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/system.json"
 
 DEV_BE_GO_URL="github.com/AplaProject/go-apla"
 DEV_BE_BRANCH="master"
@@ -61,7 +61,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="v0.2.0"
+SCRIPTS_BRANCH="v0.2.1"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -70,12 +70,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     DB_PASSWORD="apla"
     CENT_URL="http://apla-cf:8000"
 
-    BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="v0.3.0"
-    BLEX_DB_HOST="$DB_HOST"
-    BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="apla_blex_"
-    BLEX_DB_PASSWORD="$DB_PASSWORD"
     BLEX_REDIS_URL="redis://apla-rq:6379/0"
     BE_API_URL_PREFIX="http://apla-bf"
 else
@@ -85,14 +80,15 @@ else
     CENT_URL="http://genesis-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="v0.3.0"
-    BLEX_DB_HOST="$DB_HOST"
-    BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"
-    BLEX_DB_PASSWORD="$DB_PASSWORD"
     BLEX_REDIS_URL="redis://genesis-rq:6379/0"
     BE_API_URL_PREFIX="http://genesis-bf"
 fi
+BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
+BLEX_BRANCH="v0.3.2"
+BLEX_DB_HOST="$DB_HOST"
+BLEX_DB_USER="$DB_USER"
+BLEX_DB_PASSWORD="$DB_PASSWORD"
 
 BE_ROOT="/genesis-back"
 BE_ROOT_LOG_DIR="/var/log/go-genesis"
