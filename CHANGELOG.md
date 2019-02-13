@@ -1,3 +1,9 @@
+## Version 0.8.0 / 2019-Feb-13 03:07
+* Upgrade backend to version 1.2.4
+* Upgrade applications to version v1.3.0
+* Upgrade scripts to v0.2.1
+* Upgrade Block Explorer version v0.3.2
+
 ## Version 0.7.2 / 2018-Dec-26 19:26
 * Upgrade mac docker to version Community Edition 2.0.0.0-mac81 2018-12-07
 * Upgrade backend to version 1.1.10
