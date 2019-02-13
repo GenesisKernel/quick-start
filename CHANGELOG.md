@@ -1,4 +1,4 @@
-## Version 0.7.3 / 2019-Feb-12 06:38
+## Version 0.8.0 / 2019-Feb-13 03:07
 * Upgrade backend to version 1.2.4
 * Upgrade applications to version v1.3.0
 * Upgrade scripts to v0.2.1

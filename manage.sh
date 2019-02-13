@@ -3,7 +3,7 @@
 ### Configuration ### begin ###
 
 PREV_VERSION="0.7.2"
-VERSION="0.7.3"
+VERSION="0.8.0"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"

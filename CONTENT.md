@@ -1,4 +1,4 @@
-# Version 0.7.3
+# Version 0.8.0
 
 * [Backend v1.2.4](https://github.com/AplaProject/go-apla/releases/tag/1.2.4)
 * [Frontend v0.11.1](https://github.com/GenesisKernel/genesis-front/releases/tag/v0.11.1)
