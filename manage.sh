@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.7.2"
-VERSION="0.8.0"
+PREV_VERSION="0.8.0"
+VERSION="0.8.1"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -121,8 +121,7 @@ DOWNLOADS_DIR='$HOME/Downloads' # !!! USE SINGLE QUOTES HERE !!!
 APPLICATIONS_DIR='$HOME/Applications' # !!! USE SINGLE QUOTES HERE !!!
 
 DOCKER_APP_NAME="Docker"
-#DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
-DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/29211/Docker.dmg"
+DOCKER_DMG_DL_URL="https://download.docker.com/mac/stable/Docker.dmg"
 DOCKER_DMG_BASENAME="$(basename "$(echo "$DOCKER_DMG_DL_URL" | $SED_E -n 's/^(.*\.dmg)(\?[^?]*)?$/\1/gp')")"
 DOCKER_MAC_APP_DIR_SIZE_M=1248 # to update run 'du -sm /Applications/Docker.app'
 DOCKER_MAC_APP_DIR="/Applications/Docker.app"
@@ -132,7 +131,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     CLIENT_MAC_PROCESS_NAME="Apla"
     CLIENT_LINUX_PROCESS_NAME="apla-front"
     CLIENT_APP_NAME="Apla"
-    CLIENT_DMG_DL_URL=""
+    CLIENT_DMG_DL_URL="https://github.com/AplaProject/apla-front/releases/download/v0.11.1/Apla-0.11.1.dmg"
     CLIENT_MAC_APP_DIR_SIZE_M=246 # to update run 'du -sm /Applications/Genesis.app'
     CLIENT_MAC_APP_DIR="/Applications/Apla.app"
     CLIENT_MAC_APP_BIN="/Applications/Apla.app/Contents/MacOS/Apla"
