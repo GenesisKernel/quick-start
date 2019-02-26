@@ -61,7 +61,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="v0.2.0"
+SCRIPTS_BRANCH="v0.2.1"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -85,7 +85,7 @@ else
     CENT_URL="http://genesis-cf:8000"
 
     BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
-    BLEX_BRANCH="v0.3.0"
+    BLEX_BRANCH="v0.3.2"
     BLEX_DB_HOST="$DB_HOST"
     BLEX_DB_USER="$DB_USER"
     BLEX_DB_NAME_PREFIX="genesis_blex_"

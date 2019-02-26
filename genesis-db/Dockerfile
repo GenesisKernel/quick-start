@@ -22,7 +22,7 @@ RUN set -eux; \
 	chown -R postgres:postgres /var/lib/postgresql
 
 # grab gosu for easy step-down from root
-ENV GOSU_VERSION 1.10
+ENV GOSU_VERSION 1.11
 RUN set -x \
 	&& apt-get update && apt-get install -y --no-install-recommends ca-certificates wget && rm -rf /var/lib/apt/lists/* \
 	&& wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" \
@@ -71,7 +71,7 @@ RUN set -ex; \
 	apt-key list
 
 ENV PG_MAJOR 11
-ENV PG_VERSION 11.1-1.pgdg90+1
+ENV PG_VERSION 11.2-1.pgdg90+1
 
 RUN set -ex; \
 	\
@@ -153,10 +153,13 @@ RUN set -ex; \
 	find /usr -name '*.pyc' -type f -exec bash -c 'for pyc; do dpkg -S "$pyc" &> /dev/null || rm -vf "$pyc"; done' -- '{}' +
 
 # make the sample config easier to munge (and "correct by default")
-RUN mv -v "/usr/share/postgresql/$PG_MAJOR/postgresql.conf.sample" /usr/share/postgresql/ \
-	&& ln -sv ../postgresql.conf.sample "/usr/share/postgresql/$PG_MAJOR/" \
-	&& sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" /usr/share/postgresql/postgresql.conf.sample \
-	&& sed -ri "s!^#?(max_connections)\s*=\s*\S+.*!\1 = 300!" /usr/share/postgresql/postgresql.conf.sample
+RUN set -eux; \
+	dpkg-divert --add --rename --divert "/usr/share/postgresql/postgresql.conf.sample.dpkg" "/usr/share/postgresql/$PG_MAJOR/postgresql.conf.sample"; \
+	cp -v /usr/share/postgresql/postgresql.conf.sample.dpkg /usr/share/postgresql/postgresql.conf.sample; \
+	ln -sv ../postgresql.conf.sample "/usr/share/postgresql/$PG_MAJOR/"; \
+	sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" /usr/share/postgresql/postgresql.conf.sample; \
+	sed -ri "s!^#?(max_connections)\s*=\s*\S+.*!\1 = 300!" /usr/share/postgresql/postgresql.conf.sample; \
+	grep -F "listen_addresses = '*'" /usr/share/postgresql/postgresql.conf.sample
 
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
