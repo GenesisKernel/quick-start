@@ -70,6 +70,7 @@ if [ "$USE_PRODUCT" = "apla" ]; then
     DB_PASSWORD="apla"
     CENT_URL="http://apla-cf:8000"
 
+    BLEX_REPO_URL="https://github.com/AplaProject/blockexplorer"
     BLEX_DB_NAME_PREFIX="apla_blex_"
     BLEX_REDIS_URL="redis://apla-rq:6379/0"
     BE_API_URL_PREFIX="http://apla-bf"
@@ -84,7 +85,6 @@ else
     BLEX_REDIS_URL="redis://genesis-rq:6379/0"
     BE_API_URL_PREFIX="http://genesis-bf"
 fi
-BLEX_REPO_URL="https://github.com/GenesisKernel/blockexplorer"
 BLEX_BRANCH="v0.3.2"
 BLEX_DB_HOST="$DB_HOST"
 BLEX_DB_USER="$DB_USER"
