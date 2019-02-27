@@ -18,10 +18,10 @@ GOLANG_VER="1.11.5"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.2.4"
+    BACKEND_BRANCH="1.2.5"
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.2.4" 
+    BACKEND_BRANCH="1.2.5" 
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
@@ -61,7 +61,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="v0.2.1"
+SCRIPTS_BRANCH="v0.2.2"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -3722,7 +3722,8 @@ start_sys_params_tweaks() {
     priv_key="$(get_priv_key 1)"
     api_url="$(get_int_api_url 1)"
 
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --name=max_block_generation_time --value=4000 --name=gap_between_blocks --value=3"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --name=max_block_generation_time --value=4000" \
+        && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --name=gap_between_blocks --value=3"
 }
 
 start_update_keys() {
@@ -3944,6 +3945,22 @@ get_demo_apps_ver() {
 
 ### Update ### 20180405 ### 08fad #### end ####
 
+start_post_install_actions() {
+    start_import_initial_apps || return 1
+    echo
+
+    start_sys_params_tweaks || return 2
+    echo
+
+    start_update_full_nodes || return 3
+    echo
+
+    start_import_demo_apps || return 4
+    echo
+
+    start_update_keys || return 5
+    echo
+}
 
 start_install() {
     local num; num=$1
@@ -4109,20 +4126,7 @@ start_install() {
         || echo "Fronend applications are ready"
     echo
 
-    start_import_initial_apps || return 26
-    echo
-
-    start_sys_params_tweaks || return 26
-    echo
-
-    start_update_full_nodes || return 25
-    echo
-
-    start_import_demo_apps || return 27
-    echo
-
-    start_update_keys || return 26
-    echo
+    start_post_install_actions || return 26
 
     #stop_be_apps $num
     #start_be_apps $num $cps
@@ -5912,6 +5916,10 @@ pre_command() {
 
     demo-page-url)
         get_demo_page_url_from_dockerfile
+        ;;
+
+    post-install-actions)
+        start_post_install_actions
         ;;
 
     import-init-apps|import-initial-aps)
