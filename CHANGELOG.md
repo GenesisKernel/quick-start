@@ -1,3 +1,11 @@
+## Version 0.8.1 / 2019-Feb-27 03:32
+* Change mac docker URL to the current stable version
+* Fix system parameters update method
+* Fix client's dmg URL
+* Upgrade backend to version 1.2.5
+* Upgrade scripts to v0.2.2
+* Upgrade Block Explorer version v0.3.2
+
 ## Version 0.8.0 / 2019-Feb-13 03:07
 * Upgrade backend to version 1.2.4
 * Upgrade applications to version v1.3.0
