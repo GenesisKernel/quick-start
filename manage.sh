@@ -3951,8 +3951,8 @@ start_import_crediting() {
     run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
 }
 
-start_import_lang_reg() {
-    echo "Importing Lang Registry app ..."
+start_import_land_reg() {
+    echo "Importing Land Registry app ..."
     local i
     i=1
     run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
@@ -5987,10 +5987,10 @@ pre_command() {
         start_import_crediting
         ;;
 
-    import-lang-reg)
+    import-land-reg)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_import_lang_reg
+        start_import_land_reg
         ;;
 
     import-token-sale)
