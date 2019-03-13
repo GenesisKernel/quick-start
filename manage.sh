@@ -3929,7 +3929,7 @@ import_from_url() {
 }
 
 start_import_initial_apps() {
-    echo "Starting importing of initial apps ..."
+    echo "Importing initial apps ..."
 
     for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do
         run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}"
@@ -3937,14 +3937,35 @@ start_import_initial_apps() {
 }
 
 start_import_demo_apps() {
-    echo "Preparing for importing of demo apps ..."
+    echo "Importing demo apps ..."
 
     for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do
         run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
     done
 }
 
-start_import_es_apps() {
+start_import_crediting() {
+    echo "Importing P2P Loans app ..."
+    local i
+    i=0
+    run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+}
+
+start_import_lang_reg() {
+    echo "Importing Lang Registry app ..."
+    local i
+    i=1
+    run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+}
+
+start_import_token_sale() {
+    echo "Importing Token Sale app ..."
+    local i
+    i=2
+    run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+}
+
+start_import_crediting_apps() {
     echo "Preparing for importing of ecosystem apps ..."
 
     for i in $(seq 0 $(expr ${#ES_APPS_URLS[@]} - 1)); do
@@ -5958,6 +5979,24 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_es_apps
+        ;;
+
+    import-crediting)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        start_import_crediting
+        ;;
+
+    import-lang-reg)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        start_import_lang_reg
+        ;;
+
+    import-token-sale)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        start_import_token_sale
         ;;
 
     import-from-file)
