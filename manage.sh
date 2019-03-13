@@ -3965,8 +3965,8 @@ start_import_token_sale() {
     run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
 }
 
-start_import_crediting_apps() {
-    echo "Preparing for importing of ecosystem apps ..."
+start_import_es_apps() {
+    echo "Importing Ecosystem apps ..."
 
     for i in $(seq 0 $(expr ${#ES_APPS_URLS[@]} - 1)); do
         run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
