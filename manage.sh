@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.8.0"
-VERSION="0.8.1"
+PREV_VERSION="0.8.1"
+VERSION="0.9.0"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -17,33 +17,45 @@ fi
 GOLANG_VER="1.11.5"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
+BACKEND_BRANCH="1.2.7"
 if [ "$USE_PRODUCT" = "apla" ]; then
-    BACKEND_BRANCH="1.2.5"
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
-    BACKEND_BRANCH="1.2.5" 
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
-INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.3.0/init_qs.json"
+INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
 INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=200
 INITIAL_APPS_IMPORT_MAX_TRIES[0]=200
 
-APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/system.json"
+APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/system.json"
 APPS_IMPORT_TIMEOUT_SECS[0]=200
 APPS_IMPORT_MAX_TRIES[0]=200
 
-APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/conditions.json"
+APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/conditions.json"
 APPS_IMPORT_TIMEOUT_SECS[1]=150
 APPS_IMPORT_MAX_TRIES[1]=150
 
-APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/basic.json"
+APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/basic.json"
 APPS_IMPORT_TIMEOUT_SECS[2]=400
 APPS_IMPORT_MAX_TRIES[2]=400
 
-APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/lang_res.json"
+APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=350
 APPS_IMPORT_MAX_TRIES[3]=350
+
+
+ES_APPS_URLS[0]="https://raw.githubusercontent.com/AplaProject/apps/develop/ecosystem_apps/crediting.json"
+ES_APPS_IMPORT_TIMEOUT_SECS[0]=200
+ES_APPS_IMPORT_MAX_TRIES[0]=200
+
+ES_APPS_URLS[1]="https://raw.githubusercontent.com/AplaProject/apps/develop/ecosystem_apps/land_registry.json"
+ES_APPS_IMPORT_TIMEOUT_SECS[1]=200
+ES_APPS_IMPORT_MAX_TRIES[1]=200
+
+ES_APPS_URLS[2]="https://raw.githubusercontent.com/AplaProject/apps/develop/ecosystem_apps/token_sale.json"
+ES_APPS_IMPORT_TIMEOUT_SECS[2]=200
+ES_APPS_IMPORT_MAX_TRIES[2]=200
 
 DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/system.json"
 
@@ -61,7 +73,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="v0.2.2"
+SCRIPTS_BRANCH="v0.2.3"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -3932,6 +3944,14 @@ start_import_demo_apps() {
     done
 }
 
+start_import_es_apps() {
+    echo "Preparing for importing of ecosystem apps ..."
+
+    for i in $(seq 0 $(expr ${#ES_APPS_URLS[@]} - 1)); do
+        run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+    done
+}
+
 get_demo_apps_ver() {
     check_cont "$BF_CONT_NAME" > /dev/null; [ $? -ne 0 ] \
         && echo "Container '$BF_CONT_NAME' isn't available " && return 1
@@ -5932,6 +5952,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_demo_apps
+        ;;
+
+    import-es-apps)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        start_import_es_apps
         ;;
 
     import-from-file)

@@ -1,3 +1,9 @@
+## Version 0.9.0 / 2019-Mar-13 16:11
+* Update backend to v1.2.7
+* Update applications to v1.4.0
+* Update scripts to v0.2.3
+* Add ecosystem applications support
+
 ## Version 0.8.1 / 2019-Feb-27 03:32
 * Change mac docker URL to the current stable version
 * Fix system parameters update method
