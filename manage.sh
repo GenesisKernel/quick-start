@@ -3952,7 +3952,16 @@ start_import_crediting() {
 }
 
 setup_crediting() {
+    local api_url priv_key
+    read_install_params_to_vars || return 2
+
+    copy_update_sys_params_scripts || return $?
+
+    priv_key="$(get_priv_key 1)"
+    api_url="$(get_int_api_url 1)"
+
     echo "Setting up P2P Loans app ..."
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --contract=CreditingInstall"
 }
 
 start_import_land_reg() {
@@ -5989,6 +5998,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_crediting
+        ;;
+
+    setup-crediting)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 21
+        setup_crediting
         ;;
 
     import-land-reg)
