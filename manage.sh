@@ -73,7 +73,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="v0.2.3"
+SCRIPTS_BRANCH="v0.2.4"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -3949,6 +3949,10 @@ start_import_crediting() {
     local i
     i=0
     run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+}
+
+setup_crediting() {
+    echo "Setting up P2P Loans app ..."
 }
 
 start_import_land_reg() {
