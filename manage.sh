@@ -3960,8 +3960,10 @@ setup_crediting() {
     priv_key="$(get_priv_key 1)"
     api_url="$(get_int_api_url 1)"
 
+    echo "Installing P2P Loans app roles ... "
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --contract=RolesInstall" || return $? 
     echo "Setting up P2P Loans app ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --contract=CreditingInstall"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --contract=CreditingInstall" || return $?
 }
 
 start_import_land_reg() {
@@ -3984,6 +3986,7 @@ start_import_es_apps() {
     for i in $(seq 0 $(expr ${#ES_APPS_URLS[@]} - 1)); do
         run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
     done
+    setup_crediting
 }
 
 get_demo_apps_ver() {
@@ -5998,6 +6001,7 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
         start_import_crediting
+        setup_crediting
         ;;
 
     setup-crediting)
