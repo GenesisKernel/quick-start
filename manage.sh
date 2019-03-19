@@ -3734,8 +3734,8 @@ start_sys_params_tweaks() {
     priv_key="$(get_priv_key 1)"
     api_url="$(get_int_api_url 1)"
 
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --name=max_block_generation_time --value=4000" \
-        && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --name=gap_between_blocks --value=3"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=max_block_generation_time --value=4000" \
+        && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=gap_between_blocks --value=3"
 }
 
 start_update_keys() {
@@ -3897,8 +3897,8 @@ import_from_file() {
     local loc_path rmt_path timeout
     loc_path="$1"
     [ ! -e "$loc_path" ] && echo "Path '$loc_path' doesn't exist" && return 2
-    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="150"
-    [ -n "$3" ] && max_tries="$3" || max_tries="150"
+    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="350"
+    [ -n "$3" ] && max_tries="$3" || max_tries="350"
 
     copy_import_demo_apps_scripts || return 3
 
@@ -3920,8 +3920,8 @@ import_from_url() {
     local url
     url="$1"
     [ -z "$url" ] && echo "URL isn't set" && return 2
-    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="150"
-    [ -n "$3" ] && max_tries="$3" || max_tries="150"
+    [ -n "$2" ] && timeout_secs="$2" || timeout_secs="350"
+    [ -n "$3" ] && max_tries="$3" || max_tries="350"
 
     copy_import_demo_apps_scripts || return 3
 
@@ -3961,9 +3961,9 @@ setup_crediting() {
     api_url="$(get_int_api_url 1)"
 
     echo "Installing P2P Loans app roles ... "
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --contract=RolesInstall" || return $? 
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --contract=RolesInstall" || return $? 
     echo "Setting up P2P Loans app ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=150 --max-tries=150 --contract=CreditingInstall" || return $?
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --contract=CreditingInstall" || return $?
 }
 
 start_import_land_reg() {
