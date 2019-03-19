@@ -1,3 +1,6 @@
+## Version 0.9.2 / 2019-Mar-19 17:39
+* Double increase timeouts
+
 ## Version 0.9.1 / 2019-Mar-15 21:16
 * Update scripts to v0.2.4
 * Add P2P Loans app setup
