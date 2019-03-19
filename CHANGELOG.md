@@ -1,5 +1,6 @@
 ## Version 0.8.2 / 2019-Mar-19 17:51
 * Downgrade backend to 1.2.5
+* Downgrade scripts to v0.2.3
 
 ## Version 0.9.2 / 2019-Mar-19 17:39
 * Double increase timeouts
