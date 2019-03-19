@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.9.0"
-VERSION="0.9.1"
+PREV_VERSION="0.9.1"
+VERSION="0.9.2"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -25,37 +25,37 @@ else
 fi
 
 INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
-INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=200
-INITIAL_APPS_IMPORT_MAX_TRIES[0]=200
+INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=301
+INITIAL_APPS_IMPORT_MAX_TRIES[0]=301
 
 APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/system.json"
-APPS_IMPORT_TIMEOUT_SECS[0]=200
-APPS_IMPORT_MAX_TRIES[0]=200
+APPS_IMPORT_TIMEOUT_SECS[0]=402
+APPS_IMPORT_MAX_TRIES[0]=402
 
 APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/conditions.json"
-APPS_IMPORT_TIMEOUT_SECS[1]=150
-APPS_IMPORT_MAX_TRIES[1]=150
+APPS_IMPORT_TIMEOUT_SECS[1]=303
+APPS_IMPORT_MAX_TRIES[1]=303
 
 APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/basic.json"
-APPS_IMPORT_TIMEOUT_SECS[2]=400
-APPS_IMPORT_MAX_TRIES[2]=400
+APPS_IMPORT_TIMEOUT_SECS[2]=604
+APPS_IMPORT_MAX_TRIES[2]=604
 
 APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/lang_res.json"
-APPS_IMPORT_TIMEOUT_SECS[3]=350
-APPS_IMPORT_MAX_TRIES[3]=350
+APPS_IMPORT_TIMEOUT_SECS[3]=705
+APPS_IMPORT_MAX_TRIES[3]=705
 
 
 ES_APPS_URLS[0]="https://raw.githubusercontent.com/AplaProject/apps/develop/ecosystem_apps/crediting.json"
-ES_APPS_IMPORT_TIMEOUT_SECS[0]=200
-ES_APPS_IMPORT_MAX_TRIES[0]=200
+ES_APPS_IMPORT_TIMEOUT_SECS[0]=406
+ES_APPS_IMPORT_MAX_TRIES[0]=406
 
 ES_APPS_URLS[1]="https://raw.githubusercontent.com/AplaProject/apps/develop/ecosystem_apps/land_registry.json"
-ES_APPS_IMPORT_TIMEOUT_SECS[1]=200
-ES_APPS_IMPORT_MAX_TRIES[1]=200
+ES_APPS_IMPORT_TIMEOUT_SECS[1]=407
+ES_APPS_IMPORT_MAX_TRIES[1]=407
 
 ES_APPS_URLS[2]="https://raw.githubusercontent.com/AplaProject/apps/develop/ecosystem_apps/token_sale.json"
-ES_APPS_IMPORT_TIMEOUT_SECS[2]=200
-ES_APPS_IMPORT_MAX_TRIES[2]=200
+ES_APPS_IMPORT_TIMEOUT_SECS[2]=408
+ES_APPS_IMPORT_MAX_TRIES[2]=408
 
 DEMO_APPS_URL="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/system.json"
 
