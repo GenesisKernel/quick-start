@@ -24,23 +24,23 @@ else
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
-INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
+INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.3.0/init_qs.json"
 INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=301
 INITIAL_APPS_IMPORT_MAX_TRIES[0]=301
 
-APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/system.json"
+APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/system.json"
 APPS_IMPORT_TIMEOUT_SECS[0]=402
 APPS_IMPORT_MAX_TRIES[0]=402
 
-APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/conditions.json"
+APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/conditions.json"
 APPS_IMPORT_TIMEOUT_SECS[1]=303
 APPS_IMPORT_MAX_TRIES[1]=303
 
-APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/basic.json"
+APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/basic.json"
 APPS_IMPORT_TIMEOUT_SECS[2]=604
 APPS_IMPORT_MAX_TRIES[2]=604
 
-APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/lang_res.json"
+APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.3.0/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=705
 APPS_IMPORT_MAX_TRIES[3]=705
 
