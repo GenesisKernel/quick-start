@@ -3687,7 +3687,7 @@ start_update_full_nodes() {
     pub_keys=$(get_node_pub_keys | sed -E 's/([0-9]+): (.*)$/--node-pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
     
     echo "Starting full nodes update ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_full_nodes.py --call-priv-key=$priv_key --call-api-url=$api_url $key_ids $api_urls $tcp_addrs $pub_keys"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_full_nodes.py --call-priv-key=$priv_key --call-api-url=$api_url $key_ids $api_urls $tcp_addrs $pub_keys --max-tries=150 --timeout-secs=150"
     [ $? -ne 0 ] \
         && echo "Full nodes voting isn't completed" && return 3
     return 0
@@ -3753,7 +3753,7 @@ start_update_keys() {
     amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
 
     echo "Starting keys update ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts --max-tries=150 --timeout-secs=150"
 }
 
 
