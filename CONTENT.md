@@ -4,7 +4,7 @@
 * [Frontend v0.11.1](https://github.com/GenesisKernel/genesis-front/releases/tag/v0.11.1)
 * [Applications v1.3.0](https://github.com/AplaProject/apps/releases/tag/v1.3.0)
 * [Block Explorer v0.3.2](https://github.com/GenesisKernel/blockexplorer/releases/tag/v0.3.2)
-* [Scripts v0.2.3](https://github.com/blitzstern5/genesis-scripts/releases/tag/v0.2.3)
+* [Scripts v0.2.2](https://github.com/blitzstern5/genesis-scripts/releases/tag/v0.2.2)
 
 # Version 0.9.2
 
