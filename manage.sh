@@ -3734,8 +3734,8 @@ start_sys_params_tweaks() {
     priv_key="$(get_priv_key 1)"
     api_url="$(get_int_api_url 1)"
 
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=max_block_generation_time --value=4000" \
-        && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=gap_between_blocks --value=3"
+    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=max_block_generation_time --value=8000" \
+        && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=gap_between_blocks --value=6"
 }
 
 start_update_keys() {
