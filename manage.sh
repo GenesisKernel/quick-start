@@ -4141,19 +4141,19 @@ start_install() {
         && echo "Redis server isn't available" && return 21 \
         || echo "Redis server ready"
 
-    start_blex_cont $blexp
+    #start_blex_cont $blexp
 
-    wait_cont_proc $BLEX_CONT_NAME supervisord 15
-    [ $? -ne 0 ] \
-        && echo "Block explorer's supervisord isn't available" && return 21 \
-        || echo "Block explorer's supervisord ready"
+    #wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    #[ $? -ne 0 ] \
+    #    && echo "Block explorer's supervisord isn't available" && return 21 \
+    #    || echo "Block explorer's supervisord ready"
 
-    setup_blex $num
-    [ $? -ne 0 ] \
-        && echo "Block explorer setup isn't completed" && return 23 \
-        || echo "Block explorer setup is completed"
-    echo
-    stop_blex &
+    #setup_blex $num
+    #[ $? -ne 0 ] \
+    #    && echo "Block explorer setup isn't completed" && return 23 \
+    #    || echo "Block explorer setup is completed"
+    #echo
+    #stop_blex &
 
     ### Update ### 20180405 ### 08fad ### begin ###
 
@@ -4192,9 +4192,9 @@ start_install() {
     #    || echo "Backend applications ready"
     #echo
 
-    echo "Starting Block Explorer ..."
-    start_blex
-    echo
+    #echo "Starting Block Explorer ..."
+    #start_blex
+    #echo
 
     echo "Comparing backends 1_keys ..."
     cmp_keys $num || return 28
@@ -4227,6 +4227,25 @@ stop_all() {
     check_cont $DB_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $DB_CONT_NAME ..." && docker stop $DB_CONT_NAME
+}
+
+get_conts_dates() {
+
+    echo -n "Date @ $DB_CONT_NAME: " \
+        && (cont_exec $DB_CONT_NAME date -u || echo "absent") 
+
+    echo -n "Date @ $BF_CONT_NAME: " \
+        && (cont_exec $BF_CONT_NAME date -u || echo "absent")
+
+    echo -n "Date @ $CF_CONT_NAME: " \
+        && (cont_exec $CF_CONT_NAME date -u || echo "absent")
+
+    echo -n "Date @ $RQ_CONT_NAME: " \
+        && (cont_exec $RQ_CONT_NAME date -u || echo "absent")
+
+    echo -n "Date @ $BLEX_CONT_NAME: " \
+        && (cont_exec $BLEX_CONT_NAME date -u || echo "absent")
+
 }
 
 start_all() {
@@ -6228,6 +6247,10 @@ pre_command() {
         update_bf_dockerfile \
         update_blex_dockerfile \
         update_fe_dockerfile
+        ;;
+
+    dates)
+        get_conts_dates
         ;;
 
     product)
