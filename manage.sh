@@ -4006,17 +4006,17 @@ start_post_install_actions() {
     start_import_initial_apps || return 1
     echo
 
-    start_sys_params_tweaks || return 2
-    echo
+    #start_sys_params_tweaks || return 2
+    #echo
 
-    start_update_keys || return 5
-    echo
+    #start_update_keys || return 5
+    #echo
 
-    start_update_full_nodes || return 3
-    echo
+    #start_update_full_nodes || return 3
+    #echo
 
-    start_import_demo_apps || return 4
-    echo
+    #start_import_demo_apps || return 4
+    #echo
 }
 
 start_install() {
