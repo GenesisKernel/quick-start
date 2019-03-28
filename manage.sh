@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.9.1"
-VERSION="0.9.2"
+PREV_VERSION="0.9.2"
+VERSION="0.9.3"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -17,7 +17,8 @@ fi
 GOLANG_VER="1.11.5"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
-BACKEND_BRANCH="1.2.7"
+#BACKEND_BRANCH="1.2.7"
+BACKEND_BRANCH="develop"
 if [ "$USE_PRODUCT" = "apla" ]; then
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
@@ -2514,14 +2515,14 @@ start_be_apps() {
             || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
-    keep_restart_be_apps_on_error $num 503 10
+    keep_restart_be_apps_on_error $num 503 10 || return 2
     #echo "Restarting backend applications ..."
     #for i in $(seq 1 $num); do
     #    [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
     #       || app_name="$BE_BIN_BASENAME$i"
     #    docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
     #done
-    wait_backend_apps_status $num || return 2
+    wait_backend_apps_status $num || return 3
 }
 
 start_be_apps_normal() {
@@ -3726,16 +3727,33 @@ start_update_full_nodes_by_voting() {
 }
 
 start_sys_params_tweaks() {
-    local api_url priv_key
+    local api_url priv_key gen_time gap cnt max_tries _stop result
+    local num wps cps dbp blexp
     read_install_params_to_vars || return 2
 
     copy_update_sys_params_scripts || return $?
 
     priv_key="$(get_priv_key 1)"
     api_url="$(get_int_api_url 1)"
+    gen_time=18000
+    gap=6
 
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=max_block_generation_time --value=8000" \
-        && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=gap_between_blocks --value=6"
+    cnt=1
+    max_tries=5
+    _stop=1
+    while [ $_stop -eq 1 ]; do
+        echo "Updating core system parameters, try $cnt/$max_tries ..."
+        [ $cnt -ge $max_tries ] && _stop=0
+        result=1
+        echo "Setting up max block generation time to $gen_time ..." \
+            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=max_block_generation_time --value=18000" \
+            echo "Setting up gap between blocks to $gap ..." \
+            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=gap_between_blocks --value=6" && result=0
+        [ $result -eq 0 ] && _stop=0
+        #|| keep_restart_be_apps_on_error $num 503 10
+        cnt="$(expr $cnt + 1)"
+    done
+
 }
 
 start_update_keys() {
@@ -3932,16 +3950,32 @@ start_import_initial_apps() {
     echo "Importing initial apps ..."
 
     for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}"
+        run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}" || return $?
     done
 }
 
 start_import_demo_apps() {
+    local i cnt max_tries _stop result
     echo "Importing demo apps ..."
 
-    for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
+    for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do 
+        #run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}" || return $?
+        cnt=1
+        max_tries=5
+        _stop=1
+        while [ $_stop -eq 1 ]; do
+            echo "Importing app ${APPS_URLS[$i]}, try $cnt/$max_tries ..."
+            [ $cnt -ge $max_tries ] && _stop=0
+            result=1
+            run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}" && result=0
+            [ $result -eq 0 ] && _stop=0
+            #|| keep_restart_be_apps_on_error $num 503 10
+            cnt="$(expr $cnt + 1)"
+        done
+        [ $result -ne 0 ] && return 2
     done
+
+
 }
 
 start_import_crediting() {
@@ -4003,20 +4037,25 @@ get_demo_apps_ver() {
 ### Update ### 20180405 ### 08fad #### end ####
 
 start_post_install_actions() {
-    start_import_initial_apps || return 1
+    local num wps cps dbp blexp
+    read_install_params_to_vars || return 1
+
+    start_import_initial_apps || return 2
     echo
 
-    #start_sys_params_tweaks || return 2
-    #echo
+    start_sys_params_tweaks || return 3
+    echo
 
-    #start_update_keys || return 5
-    #echo
+    keep_restart_be_apps_on_error $num 503 10 || return 4
 
-    #start_update_full_nodes || return 3
-    #echo
+    start_update_keys # || return 5
+    echo
 
-    #start_import_demo_apps || return 4
-    #echo
+    start_update_full_nodes || return 6
+    echo
+
+    start_import_demo_apps || return 7
+    echo
 }
 
 start_install() {
@@ -4182,6 +4221,10 @@ start_install() {
         && echo "Fronend applications arn't available" && return 24 \
         || echo "Fronend applications are ready"
     echo
+
+    echo "Sleeping for 10 seconds ..."
+    sleep 10
+
 
     start_post_install_actions || return 26
 
