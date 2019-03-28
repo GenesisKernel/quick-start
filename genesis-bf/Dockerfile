@@ -5,7 +5,7 @@ ENV PATH /go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr
 ENV GOLANG_VER 1.11.5
 ENV NODEJS_SETUP_SCRIPT_URL https://deb.nodesource.com/setup_10.x
 ENV BACKEND_GO_URL github.com/AplaProject/go-apla
-ENV BACKEND_BRANCH 1.2.7
+ENV BACKEND_BRANCH develop
 ENV BE_BIN_BASENAME go-apla
 ENV FRONTEND_REPO_URL https://github.com/GenesisKernel/genesis-front
 ENV FRONTEND_BRANCH v0.11.1

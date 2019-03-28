@@ -3972,9 +3972,10 @@ start_import_demo_apps() {
             #|| keep_restart_be_apps_on_error $num 503 10
             cnt="$(expr $cnt + 1)"
         done
-        [ $result -ne 0 ] && return 2
+        [ $result -ne 0 ] && echo "Error: can't import ${APPS_URLS[$i]}" \
+            && return 2
     done
-
+    echo "Demo apps have been successfully imported"
 
 }
 
