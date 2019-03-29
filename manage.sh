@@ -24,8 +24,8 @@ else
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
-MAX_BLOCK_GENERATION_TIME=10000
-GAP_BETWEEN_BLOCKS=6
+MAX_BLOCK_GENERATION_TIME=4000
+GAP_BETWEEN_BLOCKS=8
 
 INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
 INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=70
