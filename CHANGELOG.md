@@ -1,3 +1,7 @@
+## Version 0.9.3 / 2019-Mar-29 11:39
+* Add tries to import and system params update transactions
+* Increase timeouts
+
 ## Version 0.9.2 / 2019-Mar-19 17:39
 * Double increase timeouts
 
