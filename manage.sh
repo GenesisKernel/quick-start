@@ -3583,8 +3583,11 @@ get_versions() {
     get_fe_git_ver
     echo "Golang version: $GOLANG_VER"
     echo
-    echo "Demo apps URL: $DEMO_APPS_URL"
+    echo "Initial apps URLs:"
+    get_initial_apps_urls
     echo
+    echo "Demo apps URLs:"
+    get_demo_apps_urls
 }
 
 check_num_param() {
@@ -3948,6 +3951,12 @@ import_from_url() {
     run_mbs_cmd import-from-url2 "$url" "$timeout_secs" "$max_tries"
 }
 
+get_initial_apps_urls() {
+    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do 
+        echo "${INITIAL_APPS_URLS[$i]}"
+    done
+}
+
 start_import_initial_apps() {
     local i cnt max_tries _stop result
     echo "Importing initial apps ..."
@@ -3971,6 +3980,12 @@ start_import_initial_apps() {
             	&& return 2
     done
     echo "Initial apps have been successfully imported"
+}
+
+get_demo_apps_urls() {
+    for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do 
+        echo "${APPS_URLS[$i]}"
+    done
 }
 
 start_import_demo_apps() {
