@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.9.2"
-VERSION="0.9.3"
+PREV_VERSION="0.9.1"
+VERSION="0.9.2"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -17,29 +17,31 @@ fi
 GOLANG_VER="1.11.5"
 NODEJS_SETUP_SCRIPT_URL="https://deb.nodesource.com/setup_10.x"
 
-#BACKEND_BRANCH="1.2.7"
-BACKEND_BRANCH="develop"
+BACKEND_BRANCH="1.2.7"
 if [ "$USE_PRODUCT" = "apla" ]; then
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 else
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
+MAX_BLOCK_GENERATION_TIME=10000
+GAP_BETWEEN_BLOCKS=6
+
 INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
-INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=301
-INITIAL_APPS_IMPORT_MAX_TRIES[0]=301
+INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=70
+INITIAL_APPS_IMPORT_MAX_TRIES[0]=70
 
 APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/system.json"
-APPS_IMPORT_TIMEOUT_SECS[0]=402
-APPS_IMPORT_MAX_TRIES[0]=402
+APPS_IMPORT_TIMEOUT_SECS[0]=280
+APPS_IMPORT_MAX_TRIES[0]=280
 
 APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/conditions.json"
-APPS_IMPORT_TIMEOUT_SECS[1]=303
-APPS_IMPORT_MAX_TRIES[1]=303
+APPS_IMPORT_TIMEOUT_SECS[1]=100
+APPS_IMPORT_MAX_TRIES[1]=100
 
 APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/basic.json"
-APPS_IMPORT_TIMEOUT_SECS[2]=604
-APPS_IMPORT_MAX_TRIES[2]=604
+APPS_IMPORT_TIMEOUT_SECS[2]=250
+APPS_IMPORT_MAX_TRIES[2]=250
 
 APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=705
@@ -497,7 +499,7 @@ check_host_ports() {
         echo "FREE"
     fi
 
-    local w_port; local c_port; local run_cmd
+    local i w_port c_port run_cmd
     for i in $(seq 1 $num); do
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
@@ -1037,8 +1039,8 @@ start_mac_clients() {
         *) echo "Can't download/install client" && return 101 ;;
     esac
 
-    local w_port; local c_port; local run_cmd
-    local offset_x; offset_x=0; local offset_y; offset_y=0
+    local i w_port c_port run_cmd offset_x offset_y
+    offset_x=0; offset_y=0
     for i in $(seq 1 $num); do
         priv_key="$(get_priv_key $i)"
         w_port=$(expr $i + $wps)
@@ -1072,7 +1074,7 @@ start_linux_clients() {
 
         local w_port; local c_port; local run_cmd
         local offset_x; offset_x=0; local offset_y; offset_y=0
-        local priv_key
+        local priv_key i
         for i in $(seq 1 $num); do
             priv_key="$(get_priv_key $i)"
             w_port=$(expr $i + $wps)
@@ -1255,7 +1257,7 @@ gen_docker_p_args() {
     local hsh; hsh=$2; [ -z "$hsh" ] && hsh=0
     local gsh; gsh=$3; [ -z "$gsh" ] && gsh=$hsh
 
-    local s; s=""
+    local i s; s=""
     for i in $(seq 1 $num); do
         [ -n "$s" ] && s="$s "
         s="${s}-p $(expr $i + $hsh):$(expr $i + $gsh)"
@@ -1493,7 +1495,7 @@ check_dbs() {
     local num; num=$1
     echo "Checking databases for $num backends ..."
     local total_result; total_result=0; local result
-    local db_name
+    local i db_name
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         echo -n "  checking database for backend $i: "
@@ -1507,7 +1509,8 @@ wait_dbs() {
     local num; num=$1
     local timeout_secs; [ -z "$2" ] && timeout_secs=15 || timeout_secs="$2"
     echo "Waiting ($timeout_secs seconds for each) databases for $num backends ..."
-    local total_result; total_result=0; local result db_name
+    local i total_result result db_name
+    total_result=0
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         echo "  checking database for backend $i: "
@@ -1524,7 +1527,7 @@ create_dbs() {
 
     echo "Creating/checking databases for $num backends ..."
     local total_result; total_result=0; local result db_name
-    local cnt; local stop
+    local i cnt stop 
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         cnt=1; stop=0
@@ -1617,7 +1620,7 @@ restart_db_server() {
 }
 
 block_chain_count() {
-    local num; num="$1"; local query db_name
+    local i num; num="$1"; local query db_name
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         query='SELECT COUNT(*) FROM block_chain'
@@ -1627,7 +1630,7 @@ block_chain_count() {
 }
 
 get_first_blocks() {
-    local num
+    local i num
     [ -z "$1" ] && echo "The number of backends isn't set" && return 1 || num=$1
     local query; local out; local prev; local res; res=0
     for i in $(seq 1 $num); do
@@ -1640,7 +1643,7 @@ get_first_blocks() {
 ### Update ### 20180405 ### 08fad #### end ####
 
 cmp_first_blocks() {
-    local num
+    local i num
     [ -z "$1" ] && echo "the number of backends isn't set" && return 1 || num=$1
     [ $num -eq 1 ] && echo "The backend is single" && return 0
     local query; local out; local prev; local res; result=0
@@ -1658,7 +1661,7 @@ cmp_keys() {
     local num
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1 || num=$1
     [ $num -eq 1 ] && echo "The backend is single" && return 0
-    local prev; local result; result=0
+    local i prev; local result; result=0
     for i in $(seq 1 $num); do
         prev="$out"
         out="$(do_db_query t-md5 $i "select id, pub from \"1_keys\" order by id;")"
@@ -2037,7 +2040,7 @@ get_api_urls() {
     read_install_params_to_vars || return 10
     [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
 
-    local c_port
+    local i c_port
     for i in $(seq 1 $num); do
         c_port=$(expr $i + $cps)
         echo "$i: http://127.0.0.1:$c_port/api/v2"
@@ -2064,7 +2067,7 @@ get_int_api_urls() {
     local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 10
     cps=7000
-    local c_port
+    local i c_port
     for i in $(seq 1 $num); do
         c_port=$(expr $i + $cps)
         echo "$i: http://127.0.0.1:$c_port/api/v2"
@@ -2092,7 +2095,7 @@ get_int_tcp_addrs() {
         get_int_tcp_addr $1
         return $?
     fi
-    local num; local wps; local cps; local dbp; local cfp; local blexp
+    local i num wps cps dbp cfp blexp
     read_install_params_to_vars || return 10
     for i in $(seq 1 $num); do
         echo "$i: $(get_int_tcp_addr $i)"
@@ -2206,8 +2209,8 @@ wait_centrifugo_status() {
 ### Update ### 20180405 ### 08fad ### begin ###
 
 check_backend_apps_status() {
-    local num; num=$1
-    local app_name; local result; result=0
+    local i num; num=$1
+    local app_name result; result=0
     echo "Checking backends ..."
     for i in $(seq 1 $num); do
         [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
@@ -2221,8 +2224,8 @@ check_backend_apps_status() {
 }
 
 wait_backend_apps_status() {
-    local num; num=$1
-    local app_name; local result; result=0
+    local i num; num=$1
+    local app_name result; result=0
     for i in $(seq 1 $num); do
         [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
             || app_name="$BE_BIN_BASENAME$i"
@@ -2278,7 +2281,7 @@ backend_apps_ctl() {
         && echo "Backend/frontend container isn't ready" \
         && return 3
 
-    local app_name; local result; result=0; local rcmd
+    local i app_name result rcmd; result=0
     for i in $(seq 1 $num); do
         [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
             || app_name="$BE_BIN_BASENAME$i"
@@ -2301,7 +2304,7 @@ backend_apps_ctl() {
 ### Update ### 20180405 ### 08fad #### end ####
 
 check_frontend_apps_status() {
-    local num; num=$1
+    local i num; num=$1
     local result; result=0
     echo "Checking frontends ..."
     for i in $(seq 1 $num); do
@@ -2314,7 +2317,7 @@ check_frontend_apps_status() {
 }
 
 wait_frontend_apps_status() {
-    local num; num=$1
+    local i num; num=$1
     local result; result=0
     for i in $(seq 1 $num); do
         # TODO: use CONT_WEB_PORT_SHIFT here
@@ -2330,7 +2333,7 @@ wait_frontend_apps_status() {
 ### Update ### 20180405 ### 08fad ### begin ###
 
 check_update_mbs_script() {
-    local srcs dsts do_copy
+    local i srcs dsts do_copy
     srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/manage_bf_set.sh"
     dsts[0]="$SCRIPTS_DIR/manage_bf_set.sh"
 
@@ -2356,14 +2359,14 @@ check_update_mbs_script() {
 }
 
 run_mbs_cmd() {
-    local num cmd rmt_path
+    local i num cmd rmt_path
     check_update_mbs_script || return $?
     rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
     docker exec -ti $BF_CONT_NAME bash $rmt_path $@
 }
 
 check_update_mblex_script() {
-    local srcs dsts do_copy
+    local i srcs dsts do_copy
     srcs[0]="$SCRIPT_DIR/$BLEX_CONT_BUILD_DIR$SCRIPTS_DIR/manage_blex.sh"
     dsts[0]="$SCRIPTS_DIR/manage_blex.sh"
 
@@ -2424,7 +2427,7 @@ stop_blex() {
 }
 
 #create_blex_dbs() {
-#    local num wps cps dbp cfp blexp db_name
+#    local i num wps cps dbp cfp blexp db_name
 #    read_install_params_to_vars || return $? 
 #    check_cont $DB_CONT_NAME > /dev/null \
 #    run_mblex_cmd create-dbs $num
@@ -2967,7 +2970,7 @@ create_blex_db() {
 }
 
 create_blex_dbs() {
-    local num wps cps dbp cfp blexp
+    local i num wps cps dbp cfp blexp
 
     read_install_params_to_vars || return $? 
 
@@ -3735,20 +3738,19 @@ start_sys_params_tweaks() {
 
     priv_key="$(get_priv_key 1)"
     api_url="$(get_int_api_url 1)"
-    gen_time=18000
-    gap=6
 
     cnt=1
     max_tries=5
     _stop=1
     while [ $_stop -eq 1 ]; do
-        echo "Updating core system parameters, try $cnt/$max_tries ..."
+        echo -n "Updating core system parameters"
+        [ $cnt -gt 1 ] && echo ", try $cnt/$max_tries ..." || echo " ..."
         [ $cnt -ge $max_tries ] && _stop=0
         result=1
         echo "Setting up max block generation time to $gen_time ..." \
-            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=max_block_generation_time --value=18000" \
-            echo "Setting up gap between blocks to $gap ..." \
-            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=gap_between_blocks --value=6" && result=0
+            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=max_block_generation_time --value=$MAX_BLOCK_GENERATION_TIME" \
+            && echo "Setting up gap between blocks to $gap ..." \
+            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=gap_between_blocks --value=$GAP_BETWEEN_BLOCKS" && result=0
         [ $result -eq 0 ] && _stop=0
         #|| keep_restart_be_apps_on_error $num 503 10
         cnt="$(expr $cnt + 1)"
@@ -3947,11 +3949,28 @@ import_from_url() {
 }
 
 start_import_initial_apps() {
+    local i cnt max_tries _stop result
     echo "Importing initial apps ..."
 
-    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}" || return $?
+    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do 
+        cnt=1
+        max_tries=5
+        _stop=1
+        while [ $_stop -eq 1 ]; do
+            echo -n "Importing initial app ${INITIAL_APPS_URLS[$i]}"
+            [ $cnt -gt 1 ] && echo ", try $cnt/$max_tries ..." || echo " ..."
+            [ $cnt -ge $max_tries ] && _stop=0
+            result=1
+            run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}" && result=0
+            [ $result -eq 0 ] && _stop=0
+            #|| keep_restart_be_apps_on_error $num 503 10
+            cnt="$(expr $cnt + 1)"
+        done
+        [ $result -ne 0 ] \
+		&& echo "Error: can't import ${INITIAL_APPS_URLS[$i]}" \
+            	&& return 2
     done
+    echo "Initial apps have been successfully imported"
 }
 
 start_import_demo_apps() {
@@ -3959,12 +3978,12 @@ start_import_demo_apps() {
     echo "Importing demo apps ..."
 
     for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do 
-        #run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}" || return $?
         cnt=1
         max_tries=5
         _stop=1
         while [ $_stop -eq 1 ]; do
-            echo "Importing app ${APPS_URLS[$i]}, try $cnt/$max_tries ..."
+            echo -n "Importing demo app ${APPS_URLS[$i]}"
+            [ $cnt -gt 1 ] && echo ", try $cnt/$max_tries ..." || echo " ..."
             [ $cnt -ge $max_tries ] && _stop=0
             result=1
             run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}" && result=0
@@ -3976,7 +3995,6 @@ start_import_demo_apps() {
             && return 2
     done
     echo "Demo apps have been successfully imported"
-
 }
 
 start_import_crediting() {
@@ -4055,7 +4073,9 @@ start_post_install_actions() {
     start_update_full_nodes || return 6
     echo
 
-    start_import_demo_apps || return 7
+    keep_restart_be_apps_on_error $num 503 10 || return 7
+
+    start_import_demo_apps || return 9
     echo
 }
 
@@ -4181,19 +4201,19 @@ start_install() {
         && echo "Redis server isn't available" && return 21 \
         || echo "Redis server ready"
 
-    #start_blex_cont $blexp
+    start_blex_cont $blexp
 
-    #wait_cont_proc $BLEX_CONT_NAME supervisord 15
-    #[ $? -ne 0 ] \
-    #    && echo "Block explorer's supervisord isn't available" && return 21 \
-    #    || echo "Block explorer's supervisord ready"
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
 
-    #setup_blex $num
-    #[ $? -ne 0 ] \
-    #    && echo "Block explorer setup isn't completed" && return 23 \
-    #    || echo "Block explorer setup is completed"
-    #echo
-    #stop_blex &
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
+    stop_blex &
 
     ### Update ### 20180405 ### 08fad ### begin ###
 
@@ -4223,10 +4243,15 @@ start_install() {
         || echo "Fronend applications are ready"
     echo
 
-    echo "Sleeping for 10 seconds ..."
-    sleep 10
+    #echo "Sleeping for 10 seconds ..."
+    #sleep 10
 
-
+    stop_be_apps $num
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
     start_post_install_actions || return 26
 
     #stop_be_apps $num
