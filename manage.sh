@@ -1106,12 +1106,20 @@ start_clients() {
     esac
 }
 
+get_mac_clients_pids() {
+    pgrep -f "$CLIENT_MAC_PROCESS_NAME --disable-full-nodes-sync=true --full-node"
+}
+
+are_mac_clients_running() {
+    [ -z "$(get_mac_clients_pids)" ] && echo "no" && return 1; echo "yes"
+}
+
 stop_mac_clients() {
     local max_tries; max_tries=20
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "$CLIENT_MAC_PROCESS_NAME --disable-full-nodes-sync=true --full-node")
+        pids="$(get_mac_clients_pids)"
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids > /dev/null \
             || stop=1
@@ -1120,12 +1128,20 @@ stop_mac_clients() {
     done
 }
 
+get_linux_clients_pids() {
+    pgrep -f "$CLIENT_LINUX_PROCESS_NAME --disable-full-nodes-sync=true --full-node"
+}
+
+are_linux_clients_running() {
+    [ -z "$(get_linux_clients_pids)" ] && echo "no" && return 1; echo "yes"
+}
+
 stop_linux_clients() {
     local max_tries; max_tries=20
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "$CLIENT_LINUX_PROCESS_NAME --disable-full-nodes-sync=true --full-node")
+        pids="$(get_linux_clients_pids)"
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids > /dev/null \
             || stop=1
@@ -1148,6 +1164,33 @@ stop_clients() {
             return 10
             ;;
     esac
+}
+
+are_clients_running() {
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        linux)
+            are_linux_clients_running
+            ;;
+        mac)
+            are_mac_clients_running
+            ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            return 10
+            ;;
+    esac
+}
+
+restart_clients() {
+    stop_clients
+    start_clients
+}
+
+restart_running_clients() {
+    if [ "$(are_clients_running)" = "yes" ]; then
+        restart_clients
+    fi
 }
 
 ### Client #### end ####
@@ -4054,7 +4097,7 @@ start_import_es_apps() {
     for i in $(seq 0 $(expr ${#ES_APPS_URLS[@]} - 1)); do
         run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
     done
-    setup_crediting
+    setup_crediting && restart_running_clients
 }
 
 get_demo_apps_ver() {
@@ -5212,6 +5255,14 @@ pre_command() {
         stop_clients
         ;;
 
+    clients-running)
+        are_clients_running
+        ;;
+
+    clients-pids)
+        get_mac_clients_pids
+        ;;
+
     restart-clients)
         stop_clients
         params="$(read_install_params)"
@@ -5219,6 +5270,10 @@ pre_command() {
             && echo "No install parameters found. Please start install first" \
             && exit 50
         start_clients $params
+        ;;
+
+    restart-running-clients)
+        restart_running_clients
         ;;
 
     ### Clients #### end ####
