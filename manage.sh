@@ -4294,6 +4294,206 @@ start_install() {
     # FIXME: add cfp
 }
 
+start_fast_install() {
+    local num; num=$1
+    local wps; wps=$2
+    local cps; cps=$3
+    local dbp; dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: change to argument
+
+    local tot_cont_res; tot_cont_res=0
+
+    local db_cont_res; check_cont $DB_CONT_NAME > /dev/null; db_cont_res=$? 
+    [ $db_cont_res -ne 1 ] \
+        && echo "DB container already exists. " \
+        && tot_cont_res=1
+
+    local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
+    local rq_cont_res; check_cont $RQ_CONT_NAME > /dev/null; rq_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Redis queue container already exists. " \
+        && tot_cont_res=1
+
+    local blex_cont_res; check_cont $BLEX_CONT_NAME > /dev/null; blex_cont_res=$? 
+    [ $blex_cont_res -ne 1 ] \
+        && echo "Block explorer container already exists. " \
+        && tot_cont_res=1
+
+    local bf_cont_res; check_cont $BF_CONT_NAME > /dev/null; bf_cont_res=$? 
+    [ $bf_cont_res -ne 1 ] \
+        && echo "Backend/Frontend container already exists. " \
+        && tot_cont_res=1
+
+    if [ $tot_cont_res -ne 0 ]; then
+        echo -n "Do you want to stop all running clients, delete containers and start a new installation? [y/N] "
+        local stop; stop=0
+        while [ $stop -eq 0 ]; do
+            read -n 1 answ
+            case $answ in
+                y|Y)
+                    echo
+                    echo "OK, stopping clients, removing container ..."
+                    delete_install
+                    stop=1
+                    ;;
+                n|N)
+                    echo
+                    echo "OK, stopping installation ..."
+                    return 5
+                    ;;
+            esac
+        done
+    fi
+    
+    start_db_cont $dbp
+
+    wait_cont_proc $DB_CONT_NAME postgres 45
+    [ $? -ne 0 ] \
+        && echo "Postgres process isn't available" && return 10 \
+        || echo "Postgres ready"
+
+    wait_db_exists postgres 45
+    [ $? -ne 0 ] \
+        && echo "postgres database isn't available" && return 11 \
+        || echo "postgres database ready"
+
+    wait_db_exists template0 45
+    [ $? -ne 0 ] \
+        && echo "template0 database isn't available" && return 12 \
+        || echo "template0 database ready"
+
+    wait_db_exists template1 45
+    [ $? -ne 0 ] \
+        && echo "template1 database isn't available" && return 13 \
+        || echo "template1 database ready"
+
+    echo
+
+    create_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases creation failed" && return 14 \
+        || echo "Backend databases creation compete"
+
+    wait_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases ant't available" && return 14 \
+        || echo "Backend databases ready"
+    echo
+
+    start_cf_cont $cfp
+
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
+    [ $? -ne 0 ] \
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
+    echo
+
+    wait_centrifugo_status || return 21
+    echo
+
+    start_bf_cont $num $wps $cps
+
+    wait_cont_proc $BF_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Backend's supervisord isn't available" && return 21 \
+        || echo "Backend's supervisord ready"
+
+    wait_cont_proc $BF_CONT_NAME nginx 15
+    [ $? -ne 0 ] \
+        && echo "Frontend's nginx isn't available" && return 22 \
+        || echo "Frontend's nginx ready"
+    echo
+
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
+    start_blex_cont $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
+
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
+    stop_blex &
+
+    ### Update ### 20180405 ### 08fad ### begin ###
+
+    setup_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications setup isn't completed" && return 23 \
+        || echo "Backend applications setup is completed"
+    echo
+
+    ### Update ### 20180405 ### 08fad #### end ####
+
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
+
+    setup_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications setup isn't completed" && return 24 \
+        || echo "Fronend applications setup is completed"
+    echo
+
+    start_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications arn't available" && return 24 \
+        || echo "Fronend applications are ready"
+    echo
+
+    #echo "Sleeping for 10 seconds ..."
+    #sleep 10
+
+    stop_be_apps $num
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
+    start_post_install_actions || return 26
+
+    #stop_be_apps $num
+    #start_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications arn't available" && return 23 \
+    #    || echo "Backend applications ready"
+    #echo
+
+    #echo "Starting Block Explorer ..."
+    #start_blex
+    #echo
+
+    echo "Comparing backends 1_keys ..."
+    cmp_keys $num || return 28
+    echo
+
+    echo "Comparing backends first blocks ..."
+    cmp_first_blocks $num || return 29
+    echo
+
+    check_host_side $num $wps $cps $dbp
+    stop_clients
+    [ $? -ne 2 ] && start_clients $num $wps $cps
+    # FIXME: add cfp
+}
+
 stop_all() {
     stop_clients
     check_cont $BF_CONT_NAME > /dev/null
