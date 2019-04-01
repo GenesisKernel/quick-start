@@ -3554,9 +3554,6 @@ fast_install_safe_restore_be_dbs_and_data_dirs() {
     [ ! -e "$src_dir" ] \
         && echo "Source directory '$src_dir' doesn't exist" && return 3
     num_of_backends="$([ -e "$src_dir/num_of_backends" ] && cat "$src_dir/num_of_backends" || echo 0)"
-    if [ $num_of_backends -ne $num ]; then
-        echo "The expected number of backends '$num_of_backends' isn't equal to real number of backends '$num'. Please run './manage.sh install $num_of_backends' first."
-    fi
 
     stop_be_apps $num \
         && restore_be_data_dirs "$src_dir/data-dirs" \
@@ -4145,6 +4142,7 @@ setup_crediting() {
     docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --contract=RolesInstall" || return $? 
     echo "Setting up P2P Loans app ..."
     docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --contract=CreditingInstall" || return $?
+    restart_running_clients
 }
 
 start_import_land_reg() {
@@ -4152,22 +4150,24 @@ start_import_land_reg() {
     local i
     i=1
     run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+    restart_running_clients
 }
 
 start_import_token_sale() {
     echo "Importing Token Sale app ..."
     local i
     i=2
-    run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+    run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}" || return 1
+    restart_running_clients
 }
 
 start_import_es_apps() {
     echo "Importing Ecosystem apps ..."
 
     for i in $(seq 0 $(expr ${#ES_APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+        run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}" || return 1
     done
-    setup_crediting && restart_running_clients
+    setup_crediting
 }
 
 get_demo_apps_ver() {
@@ -4560,18 +4560,6 @@ start_fast_install() {
     #    || echo "Backend applications ready"
     #echo
 
-    setup_fe_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Fronend applications setup isn't completed" && return 24 \
-        || echo "Fronend applications setup is completed"
-    echo
-
-    start_fe_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Fronend applications arn't available" && return 24 \
-        || echo "Fronend applications are ready"
-    echo
-
     #echo "Sleeping for 10 seconds ..."
     #sleep 10
 
@@ -4589,6 +4577,18 @@ start_fast_install() {
     download_fast_install_data "$FAST_INSTALL_DATA_URL" "$FAST_INSTALL_DATA_BASENAME" || return 28
     fast_install_safe_restore_be_dbs_and_data_dirs "$data_path" || return 26
     [ ! -e "$data_path" ] || rm "$data_path"
+
+    setup_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications setup isn't completed" && return 24 \
+        || echo "Fronend applications setup is completed"
+    echo
+
+    start_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications arn't available" && return 24 \
+        || echo "Fronend applications are ready"
+    echo
 
     start_be_apps $num $cps
     [ $? -ne 0 ] \
