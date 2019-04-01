@@ -27,6 +27,14 @@ fi
 MAX_BLOCK_GENERATION_TIME=4000
 GAP_BETWEEN_BLOCKS=8
 
+if [ "$USE_PRODUCT" = "apla" ]; then
+    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/genesis-qs-0.9.3-20190401023224.tar.gz"
+    FAST_INSTALL_DATA_BASENAME="dbs-and-data-dirs-20190401023224.tar.gz"
+else
+    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/genesis-qs-0.9.3-20190401023224.tar.gz"
+    FAST_INSTALL_DATA_BASENAME="dbs-and-data-dirs-20190401023224.tar.gz"
+fi    
+
 INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
 INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=70
 INITIAL_APPS_IMPORT_MAX_TRIES[0]=70
@@ -665,6 +673,30 @@ download_and_install_dmg() {
         esac
     fi
     return $result
+}
+
+download_fast_install_data() {
+    check_curl_avail
+    local data_url; data_url="$1"
+    local data_basename; data_basename="$2"
+    local result data_path
+    data_path="$(pwd)/$data_basename"
+    echo "Downloading fast install data from '$data_url' to '$data_path' ..."
+    curl -L -o "$data_path" "$data_url"
+    result=$?
+    case $result in
+        77)
+            echo
+            echo "To fix this error you need to update CA certificate file."
+            echo "Please read ISSUES.md 'curl: (77) SSL: can't load CA certificate file' section"
+            echo "See also https://curl.haxx.se/docs/sslcerts.html for details."
+            echo "See also https://curl.haxx.se/docs/caextract.html for download URLs."
+            echo
+            return $result
+            ;;
+        0) echo "$data_path" ;;
+        *) return $result ;;
+    esac
 }
 
 ### Download/install #### end ####
@@ -3498,6 +3530,45 @@ safe_restore_be_dbs_and_data_dirs() {
     esac
 }
 
+fast_install_safe_restore_be_dbs_and_data_dirs() {
+    local num wps cps dbp cfp blexp src_dir ind is_tar_gz num_of_backends
+    [ -z "$1" ] && echo "Source directory or tar.gz archive isn't set" \
+        && return 1
+    src_dir="$1"
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+
+    is_tar_gz="$(file "$src_dir" | cut -f 2 -d ':' | cut -d ',' -f1 | $SED_E 's/^[ ]*//' | grep "gzip compressed data")"
+    if [ -n "$is_tar_gz" ]; then
+        echo "Source path '$src_dir' is a tar.gz archive. Unpacking ..."
+        (cd "$(dirname "$src_dir")" && tar zvxf "$src_dir")
+        src_dir="$(echo "$src_dir" | $SED_E 's/\.tar\.gz$//')"
+    fi
+
+    [ ! -e "$src_dir" ] \
+        && echo "Source directory '$src_dir' doesn't exist" && return 3
+    num_of_backends="$([ -e "$src_dir/num_of_backends" ] && cat "$src_dir/num_of_backends" || echo 0)"
+    if [ $num_of_backends -ne $num ]; then
+        echo "The expected number of backends '$num_of_backends' isn't equal to real number of backends '$num'. Please run './manage.sh install $num_of_backends' first."
+    fi
+
+    stop_be_apps $num \
+        && restore_be_data_dirs "$src_dir/data-dirs" \
+        && restart_db_server \
+        && drop_be_dbs \
+        && create_be_dbs \
+        && restore_be_dbs "$src_dir/db-dumps" \
+        && ([ -n "$is_tar_gz" ] && [ -e "$src_dir" ] && rm -rf "$src_dir" || :) \
+        && start_be_apps $num
+}
+
 ### Backends services #### end ####
 
 
@@ -3793,9 +3864,9 @@ start_sys_params_tweaks() {
         [ $cnt -gt 1 ] && echo ", try $cnt/$max_tries ..." || echo " ..."
         [ $cnt -ge $max_tries ] && _stop=0
         result=1
-        echo "Setting up max block generation time to $gen_time ..." \
+        echo "Setting up max block generation time to $MAX_BLOCK_GENERATION_TIME ..." \
             && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=max_block_generation_time --value=$MAX_BLOCK_GENERATION_TIME" \
-            && echo "Setting up gap between blocks to $gap ..." \
+            && echo "Setting up gap between blocks to $GAP_BETWEEN_BLOCKS ..." \
             && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=gap_between_blocks --value=$GAP_BETWEEN_BLOCKS" && result=0
         [ $result -eq 0 ] && _stop=0
         #|| keep_restart_be_apps_on_error $num 503 10
@@ -4465,29 +4536,30 @@ start_fast_install() {
     [ $? -ne 0 ] \
         && echo "Block explorer's supervisord isn't available" && return 21 \
         || echo "Block explorer's supervisord ready"
-
-    setup_blex $num
-    [ $? -ne 0 ] \
-        && echo "Block explorer setup isn't completed" && return 23 \
-        || echo "Block explorer setup is completed"
-    echo
     stop_blex &
+
+    #setup_blex $num
+    #[ $? -ne 0 ] \
+    #    && echo "Block explorer setup isn't completed" && return 23 \
+    #    || echo "Block explorer setup is completed"
+    #echo
+    #stop_blex &
 
     ### Update ### 20180405 ### 08fad ### begin ###
 
-    setup_be_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Backend applications setup isn't completed" && return 23 \
-        || echo "Backend applications setup is completed"
-    echo
+    #setup_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications setup isn't completed" && return 23 \
+    #    || echo "Backend applications setup is completed"
+    #echo
 
     ### Update ### 20180405 ### 08fad #### end ####
 
-    start_be_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Backend applications arn't available" && return 23 \
-        || echo "Backend applications ready"
-    echo
+    #start_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications arn't available" && return 23 \
+    #    || echo "Backend applications ready"
+    #echo
 
     setup_fe_apps $num $cps
     [ $? -ne 0 ] \
@@ -4504,24 +4576,33 @@ start_fast_install() {
     #echo "Sleeping for 10 seconds ..."
     #sleep 10
 
-    stop_be_apps $num
+    #stop_be_apps $num
+
+    setup_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications setup isn't completed" && return 23 \
+        || echo "Backend applications setup is completed"
+    echo
+
+    #start_post_install_actions || return 26
+    local data_path result
+    data_path="$(pwd)/$FAST_INSTALL_DATA_BASENAME"
+    download_fast_install_data "$FAST_INSTALL_DATA_URL" "$FAST_INSTALL_DATA_BASENAME" || return 28
+    fast_install_safe_restore_be_dbs_and_data_dirs "$data_path" || return 26
+    [ ! -e "$data_path" ] || rm "$data_path"
+
     start_be_apps $num $cps
     [ $? -ne 0 ] \
         && echo "Backend applications arn't available" && return 23 \
         || echo "Backend applications ready"
     echo
-    start_post_install_actions || return 26
 
-    #stop_be_apps $num
-    #start_be_apps $num $cps
-    #[ $? -ne 0 ] \
-    #    && echo "Backend applications arn't available" && return 23 \
-    #    || echo "Backend applications ready"
-    #echo
-
-    #echo "Starting Block Explorer ..."
-    #start_blex
-    #echo
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
+    start_blex
 
     echo "Comparing backends 1_keys ..."
     cmp_keys $num || return 28
@@ -5163,6 +5244,11 @@ pre_command() {
 
     download-client)
         download_and_check_dmg "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME"
+        echo "res: $?"
+        ;;
+
+    download-fast-install-data|dl-fi-data)
+        download_fast_install_data "$FAST_INSTALL_DATA_URL" "$FAST_INSTALL_DATA_BASENAME"
         echo "res: $?"
         ;;
 
@@ -6481,6 +6567,20 @@ pre_command() {
         save_install_params $2 $3 $4 $5 $6
         start_install $2 $3 $4 $5 $6
         ;;
+
+    fast-install|finstall)
+        check_run_as_root
+        check_num_param $2
+        start_docker
+        check_host_ports $2 $3 $4 $5 $6
+        [ $? -ne 0 ] \
+            && echo "Please free busy ports first or customize ports shifts" \
+            && exit 100
+        echo
+        save_install_params $2 $3 $4 $5 $6
+        start_fast_install $2 $3 $4 $5 $6
+        ;;
+
 
     set-params)
         echo "Saving install parameters ..."
