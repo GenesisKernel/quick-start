@@ -4590,11 +4590,11 @@ start_fast_install() {
         || echo "Fronend applications are ready"
     echo
 
-    start_be_apps $num $cps
-    [ $? -ne 0 ] \
-        && echo "Backend applications arn't available" && return 23 \
-        || echo "Backend applications ready"
-    echo
+    #start_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications arn't available" && return 23 \
+    #    || echo "Backend applications ready"
+    #echo
 
     setup_blex $num
     [ $? -ne 0 ] \
