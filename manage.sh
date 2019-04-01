@@ -6606,6 +6606,16 @@ pre_command() {
         start_install $(read_install_params) 
         ;;
 
+    fast-reinstall|freinstall)
+        check_run_as_root
+        params="$(read_install_params)"
+        [ -z "$params" ] \
+            && echo "No install parameters found. Please start install first" \
+            && exit 50
+        delete_install
+        start_fast_install $(read_install_params) 
+        ;;
+
     stop)
         check_run_as_root
         stop_all
