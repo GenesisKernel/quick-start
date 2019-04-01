@@ -1053,7 +1053,6 @@ install_linux_client_directly() {
     )
 }
 
-
 start_mac_clients() {
     local num; num=$1;
     ([ -z "$num" ] || [ $num -lt 1 ]) \
