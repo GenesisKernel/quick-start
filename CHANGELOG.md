@@ -1,6 +1,11 @@
 ## Version 0.9.3 / 2019-Mar-29 11:39
+* Update license
 * Add tries to import and system params update transactions
 * Increase timeouts
+* Change block generation time to 4000
+* Change gap between blocks to 8
+* Add fast install functionality
+* Add transaction tries
 
 ## Version 0.9.2 / 2019-Mar-19 17:39
 * Double increase timeouts
