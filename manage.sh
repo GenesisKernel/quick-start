@@ -26,13 +26,14 @@ fi
 
 MAX_BLOCK_GENERATION_TIME=4000
 GAP_BETWEEN_BLOCKS=8
+MAX_NUM_OF_NODES=5
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/genesis-qs-0.9.3-20190401023224.tar.gz"
-    FAST_INSTALL_DATA_BASENAME="dbs-and-data-dirs-20190401023224.tar.gz"
+    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/apla/0.9.3/apla-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
+    FAST_INSTALL_DATA_BASENAME="apla-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
 else
-    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/genesis-qs-0.9.3-20190401023224.tar.gz"
-    FAST_INSTALL_DATA_BASENAME="dbs-and-data-dirs-20190401023224.tar.gz"
+    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/genesis/0.9.3/genesis-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
+    FAST_INSTALL_DATA_BASENAME="genesis-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
 fi    
 
 INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
@@ -678,9 +679,8 @@ download_and_install_dmg() {
 download_fast_install_data() {
     check_curl_avail
     local data_url; data_url="$1"
-    local data_basename; data_basename="$2"
-    local result data_path
-    data_path="$(pwd)/$data_basename"
+    local data_path; data_path="$2"
+    local result 
     echo "Downloading fast install data from '$data_url' to '$data_path' ..."
     curl -L -o "$data_path" "$data_url"
     result=$?
@@ -941,7 +941,6 @@ start_mac_docker() {
     echo "Docker ready"
     return 0
 }
-
 
 start_linux_docker() {
     install_linux_docker "$(get_linux_dist)"
@@ -2061,6 +2060,15 @@ get_pub_keys() {
     local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 10
     cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/PublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
+}
+
+get_first_n_pub_keys() {
+    local n
+    if [ -n "$1" ]; then
+        get_pub_keys |  tail -n +1 | head -n $1
+    else
+        get_pub_keys
+    fi
 }
 
 get_node_pub_key() {
@@ -3441,7 +3449,6 @@ safe_restore_be_data_dirs() {
     esac
 }
 
-
 safe_dump_be_dbs_and_data_dirs() {
     local num wps cps dbp cfp blexp dst_dir
     [ -z "$1" ] && dst_dir="./dbs-and-data-dirs-$(date '+%Y%m%d%H%M%S')" || dst_dir="$1"
@@ -3477,6 +3484,62 @@ safe_dump_be_dbs_and_data_dirs() {
             ;;
         *) echo; echo "OK, canceling dbs and data dirs dump process ..." ;;
     esac
+}
+
+safe_dump_be_dbs_and_data_dirs_non_inter() {
+    local num wps cps dbp cfp blexp dst_dir
+    [ -z "$1" ] && dst_dir="./dbs-and-data-dirs-$(date '+%Y%m%d%H%M%S')" || dst_dir="$1"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_clients \
+        && stop_be_apps $num \
+        && echo "$num" > "$dst_dir/num_of_backends" \
+        && get_versions > "$dst_dir/versions" \
+        && cp_be_logs "$dst_dir/logs" \
+        && dump_be_data_dirs "$dst_dir/data-dirs" \
+        && restart_db_server \
+        && dump_be_dbs "$dst_dir/db-dumps" \
+        && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
+        && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :)
+}
+
+dump_fast_install_data() {
+    local num wps cps dbp cfp blexp dst_dir
+    read_install_params_to_vars || return $? 
+    [ -z "$1" ] && session=$(date '+%Y%m%d%H00') || session="$1"
+
+    [ -z "$2" ] && dst_dir="./$USE_PRODUCT-qs-$VERSION-fast-install-data-$session-$num-nodes" || dst_dir="$2"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_clients \
+        && stop_be_apps $num \
+        && echo "$num" > "$dst_dir/num_of_backends" \
+        && get_versions > "$dst_dir/versions" \
+        && dump_be_data_dirs "$dst_dir/data-dirs" \
+        && restart_db_server \
+        && dump_be_dbs "$dst_dir/db-dumps" \
+        && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
+        && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :) \
+        && start_be_apps $num \
+        && start_clients
 }
 
 safe_restore_be_dbs_and_data_dirs() {
@@ -3529,7 +3592,48 @@ safe_restore_be_dbs_and_data_dirs() {
     esac
 }
 
-fast_install_safe_restore_be_dbs_and_data_dirs() {
+safe_restore_be_dbs_and_data_dirs_non_inter() {
+    local num wps cps dbp cfp blexp src_dir ind is_tar_gz num_of_backends
+    [ -z "$1" ] && echo "Source directory or tar.gz archive isn't set" \
+        && return 1
+    src_dir="$1"
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    is_tar_gz="$(file "$src_dir" | cut -f 2 -d ':' | cut -d ',' -f1 | $SED_E 's/^[ ]*//' | grep "gzip compressed data")"
+    if [ -n "$is_tar_gz" ]; then
+        echo "Source path '$src_dir' is a tar.gz archive. Unpacking ..."
+        (cd "$(dirname "$src_dir")" && tar zvxf "$src_dir")
+        src_dir="$(echo "$src_dir" | $SED_E 's/\.tar\.gz$//')"
+    fi
+
+    [ ! -e "$src_dir" ] \
+        && echo "Source directory '$src_dir' doesn't exist" && return 3
+    num_of_backends="$([ -e "$src_dir/num_of_backends" ] && cat "$src_dir/num_of_backends" || echo 0)"
+    if [ $num_of_backends -ne $num ]; then
+        echo "The expected number of backends '$num_of_backends' isn't equal to real number of backends '$num'. Please run './manage.sh install $num_of_backends' first."
+    fi
+
+    stop_clients \
+        && stop_blex \
+        && stop_be_apps $num \
+        && restore_be_data_dirs "$src_dir/data-dirs" \
+        && restart_db_server \
+        && drop_be_dbs \
+        && create_be_dbs \
+        && restore_be_dbs "$src_dir/db-dumps" \
+        && ([ -n "$is_tar_gz" ] && [ -e "$src_dir" ] && rm -rf "$src_dir" || :) \
+        && start_be_apps $num \
+        && start_blex
+}
+
+restore_fast_install_data() {
     local num wps cps dbp cfp blexp src_dir ind is_tar_gz num_of_backends
     [ -z "$1" ] && echo "Source directory or tar.gz archive isn't set" \
         && return 1
@@ -3686,10 +3790,12 @@ get_versions() {
     echo
     echo "Quick Start version: $VERSION"
     echo
-    echo "Backend version: "
+    echo "Backend: "
     get_be_version
     get_be_git_ver
-    echo "Frontend version: "
+    echo "Frontend: "
+    echo -n "Version: "
+    get_fe_ver
     get_fe_git_ver
     echo "Golang version: $GOLANG_VER"
     echo
@@ -3698,12 +3804,14 @@ get_versions() {
     echo
     echo "Demo apps URLs:"
     get_demo_apps_urls
+    echo
 }
 
 check_num_param() {
     [ -z "$1" ] && echo "The number of clients/backends is not set" && exit 100
-    [ $1 -gt 5 ] \
-        && echo "The maximum number of clients/backends is 5" && exit 101
+    [ $1 -gt $MAX_NUM_OF_NODES ] \
+        && echo "The maximum number of clients/backends is $MAX_NUM_OF_NODES" \
+        && exit 101
 }
 
 save_install_params() {
@@ -3872,8 +3980,10 @@ start_sys_params_tweaks() {
 }
 
 start_update_keys() {
-    local rmt_path priv_key api_url key_ids pub_keys amount
+    local first_n rmt_path priv_key api_url key_ids pub_keys amount
     read_install_params_to_vars || return 2
+
+    first_n="$1"
 
     copy_update_keys_scripts || return $?
 
@@ -3881,12 +3991,14 @@ start_update_keys() {
     
     api_url="$(get_int_api_url 1)"
     
-    pub_keys=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    pub_keys=$(get_first_n_pub_keys $first_n |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
     
-    amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
+    amounts=$(get_first_n_pub_keys $first_n |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
 
-    echo "Starting keys update ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts --max-tries=150 --timeout-secs=150"
+    if [ -n "$pub_keys" ]; then
+        echo "Starting keys update ..."
+        docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts --max-tries=150 --timeout-secs=150"
+    fi
 }
 
 
@@ -4407,6 +4519,257 @@ start_install() {
     # FIXME: add cfp
 }
 
+prep_fast_install_data() {
+    local num; num=$1
+    local wps; wps=$2
+    local cps; cps=$3
+    local dbp; dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: change to argument
+
+    local tot_cont_res; tot_cont_res=0
+
+    local db_cont_res; check_cont $DB_CONT_NAME > /dev/null; db_cont_res=$? 
+    [ $db_cont_res -ne 1 ] \
+        && echo "DB container already exists. " \
+        && tot_cont_res=1
+
+    local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
+    local rq_cont_res; check_cont $RQ_CONT_NAME > /dev/null; rq_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Redis queue container already exists. " \
+        && tot_cont_res=1
+
+    local blex_cont_res; check_cont $BLEX_CONT_NAME > /dev/null; blex_cont_res=$? 
+    [ $blex_cont_res -ne 1 ] \
+        && echo "Block explorer container already exists. " \
+        && tot_cont_res=1
+
+    local bf_cont_res; check_cont $BF_CONT_NAME > /dev/null; bf_cont_res=$? 
+    [ $bf_cont_res -ne 1 ] \
+        && echo "Backend/Frontend container already exists. " \
+        && tot_cont_res=1
+
+    if [ $tot_cont_res -ne 0 ]; then
+        echo -n "Do you want to stop all running clients, delete containers and start a new installation? [y/N] "
+        local stop; stop=0
+        while [ $stop -eq 0 ]; do
+            read -n 1 answ
+            case $answ in
+                y|Y)
+                    echo
+                    echo "OK, stopping clients, removing container ..."
+                    delete_install
+                    stop=1
+                    ;;
+                n|N)
+                    echo
+                    echo "OK, stopping installation ..."
+                    return 5
+                    ;;
+            esac
+        done
+    fi
+    
+    start_db_cont $dbp
+
+    wait_cont_proc $DB_CONT_NAME postgres 45
+    [ $? -ne 0 ] \
+        && echo "Postgres process isn't available" && return 10 \
+        || echo "Postgres ready"
+
+    wait_db_exists postgres 45
+    [ $? -ne 0 ] \
+        && echo "postgres database isn't available" && return 11 \
+        || echo "postgres database ready"
+
+    wait_db_exists template0 45
+    [ $? -ne 0 ] \
+        && echo "template0 database isn't available" && return 12 \
+        || echo "template0 database ready"
+
+    wait_db_exists template1 45
+    [ $? -ne 0 ] \
+        && echo "template1 database isn't available" && return 13 \
+        || echo "template1 database ready"
+
+    echo
+
+    create_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases creation failed" && return 14 \
+        || echo "Backend databases creation compete"
+
+    wait_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases ant't available" && return 14 \
+        || echo "Backend databases ready"
+    echo
+
+    start_cf_cont $cfp
+
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
+    [ $? -ne 0 ] \
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
+    echo
+
+    wait_centrifugo_status || return 21
+    echo
+
+    start_bf_cont $num $wps $cps
+
+    wait_cont_proc $BF_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Backend's supervisord isn't available" && return 21 \
+        || echo "Backend's supervisord ready"
+
+    wait_cont_proc $BF_CONT_NAME nginx 15
+    [ $? -ne 0 ] \
+        && echo "Frontend's nginx isn't available" && return 22 \
+        || echo "Frontend's nginx ready"
+    echo
+
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
+    start_blex_cont $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
+
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
+    stop_blex &
+
+    ### Update ### 20180405 ### 08fad ### begin ###
+
+    setup_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications setup isn't completed" && return 23 \
+        || echo "Backend applications setup is completed"
+    echo
+
+    ### Update ### 20180405 ### 08fad #### end ####
+
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
+
+    setup_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications setup isn't completed" && return 24 \
+        || echo "Fronend applications setup is completed"
+    echo
+
+    start_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications arn't available" && return 24 \
+        || echo "Fronend applications are ready"
+    echo
+
+    stop_be_apps $num
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
+
+    #start_update_keys # || return 5
+    #echo
+
+    #start_update_full_nodes || return 6
+    #echo
+
+    #keep_restart_be_apps_on_error $num 503 10 || return 7
+
+    #start_import_demo_apps || return 9
+    #echo
+
+    #echo "Comparing backends 1_keys ..."
+    #cmp_keys $num || return 28
+    #echo
+
+    #echo "Comparing backends first blocks ..."
+    #cmp_first_blocks $num || return 29
+    #echo
+
+    #check_host_side $num $wps $cps $dbp
+    #stop_clients
+    #[ $? -ne 2 ] && start_clients $num $wps $cps
+    ## FIXME: add cfp
+}
+
+find_first_dbs_dumps() {
+    local dir
+    [ -z "$1" ] && dir="$SCRIPT_DIR" || dir="$1"
+    db_dumps="$(cd "$dir" && find . -mindepth 1 -maxdepth 1 -name 'dbs-and-data-dirs-*' | tail -1)"
+    [ -n "$db_dumps" ] && echo "$db_dumps"
+}
+
+prep_fast_install_data_set() {
+    local i src_dir session
+
+    delete_install
+    clear_install_params
+    save_install_params $MAX_NUM_OF_NODES
+
+    prep_fast_install_data $MAX_NUM_OF_NODES || return 1
+    start_import_initial_apps || return 2
+    start_sys_params_tweaks || return 3
+    keep_restart_be_apps_on_error $MAX_NUM_OF_NODES 503 10 || return 4
+
+    safe_dump_be_dbs_and_data_dirs_non_inter
+    src_dir="$(find_first_dbs_dumps)" || return 5
+    safe_restore_be_dbs_and_data_dirs_non_inter "$src_dir"
+
+    session="$(date '+%Y%m%d%H%M%S')"
+
+    for i in $(seq $MAX_NUM_OF_NODES 1); do
+        delete_install
+        clear_install_params
+        save_install_params $i
+        prep_fast_install_data $i || return 6
+        keep_restart_be_apps_on_error $i 503 10 || return 7
+        restore_fast_install_data "$src_dir" || return 8
+ 
+        start_update_keys || return 9
+        start_update_full_nodes || return 10 
+        keep_restart_be_apps_on_error $num 503 10 || return 11 
+        start_import_demo_apps || return 12 
+        dump_fast_install_data $session
+    done
+    [ ! -e "$src_dir" ] || rm "$src_dir"
+    echo "DONE"
+}
+
+get_fast_install_data_url() {
+    echo "$FAST_INSTALL_DATA_URL" | sed -E "s/(.*)([0-9]+)(-nodes.*)/\1$1\3/g"
+}
+
+get_fast_install_data_basename() {
+    echo "$FAST_INSTALL_DATA_BASENAME" | sed -E "s/(.*)([0-9]+)(-nodes.*)/\1$1\3/g"
+}
+
+get_fast_install_data_path() {
+    echo "$SCRIPT_DIR/$(get_fast_install_data_basename $1)"
+}
+
 start_fast_install() {
     local num; num=$1
     local wps; wps=$2
@@ -4572,10 +4935,12 @@ start_fast_install() {
     echo
 
     #start_post_install_actions || return 26
-    local data_path result
-    data_path="$(pwd)/$FAST_INSTALL_DATA_BASENAME"
-    download_fast_install_data "$FAST_INSTALL_DATA_URL" "$FAST_INSTALL_DATA_BASENAME" || return 28
-    fast_install_safe_restore_be_dbs_and_data_dirs "$data_path" || return 26
+    local data_path data_url result
+    data_url="$(get_fast_install_data_url $num)"
+    data_basename="$(get_fast_install_data_basename $num)"
+    data_path="$(get_fast_install_data_path $num)"
+    download_fast_install_data "$data_url" "$data_path" || return 28
+    restore_fast_install_data "$data_path" || return 26
     [ ! -e "$data_path" ] || rm "$data_path"
 
     setup_fe_apps $num $cps
@@ -5245,6 +5610,17 @@ pre_command() {
         download_and_check_dmg "$CLIENT_DMG_DL_URL" "$CLIENT_DMG_BASENAME"
         echo "res: $?"
         ;;
+
+    fast-install-data-url|fi-url)
+        data_url="$(get_fast_install_data_url $2)"
+        echo "data_url: $data_url"
+        ;;
+
+    fast-install-data-path|fi-path)
+        data_path="$(get_fast_install_data_path $2)"
+        echo "data_path: $data_path"
+        ;;
+
 
     download-fast-install-data|dl-fi-data)
         download_fast_install_data "$FAST_INSTALL_DATA_URL" "$FAST_INSTALL_DATA_BASENAME"
@@ -6182,6 +6558,11 @@ pre_command() {
         get_pub_keys $2
         ;;
 
+    n-pub-keys)
+        get_first_n_pub_keys $2
+        ;;
+
+
     node-pub-keys)
         get_node_pub_keys $2
         ;;
@@ -6401,10 +6782,26 @@ pre_command() {
         safe_restore_be_dbs_and_data_dirs $2
         ;;
 
+    dump-fast-install-data|dump-fi-data)
+        dump_fast_install_data $2
+        ;;
+
+    prep-fi-ds)    
+        prep_fast_install_data_set
+        ;;
+
+    find-first-dbs-dump)
+        find_first_dbs_dumps .
+        ;;
+
+    restore-fast-install-data|rest-fi-data)
+        restore_fast_install_data $2
+        ;;
+
     update-keys)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_update_keys $num
+        start_update_keys $2
         ;;
 
     sys-tweaks)
