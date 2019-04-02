@@ -29,8 +29,8 @@ GAP_BETWEEN_BLOCKS=8
 MAX_NUM_OF_NODES=5
 
 if [ "$USE_PRODUCT" = "apla" ]; then
-    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/apla/0.9.3/apla-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
-    FAST_INSTALL_DATA_BASENAME="apla-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
+    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/apla/0.9.3/apla-qs-0.9.3-fast-install-data-20190402133432-1-nodes.tar.gz"
+    FAST_INSTALL_DATA_BASENAME="apla-qs-0.9.3-fast-install-data-20190402133432-1-nodes.tar.gz"
 else
     FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/genesis/0.9.3/genesis-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
     FAST_INSTALL_DATA_BASENAME="genesis-qs-0.9.3-fast-install-data-20190402074118-1-nodes.tar.gz"
