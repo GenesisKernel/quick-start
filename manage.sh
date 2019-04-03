@@ -2515,6 +2515,14 @@ create_blex_dbs() {
         && run_mblex_cmd create-dbs $num
 }
 
+clear_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd clear-dbs $num
+}
+
 stat_blex_dbs() {
     local i num wps cps dbp cfp blexp db_name
     read_install_params_to_vars || return $? 
@@ -6466,6 +6474,12 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         create_blex_dbs $num
+        ;;
+
+    clear-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        clear_blex_dbs $num
         ;;
 
     stat-blex-dbs)
