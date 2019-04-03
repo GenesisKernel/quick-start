@@ -2508,17 +2508,29 @@ stop_blex() {
     && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer-worker"
 }
 
-#create_blex_dbs() {
-#    local i num wps cps dbp cfp blexp db_name
-#    read_install_params_to_vars || return $? 
-#    check_cont $DB_CONT_NAME > /dev/null \
-#    run_mblex_cmd create-dbs $num
-#    for i in $(seq 1 $num); do
-#        db_name="$BLEX_DB_NAME_PREFIX$i"
-#        echo "Creating '$db_name' database @ '$DB_CONT_NAME' ..."
-#        docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
-#    done
-#}
+create_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd create-dbs $num
+}
+
+stat_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd stat-dbs $num
+}
+
+unlock_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd unlock-dbs $num
+}
 
 setup_blex() {
     local num blexp
@@ -6455,6 +6467,18 @@ pre_command() {
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         create_blex_dbs $num
+        ;;
+
+    stat-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        stat_blex_dbs $num
+        ;;
+
+    unlock-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        unlock_blex_dbs $num
         ;;
 
     setup-blex)

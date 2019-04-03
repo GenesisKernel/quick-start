@@ -1,3 +1,7 @@
+## Version 0.9.4 / 2019-Apr-03 04:16
+* Update scripts to v0.2.5
+* Add clear-blex-dbs, stat-blex-dbs, unlock-blex-dbs  commands
+
 ## Version 0.9.3 / 2019-Mar-29 11:39
 * Update license
 * Add tries to import and system params update transactions
