@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.9.2"
-VERSION="0.9.3"
+PREV_VERSION="0.9.3"
+VERSION="0.9.4"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -85,7 +85,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="v0.2.4"
+SCRIPTS_BRANCH="v0.2.5"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -6462,13 +6462,6 @@ pre_command() {
         read_install_params_to_vars || exit 19
         setup_blex $num
         ;;
-
-    setop-blex)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 16
-        start_blex
-        ;;
-
 
     start-blex)
         num=""; wps=""; cps=""; dbp=""; blexp=""
