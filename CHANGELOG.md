@@ -1,3 +1,16 @@
+## Version 0.9.4 / 2019-Apr-09 04:27
+* Update scripts to v0.2.5
+* Update block explorer to v0.3.3
+* Add clear-blex-dbs, create-blex-dbs, stat-blex-dbs, unlock-blex-dbs  commands
+
+## Version 0.9.3 / 2019-Mar-29 11:39
+* Update license
+* Add tries to import and system params update transactions
+* Increase timeouts
+* Change block generation time to 4000
+* Change gap between blocks to 8
+* Add fast install functionality
+
 ## Version 0.9.2 / 2019-Mar-19 17:39
 * Double increase timeouts
 

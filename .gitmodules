@@ -4,7 +4,7 @@
     branch = master
 [submodule "genesis-bf/genesis-scripts"]
 	path = genesis-bf/genesis-scripts
-	url = git@github.com:blitzstern5/genesis-scripts
+	url = git@blitzstern5.github.com:blitzstern5/genesis-scripts
     branch = master
 [submodule "genesis-blex/genesis-scripts"]
 	path = genesis-blex/genesis-scripts

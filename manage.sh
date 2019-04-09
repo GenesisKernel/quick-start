@@ -2,8 +2,8 @@
 
 ### Configuration ### begin ###
 
-PREV_VERSION="0.9.1"
-VERSION="0.9.2"
+PREV_VERSION="0.9.3"
+VERSION="0.9.4"
 SED_E="sed -E"
 
 USE_PRODUCT="genesis"
@@ -24,21 +24,32 @@ else
     BACKEND_GO_URL="github.com/AplaProject/go-apla"
 fi
 
+MAX_BLOCK_GENERATION_TIME=4000
+GAP_BETWEEN_BLOCKS=8
+MAX_NUM_OF_NODES=5
+
+if [ "$USE_PRODUCT" = "apla" ]; then
+    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/apla/0.9.4/apla-qs-0.9.4-fast-install-data-20190403060559-1-nodes.tar.gz"
+else
+    FAST_INSTALL_DATA_URL="https://github.com/blitzstern5/quick-start-data/raw/master/genesis/0.9.4/genesis-qs-0.9.4-fast-install-data-20190403052958-1-nodes.tar.gz"
+fi    
+FAST_INSTALL_DATA_BASENAME="$(basename "$FAST_INSTALL_DATA_URL")"
+
 INITIAL_APPS_URLS[0]="https://github.com/AplaProject/apps/releases/download/v1.4.0/init_qs.json"
-INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=301
-INITIAL_APPS_IMPORT_MAX_TRIES[0]=301
+INITIAL_APPS_IMPORT_TIMEOUT_SECS[0]=70
+INITIAL_APPS_IMPORT_MAX_TRIES[0]=70
 
 APPS_URLS[0]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/system.json"
-APPS_IMPORT_TIMEOUT_SECS[0]=402
-APPS_IMPORT_MAX_TRIES[0]=402
+APPS_IMPORT_TIMEOUT_SECS[0]=280
+APPS_IMPORT_MAX_TRIES[0]=280
 
 APPS_URLS[1]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/conditions.json"
-APPS_IMPORT_TIMEOUT_SECS[1]=303
-APPS_IMPORT_MAX_TRIES[1]=303
+APPS_IMPORT_TIMEOUT_SECS[1]=100
+APPS_IMPORT_MAX_TRIES[1]=100
 
 APPS_URLS[2]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/basic.json"
-APPS_IMPORT_TIMEOUT_SECS[2]=604
-APPS_IMPORT_MAX_TRIES[2]=604
+APPS_IMPORT_TIMEOUT_SECS[2]=250
+APPS_IMPORT_MAX_TRIES[2]=250
 
 APPS_URLS[3]="https://github.com/GenesisKernel/apps/releases/download/v1.4.0/lang_res.json"
 APPS_IMPORT_TIMEOUT_SECS[3]=705
@@ -73,7 +84,7 @@ fi
 FRONTEND_BRANCH="v0.11.1"
 
 SCRIPTS_REPO_URL="https://github.com/blitzstern5/genesis-scripts"
-SCRIPTS_BRANCH="v0.2.4"
+SCRIPTS_BRANCH="v0.2.5"
 
 DB_USER="postgres"
 if [ "$USE_PRODUCT" = "apla" ]; then
@@ -97,7 +108,7 @@ else
     BLEX_REDIS_URL="redis://genesis-rq:6379/0"
     BE_API_URL_PREFIX="http://genesis-bf"
 fi
-BLEX_BRANCH="v0.3.2"
+BLEX_BRANCH="v0.3.3"
 BLEX_DB_HOST="$DB_HOST"
 BLEX_DB_USER="$DB_USER"
 BLEX_DB_PASSWORD="$DB_PASSWORD"
@@ -496,7 +507,7 @@ check_host_ports() {
         echo "FREE"
     fi
 
-    local w_port; local c_port; local run_cmd
+    local i w_port c_port run_cmd
     for i in $(seq 1 $num); do
         w_port=$(expr $i + $wps)
         c_port=$(expr $i + $cps)
@@ -662,6 +673,29 @@ download_and_install_dmg() {
         esac
     fi
     return $result
+}
+
+download_fast_install_data() {
+    check_curl_avail
+    local data_url; data_url="$1"
+    local data_path; data_path="$2"
+    local result 
+    echo "Downloading fast install data from '$data_url' to '$data_path' ..."
+    curl -L -o "$data_path" "$data_url"
+    result=$?
+    case $result in
+        77)
+            echo
+            echo "To fix this error you need to update CA certificate file."
+            echo "Please read ISSUES.md 'curl: (77) SSL: can't load CA certificate file' section"
+            echo "See also https://curl.haxx.se/docs/sslcerts.html for details."
+            echo "See also https://curl.haxx.se/docs/caextract.html for download URLs."
+            echo
+            return $result
+            ;;
+        0) echo "$data_path" ;;
+        *) return $result ;;
+    esac
 }
 
 ### Download/install #### end ####
@@ -907,7 +941,6 @@ start_mac_docker() {
     return 0
 }
 
-
 start_linux_docker() {
     install_linux_docker "$(get_linux_dist)"
     [ -n "$(command -v docker)" ] && return 0
@@ -1018,7 +1051,6 @@ install_linux_client_directly() {
     )
 }
 
-
 start_mac_clients() {
     local num; num=$1;
     ([ -z "$num" ] || [ $num -lt 1 ]) \
@@ -1036,8 +1068,8 @@ start_mac_clients() {
         *) echo "Can't download/install client" && return 101 ;;
     esac
 
-    local w_port; local c_port; local run_cmd
-    local offset_x; offset_x=0; local offset_y; offset_y=0
+    local i w_port c_port run_cmd offset_x offset_y
+    offset_x=0; offset_y=0
     for i in $(seq 1 $num); do
         priv_key="$(get_priv_key $i)"
         w_port=$(expr $i + $wps)
@@ -1071,7 +1103,7 @@ start_linux_clients() {
 
         local w_port; local c_port; local run_cmd
         local offset_x; offset_x=0; local offset_y; offset_y=0
-        local priv_key
+        local priv_key i
         for i in $(seq 1 $num); do
             priv_key="$(get_priv_key $i)"
             w_port=$(expr $i + $wps)
@@ -1103,12 +1135,20 @@ start_clients() {
     esac
 }
 
+get_mac_clients_pids() {
+    pgrep -f "$CLIENT_MAC_PROCESS_NAME --disable-full-nodes-sync=true --full-node"
+}
+
+are_mac_clients_running() {
+    [ -z "$(get_mac_clients_pids)" ] && echo "no" && return 1; echo "yes"
+}
+
 stop_mac_clients() {
     local max_tries; max_tries=20
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "$CLIENT_MAC_PROCESS_NAME --disable-full-nodes-sync=true --full-node")
+        pids="$(get_mac_clients_pids)"
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids > /dev/null \
             || stop=1
@@ -1117,12 +1157,20 @@ stop_mac_clients() {
     done
 }
 
+get_linux_clients_pids() {
+    pgrep -f "$CLIENT_LINUX_PROCESS_NAME --disable-full-nodes-sync=true --full-node"
+}
+
+are_linux_clients_running() {
+    [ -z "$(get_linux_clients_pids)" ] && echo "no" && return 1; echo "yes"
+}
+
 stop_linux_clients() {
     local max_tries; max_tries=20
     local cnt; cnt=1; local stop; stop=0; local pids
     while [ $stop -eq 0 ]; do
         [ $cnt -gt 1 ] && sleep 1
-        pids=$(pgrep -f "$CLIENT_LINUX_PROCESS_NAME --disable-full-nodes-sync=true --full-node")
+        pids="$(get_linux_clients_pids)"
         [ -n "$pids" ] && pids="$(echo "$pids" | tr '\n' ' ')" \
             && echo "Stopping clients ..." && kill $pids > /dev/null \
             || stop=1
@@ -1145,6 +1193,33 @@ stop_clients() {
             return 10
             ;;
     esac
+}
+
+are_clients_running() {
+    local os_type; os_type="$(get_os_type)"
+    case $os_type in
+        linux)
+            are_linux_clients_running
+            ;;
+        mac)
+            are_mac_clients_running
+            ;;
+        *)
+            echo "Sorry, but $os_type is not supported yet"
+            return 10
+            ;;
+    esac
+}
+
+restart_clients() {
+    stop_clients
+    start_clients
+}
+
+restart_running_clients() {
+    if [ "$(are_clients_running)" = "yes" ]; then
+        restart_clients
+    fi
 }
 
 ### Client #### end ####
@@ -1254,7 +1329,7 @@ gen_docker_p_args() {
     local hsh; hsh=$2; [ -z "$hsh" ] && hsh=0
     local gsh; gsh=$3; [ -z "$gsh" ] && gsh=$hsh
 
-    local s; s=""
+    local i s; s=""
     for i in $(seq 1 $num); do
         [ -n "$s" ] && s="$s "
         s="${s}-p $(expr $i + $hsh):$(expr $i + $gsh)"
@@ -1492,7 +1567,7 @@ check_dbs() {
     local num; num=$1
     echo "Checking databases for $num backends ..."
     local total_result; total_result=0; local result
-    local db_name
+    local i db_name
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         echo -n "  checking database for backend $i: "
@@ -1506,7 +1581,8 @@ wait_dbs() {
     local num; num=$1
     local timeout_secs; [ -z "$2" ] && timeout_secs=15 || timeout_secs="$2"
     echo "Waiting ($timeout_secs seconds for each) databases for $num backends ..."
-    local total_result; total_result=0; local result db_name
+    local i total_result result db_name
+    total_result=0
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         echo "  checking database for backend $i: "
@@ -1523,7 +1599,7 @@ create_dbs() {
 
     echo "Creating/checking databases for $num backends ..."
     local total_result; total_result=0; local result db_name
-    local cnt; local stop
+    local i cnt stop 
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         cnt=1; stop=0
@@ -1616,7 +1692,7 @@ restart_db_server() {
 }
 
 block_chain_count() {
-    local num; num="$1"; local query db_name
+    local i num; num="$1"; local query db_name
     for i in $(seq 1 $num); do
         db_name="$DB_NAME_PREFIX$i"
         query='SELECT COUNT(*) FROM block_chain'
@@ -1626,7 +1702,7 @@ block_chain_count() {
 }
 
 get_first_blocks() {
-    local num
+    local i num
     [ -z "$1" ] && echo "The number of backends isn't set" && return 1 || num=$1
     local query; local out; local prev; local res; res=0
     for i in $(seq 1 $num); do
@@ -1639,7 +1715,7 @@ get_first_blocks() {
 ### Update ### 20180405 ### 08fad #### end ####
 
 cmp_first_blocks() {
-    local num
+    local i num
     [ -z "$1" ] && echo "the number of backends isn't set" && return 1 || num=$1
     [ $num -eq 1 ] && echo "The backend is single" && return 0
     local query; local out; local prev; local res; result=0
@@ -1657,7 +1733,7 @@ cmp_keys() {
     local num
     [ -z "$1" ] && echo "Backend's number isn't set" && return 1 || num=$1
     [ $num -eq 1 ] && echo "The backend is single" && return 0
-    local prev; local result; result=0
+    local i prev; local result; result=0
     for i in $(seq 1 $num); do
         prev="$out"
         out="$(do_db_query t-md5 $i "select id, pub from \"1_keys\" order by id;")"
@@ -1985,6 +2061,15 @@ get_pub_keys() {
     cont_exec $BF_CONT_NAME "bash -c 'for i in \$(seq 1 $num); do echo -n \"\$i: \" && pub_key_path=\"$BE_ROOT_DATA_DIR/node\$i/PublicKey\" && [ -e \"\$pub_key_path\" ]  && cat \"\$pub_key_path\" && echo; done'"
 }
 
+get_first_n_pub_keys() {
+    local n
+    if [ -n "$1" ]; then
+        get_pub_keys |  tail -n +1 | head -n $1
+    else
+        get_pub_keys
+    fi
+}
+
 get_node_pub_key() {
     [ -z "$1" ] && echo "The index number of a backend isn't set" && return 1
     local idx; idx="$1"
@@ -2036,7 +2121,7 @@ get_api_urls() {
     read_install_params_to_vars || return 10
     [ -z "$cps" ] && cps=$CLIENT_PORT_SHIFT
 
-    local c_port
+    local i c_port
     for i in $(seq 1 $num); do
         c_port=$(expr $i + $cps)
         echo "$i: http://127.0.0.1:$c_port/api/v2"
@@ -2063,7 +2148,7 @@ get_int_api_urls() {
     local num; local wps; local cps; local dbp; local cfp; local blexp
     read_install_params_to_vars || return 10
     cps=7000
-    local c_port
+    local i c_port
     for i in $(seq 1 $num); do
         c_port=$(expr $i + $cps)
         echo "$i: http://127.0.0.1:$c_port/api/v2"
@@ -2091,7 +2176,7 @@ get_int_tcp_addrs() {
         get_int_tcp_addr $1
         return $?
     fi
-    local num; local wps; local cps; local dbp; local cfp; local blexp
+    local i num wps cps dbp cfp blexp
     read_install_params_to_vars || return 10
     for i in $(seq 1 $num); do
         echo "$i: $(get_int_tcp_addr $i)"
@@ -2205,8 +2290,8 @@ wait_centrifugo_status() {
 ### Update ### 20180405 ### 08fad ### begin ###
 
 check_backend_apps_status() {
-    local num; num=$1
-    local app_name; local result; result=0
+    local i num; num=$1
+    local app_name result; result=0
     echo "Checking backends ..."
     for i in $(seq 1 $num); do
         [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
@@ -2220,8 +2305,8 @@ check_backend_apps_status() {
 }
 
 wait_backend_apps_status() {
-    local num; num=$1
-    local app_name; local result; result=0
+    local i num; num=$1
+    local app_name result; result=0
     for i in $(seq 1 $num); do
         [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
             || app_name="$BE_BIN_BASENAME$i"
@@ -2277,7 +2362,7 @@ backend_apps_ctl() {
         && echo "Backend/frontend container isn't ready" \
         && return 3
 
-    local app_name; local result; result=0; local rcmd
+    local i app_name result rcmd; result=0
     for i in $(seq 1 $num); do
         [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
             || app_name="$BE_BIN_BASENAME$i"
@@ -2300,7 +2385,7 @@ backend_apps_ctl() {
 ### Update ### 20180405 ### 08fad #### end ####
 
 check_frontend_apps_status() {
-    local num; num=$1
+    local i num; num=$1
     local result; result=0
     echo "Checking frontends ..."
     for i in $(seq 1 $num); do
@@ -2313,7 +2398,7 @@ check_frontend_apps_status() {
 }
 
 wait_frontend_apps_status() {
-    local num; num=$1
+    local i num; num=$1
     local result; result=0
     for i in $(seq 1 $num); do
         # TODO: use CONT_WEB_PORT_SHIFT here
@@ -2329,7 +2414,7 @@ wait_frontend_apps_status() {
 ### Update ### 20180405 ### 08fad ### begin ###
 
 check_update_mbs_script() {
-    local srcs dsts do_copy
+    local i srcs dsts do_copy
     srcs[0]="$SCRIPT_DIR/$BF_CONT_BUILD_DIR$SCRIPTS_DIR/manage_bf_set.sh"
     dsts[0]="$SCRIPTS_DIR/manage_bf_set.sh"
 
@@ -2355,14 +2440,14 @@ check_update_mbs_script() {
 }
 
 run_mbs_cmd() {
-    local num cmd rmt_path
+    local i num cmd rmt_path
     check_update_mbs_script || return $?
     rmt_path="$SCRIPTS_DIR/manage_bf_set.sh"
     docker exec -ti $BF_CONT_NAME bash $rmt_path $@
 }
 
 check_update_mblex_script() {
-    local srcs dsts do_copy
+    local i srcs dsts do_copy
     srcs[0]="$SCRIPT_DIR/$BLEX_CONT_BUILD_DIR$SCRIPTS_DIR/manage_blex.sh"
     dsts[0]="$SCRIPTS_DIR/manage_blex.sh"
 
@@ -2422,17 +2507,37 @@ stop_blex() {
     && docker exec -t $BLEX_CONT_NAME bash -c "supervisorctl stop blockexplorer-worker"
 }
 
-#create_blex_dbs() {
-#    local num wps cps dbp cfp blexp db_name
-#    read_install_params_to_vars || return $? 
-#    check_cont $DB_CONT_NAME > /dev/null \
-#    run_mblex_cmd create-dbs $num
-#    for i in $(seq 1 $num); do
-#        db_name="$BLEX_DB_NAME_PREFIX$i"
-#        echo "Creating '$db_name' database @ '$DB_CONT_NAME' ..."
-#        docker exec -ti $DB_CONT_NAME bash /db.sh create postgres "$db_name"
-#    done
-#}
+create_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd create-dbs $num
+}
+
+clear_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd clear-dbs $num
+}
+
+stat_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd stat-dbs $num
+}
+
+unlock_blex_dbs() {
+    local i num wps cps dbp cfp blexp db_name
+    read_install_params_to_vars || return $? 
+    check_cont $BLEX_CONT_NAME > /dev/null \
+        && check_cont $DB_CONT_NAME > /dev/null \
+        && run_mblex_cmd unlock-dbs $num
+}
 
 setup_blex() {
     local num blexp
@@ -2514,14 +2619,14 @@ start_be_apps() {
             || app_name="$BE_BIN_BASENAME$i"
         docker exec -t $BF_CONT_NAME bash -c "supervisorctl start $app_name"
     done
-    keep_restart_be_apps_on_error $num 503 10
+    keep_restart_be_apps_on_error $num 503 10 || return 2
     #echo "Restarting backend applications ..."
     #for i in $(seq 1 $num); do
     #    [ $i -eq 1 ] && app_name="$BE_BIN_BASENAME" \
     #       || app_name="$BE_BIN_BASENAME$i"
     #    docker exec -t $BF_CONT_NAME bash -c "supervisorctl restart $app_name"
     #done
-    wait_backend_apps_status $num || return 2
+    wait_backend_apps_status $num || return 3
 }
 
 start_be_apps_normal() {
@@ -2966,7 +3071,7 @@ create_blex_db() {
 }
 
 create_blex_dbs() {
-    local num wps cps dbp cfp blexp
+    local i num wps cps dbp cfp blexp
 
     read_install_params_to_vars || return $? 
 
@@ -3363,7 +3468,6 @@ safe_restore_be_data_dirs() {
     esac
 }
 
-
 safe_dump_be_dbs_and_data_dirs() {
     local num wps cps dbp cfp blexp dst_dir
     [ -z "$1" ] && dst_dir="./dbs-and-data-dirs-$(date '+%Y%m%d%H%M%S')" || dst_dir="$1"
@@ -3399,6 +3503,62 @@ safe_dump_be_dbs_and_data_dirs() {
             ;;
         *) echo; echo "OK, canceling dbs and data dirs dump process ..." ;;
     esac
+}
+
+safe_dump_be_dbs_and_data_dirs_non_inter() {
+    local num wps cps dbp cfp blexp dst_dir
+    [ -z "$1" ] && dst_dir="./dbs-and-data-dirs-$(date '+%Y%m%d%H%M%S')" || dst_dir="$1"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_clients \
+        && stop_be_apps $num \
+        && echo "$num" > "$dst_dir/num_of_backends" \
+        && get_versions > "$dst_dir/versions" \
+        && cp_be_logs "$dst_dir/logs" \
+        && dump_be_data_dirs "$dst_dir/data-dirs" \
+        && restart_db_server \
+        && dump_be_dbs "$dst_dir/db-dumps" \
+        && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
+        && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :)
+}
+
+dump_fast_install_data() {
+    local num wps cps dbp cfp blexp dst_dir
+    read_install_params_to_vars || return $? 
+    [ -z "$1" ] && session=$(date '+%Y%m%d%H00') || session="$1"
+
+    [ -z "$2" ] && dst_dir="./$USE_PRODUCT-qs-$VERSION-fast-install-data-$session-$num-nodes" || dst_dir="$2"
+    if [ ! -e "$dst_dir" ]; then
+        mkdir -p "$dst_dir" || return $?
+    fi
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    stop_clients \
+        && stop_be_apps $num \
+        && echo "$num" > "$dst_dir/num_of_backends" \
+        && get_versions > "$dst_dir/versions" \
+        && dump_be_data_dirs "$dst_dir/data-dirs" \
+        && restart_db_server \
+        && dump_be_dbs "$dst_dir/db-dumps" \
+        && tar -czf "$dst_dir.tar.gz" "$dst_dir" \
+        && ([ -e "$dst_dir" ] && [ -e "$dst_dir.tar.gz" ] && rm -rf "$dst_dir" || :) \
+        && start_be_apps $num \
+        && start_clients
 }
 
 safe_restore_be_dbs_and_data_dirs() {
@@ -3449,6 +3609,83 @@ safe_restore_be_dbs_and_data_dirs() {
             ;;
         *) echo; echo "OK, canceling dbs and data dirs restore process ..." ;;
     esac
+}
+
+safe_restore_be_dbs_and_data_dirs_non_inter() {
+    local num wps cps dbp cfp blexp src_dir ind is_tar_gz num_of_backends
+    [ -z "$1" ] && echo "Source directory or tar.gz archive isn't set" \
+        && return 1
+    src_dir="$1"
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+    is_tar_gz="$(file "$src_dir" | cut -f 2 -d ':' | cut -d ',' -f1 | $SED_E 's/^[ ]*//' | grep "gzip compressed data")"
+    if [ -n "$is_tar_gz" ]; then
+        echo "Source path '$src_dir' is a tar.gz archive. Unpacking ..."
+        (cd "$(dirname "$src_dir")" && tar zvxf "$src_dir")
+        src_dir="$(echo "$src_dir" | $SED_E 's/\.tar\.gz$//')"
+    fi
+
+    [ ! -e "$src_dir" ] \
+        && echo "Source directory '$src_dir' doesn't exist" && return 3
+    num_of_backends="$([ -e "$src_dir/num_of_backends" ] && cat "$src_dir/num_of_backends" || echo 0)"
+    if [ $num_of_backends -ne $num ]; then
+        echo "The expected number of backends '$num_of_backends' isn't equal to real number of backends '$num'. Please run './manage.sh install $num_of_backends' first."
+    fi
+
+    stop_clients \
+        && stop_blex \
+        && stop_be_apps $num \
+        && restore_be_data_dirs "$src_dir/data-dirs" \
+        && restart_db_server \
+        && drop_be_dbs \
+        && create_be_dbs \
+        && restore_be_dbs "$src_dir/db-dumps" \
+        && ([ -n "$is_tar_gz" ] && [ -e "$src_dir" ] && rm -rf "$src_dir" || :) \
+        && start_be_apps $num \
+        && start_blex
+}
+
+restore_fast_install_data() {
+    local num wps cps dbp cfp blexp src_dir ind is_tar_gz num_of_backends
+    [ -z "$1" ] && echo "Source directory or tar.gz archive isn't set" \
+        && return 1
+    src_dir="$1"
+
+    read_install_params_to_vars || return $? 
+
+    check_cont $BF_CONT_NAME > /dev/null
+    [ $? -ne 0 ] \
+        && echo "Backend/frontend container isn't ready" \
+        && return 2
+
+    echo
+
+    is_tar_gz="$(file "$src_dir" | cut -f 2 -d ':' | cut -d ',' -f1 | $SED_E 's/^[ ]*//' | grep "gzip compressed data")"
+    if [ -n "$is_tar_gz" ]; then
+        echo "Source path '$src_dir' is a tar.gz archive. Unpacking ..."
+        (cd "$(dirname "$src_dir")" && tar zvxf "$src_dir")
+        src_dir="$(echo "$src_dir" | $SED_E 's/\.tar\.gz$//')"
+    fi
+
+    [ ! -e "$src_dir" ] \
+        && echo "Source directory '$src_dir' doesn't exist" && return 3
+    num_of_backends="$([ -e "$src_dir/num_of_backends" ] && cat "$src_dir/num_of_backends" || echo 0)"
+
+    stop_be_apps $num \
+        && restore_be_data_dirs "$src_dir/data-dirs" \
+        && restart_db_server \
+        && drop_be_dbs \
+        && create_be_dbs \
+        && restore_be_dbs "$src_dir/db-dumps" \
+        && ([ -n "$is_tar_gz" ] && [ -e "$src_dir" ] && rm -rf "$src_dir" || :) \
+        && start_be_apps $num
 }
 
 ### Backends services #### end ####
@@ -3572,21 +3809,28 @@ get_versions() {
     echo
     echo "Quick Start version: $VERSION"
     echo
-    echo "Backend version: "
+    echo "Backend: "
     get_be_version
     get_be_git_ver
-    echo "Frontend version: "
+    echo "Frontend: "
+    echo -n "Version: "
+    get_fe_ver
     get_fe_git_ver
     echo "Golang version: $GOLANG_VER"
     echo
-    echo "Demo apps URL: $DEMO_APPS_URL"
+    echo "Initial apps URLs:"
+    get_initial_apps_urls
+    echo
+    echo "Demo apps URLs:"
+    get_demo_apps_urls
     echo
 }
 
 check_num_param() {
     [ -z "$1" ] && echo "The number of clients/backends is not set" && exit 100
-    [ $1 -gt 5 ] \
-        && echo "The maximum number of clients/backends is 5" && exit 101
+    [ $1 -gt $MAX_NUM_OF_NODES ] \
+        && echo "The maximum number of clients/backends is $MAX_NUM_OF_NODES" \
+        && exit 101
 }
 
 save_install_params() {
@@ -3726,7 +3970,8 @@ start_update_full_nodes_by_voting() {
 }
 
 start_sys_params_tweaks() {
-    local api_url priv_key
+    local api_url priv_key gen_time gap cnt max_tries _stop result
+    local num wps cps dbp blexp
     read_install_params_to_vars || return 2
 
     copy_update_sys_params_scripts || return $?
@@ -3734,13 +3979,30 @@ start_sys_params_tweaks() {
     priv_key="$(get_priv_key 1)"
     api_url="$(get_int_api_url 1)"
 
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=max_block_generation_time --value=8000" \
-        && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --name=gap_between_blocks --value=6"
+    cnt=1
+    max_tries=5
+    _stop=1
+    while [ $_stop -eq 1 ]; do
+        echo -n "Updating core system parameters"
+        [ $cnt -gt 1 ] && echo ", try $cnt/$max_tries ..." || echo " ..."
+        [ $cnt -ge $max_tries ] && _stop=0
+        result=1
+        echo "Setting up max block generation time to $MAX_BLOCK_GENERATION_TIME ..." \
+            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=max_block_generation_time --value=$MAX_BLOCK_GENERATION_TIME" \
+            && echo "Setting up gap between blocks to $GAP_BETWEEN_BLOCKS ..." \
+            && docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/update_sys_params.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=30 --max-tries=30 --name=gap_between_blocks --value=$GAP_BETWEEN_BLOCKS" && result=0
+        [ $result -eq 0 ] && _stop=0
+        #|| keep_restart_be_apps_on_error $num 503 10
+        cnt="$(expr $cnt + 1)"
+    done
+
 }
 
 start_update_keys() {
-    local rmt_path priv_key api_url key_ids pub_keys amount
+    local first_n rmt_path priv_key api_url key_ids pub_keys amount
     read_install_params_to_vars || return 2
+
+    first_n="$1"
 
     copy_update_keys_scripts || return $?
 
@@ -3748,12 +4010,14 @@ start_update_keys() {
     
     api_url="$(get_int_api_url 1)"
     
-    pub_keys=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
+    pub_keys=$(get_first_n_pub_keys $first_n |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--pub-key=\2/' | tr -d '\r' | tr '\n' ' ')
     
-    amounts=$(get_pub_keys |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
+    amounts=$(get_first_n_pub_keys $first_n |  tail -n +2 | sed -E 's/([0-9]+): (.*)$/--amount=1000000000000000000000/' | tr -d '\r' | tr '\n' ' ')
 
-    echo "Starting keys update ..."
-    docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts --max-tries=150 --timeout-secs=150"
+    if [ -n "$pub_keys" ]; then
+        echo "Starting keys update ..."
+        docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/new_users.py --priv-key=$priv_key --api-url=$api_url $pub_keys $amounts --max-tries=150 --timeout-secs=150"
+    fi
 }
 
 
@@ -3928,20 +4192,65 @@ import_from_url() {
     run_mbs_cmd import-from-url2 "$url" "$timeout_secs" "$max_tries"
 }
 
+get_initial_apps_urls() {
+    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do 
+        echo "${INITIAL_APPS_URLS[$i]}"
+    done
+}
+
 start_import_initial_apps() {
+    local i cnt max_tries _stop result
     echo "Importing initial apps ..."
 
-    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}"
+    for i in $(seq 0 $(expr ${#INITIAL_APPS_URLS[@]} - 1)); do 
+        cnt=1
+        max_tries=5
+        _stop=1
+        while [ $_stop -eq 1 ]; do
+            echo -n "Importing initial app ${INITIAL_APPS_URLS[$i]}"
+            [ $cnt -gt 1 ] && echo ", try $cnt/$max_tries ..." || echo " ..."
+            [ $cnt -ge $max_tries ] && _stop=0
+            result=1
+            run_mbs_cmd import-from-url2 "${INITIAL_APPS_URLS[$i]}" "${INITIAL_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${INITIAL_APPS_IMPORT_MAX_TRIES[$i]}" && result=0
+            [ $result -eq 0 ] && _stop=0
+            #|| keep_restart_be_apps_on_error $num 503 10
+            cnt="$(expr $cnt + 1)"
+        done
+        [ $result -ne 0 ] \
+		&& echo "Error: can't import ${INITIAL_APPS_URLS[$i]}" \
+            	&& return 2
+    done
+    echo "Initial apps have been successfully imported"
+}
+
+get_demo_apps_urls() {
+    for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do 
+        echo "${APPS_URLS[$i]}"
     done
 }
 
 start_import_demo_apps() {
+    local i cnt max_tries _stop result
     echo "Importing demo apps ..."
 
-    for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}"
+    for i in $(seq 0 $(expr ${#APPS_URLS[@]} - 1)); do 
+        cnt=1
+        max_tries=5
+        _stop=1
+        while [ $_stop -eq 1 ]; do
+            echo -n "Importing demo app ${APPS_URLS[$i]}"
+            [ $cnt -gt 1 ] && echo ", try $cnt/$max_tries ..." || echo " ..."
+            [ $cnt -ge $max_tries ] && _stop=0
+            result=1
+            run_mbs_cmd import-from-url2 "${APPS_URLS[$i]}" "${APPS_IMPORT_TIMEOUT_SECS[$i]}" "${APPS_IMPORT_MAX_TRIES[$i]}" && result=0
+            [ $result -eq 0 ] && _stop=0
+            #|| keep_restart_be_apps_on_error $num 503 10
+            cnt="$(expr $cnt + 1)"
+        done
+        [ $result -ne 0 ] && echo "Error: can't import ${APPS_URLS[$i]}" \
+            && return 2
     done
+    echo "Demo apps have been successfully imported"
 }
 
 start_import_crediting() {
@@ -3964,6 +4273,7 @@ setup_crediting() {
     docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --contract=RolesInstall" || return $? 
     echo "Setting up P2P Loans app ..."
     docker exec -t $BF_CONT_NAME sh -c "PYTHONPATH=$SCRIPTS_DIR python3 $SCRIPTS_DIR/call_contract.py --priv-key=$priv_key --api-url=$api_url --timeout-secs=350 --max-tries=350 --contract=CreditingInstall" || return $?
+    restart_running_clients
 }
 
 start_import_land_reg() {
@@ -3971,20 +4281,22 @@ start_import_land_reg() {
     local i
     i=1
     run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+    restart_running_clients
 }
 
 start_import_token_sale() {
     echo "Importing Token Sale app ..."
     local i
     i=2
-    run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+    run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}" || return 1
+    restart_running_clients
 }
 
 start_import_es_apps() {
     echo "Importing Ecosystem apps ..."
 
     for i in $(seq 0 $(expr ${#ES_APPS_URLS[@]} - 1)); do
-        run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}"
+        run_mbs_cmd import-from-url2 "${ES_APPS_URLS[$i]}" "${ES_APPS_IMPORT_TIMEOUT_SECS[$i]}" "${ES_APPS_IMPORT_MAX_TRIES[$i]}" || return 1
     done
     setup_crediting
 }
@@ -4003,19 +4315,26 @@ get_demo_apps_ver() {
 ### Update ### 20180405 ### 08fad #### end ####
 
 start_post_install_actions() {
-    start_import_initial_apps || return 1
+    local num wps cps dbp blexp
+    read_install_params_to_vars || return 1
+
+    start_import_initial_apps || return 2
     echo
 
-    start_sys_params_tweaks || return 2
+    start_sys_params_tweaks || return 3
     echo
 
-    start_update_keys || return 5
+    keep_restart_be_apps_on_error $num 503 10 || return 4
+
+    start_update_keys # || return 5
     echo
 
-    start_update_full_nodes || return 3
+    start_update_full_nodes || return 6
     echo
 
-    start_import_demo_apps || return 4
+    keep_restart_be_apps_on_error $num 503 10 || return 7
+
+    start_import_demo_apps || return 9
     echo
 }
 
@@ -4183,6 +4502,15 @@ start_install() {
         || echo "Fronend applications are ready"
     echo
 
+    #echo "Sleeping for 10 seconds ..."
+    #sleep 10
+
+    stop_be_apps $num
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
     start_post_install_actions || return 26
 
     #stop_be_apps $num
@@ -4192,9 +4520,472 @@ start_install() {
     #    || echo "Backend applications ready"
     #echo
 
-    echo "Starting Block Explorer ..."
-    start_blex
+    #echo "Starting Block Explorer ..."
+    #start_blex
+    #echo
+
+    echo "Comparing backends 1_keys ..."
+    cmp_keys $num || return 28
     echo
+
+    echo "Comparing backends first blocks ..."
+    cmp_first_blocks $num || return 29
+    echo
+
+    check_host_side $num $wps $cps $dbp
+    stop_clients
+    [ $? -ne 2 ] && start_clients $num $wps $cps
+    # FIXME: add cfp
+}
+
+prep_fast_install_data() {
+    local num; num=$1
+    local wps; wps=$2
+    local cps; cps=$3
+    local dbp; dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: change to argument
+
+    local tot_cont_res; tot_cont_res=0
+
+    local db_cont_res; check_cont $DB_CONT_NAME > /dev/null; db_cont_res=$? 
+    [ $db_cont_res -ne 1 ] \
+        && echo "DB container already exists. " \
+        && tot_cont_res=1
+
+    local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
+    local rq_cont_res; check_cont $RQ_CONT_NAME > /dev/null; rq_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Redis queue container already exists. " \
+        && tot_cont_res=1
+
+    local blex_cont_res; check_cont $BLEX_CONT_NAME > /dev/null; blex_cont_res=$? 
+    [ $blex_cont_res -ne 1 ] \
+        && echo "Block explorer container already exists. " \
+        && tot_cont_res=1
+
+    local bf_cont_res; check_cont $BF_CONT_NAME > /dev/null; bf_cont_res=$? 
+    [ $bf_cont_res -ne 1 ] \
+        && echo "Backend/Frontend container already exists. " \
+        && tot_cont_res=1
+
+    if [ $tot_cont_res -ne 0 ]; then
+        echo -n "Do you want to stop all running clients, delete containers and start a new installation? [y/N] "
+        local stop; stop=0
+        while [ $stop -eq 0 ]; do
+            read -n 1 answ
+            case $answ in
+                y|Y)
+                    echo
+                    echo "OK, stopping clients, removing container ..."
+                    delete_install
+                    stop=1
+                    ;;
+                n|N)
+                    echo
+                    echo "OK, stopping installation ..."
+                    return 5
+                    ;;
+            esac
+        done
+    fi
+    
+    start_db_cont $dbp
+
+    wait_cont_proc $DB_CONT_NAME postgres 45
+    [ $? -ne 0 ] \
+        && echo "Postgres process isn't available" && return 10 \
+        || echo "Postgres ready"
+
+    wait_db_exists postgres 45
+    [ $? -ne 0 ] \
+        && echo "postgres database isn't available" && return 11 \
+        || echo "postgres database ready"
+
+    wait_db_exists template0 45
+    [ $? -ne 0 ] \
+        && echo "template0 database isn't available" && return 12 \
+        || echo "template0 database ready"
+
+    wait_db_exists template1 45
+    [ $? -ne 0 ] \
+        && echo "template1 database isn't available" && return 13 \
+        || echo "template1 database ready"
+
+    echo
+
+    create_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases creation failed" && return 14 \
+        || echo "Backend databases creation compete"
+
+    wait_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases ant't available" && return 14 \
+        || echo "Backend databases ready"
+    echo
+
+    start_cf_cont $cfp
+
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
+    [ $? -ne 0 ] \
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
+    echo
+
+    wait_centrifugo_status || return 21
+    echo
+
+    start_bf_cont $num $wps $cps
+
+    wait_cont_proc $BF_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Backend's supervisord isn't available" && return 21 \
+        || echo "Backend's supervisord ready"
+
+    wait_cont_proc $BF_CONT_NAME nginx 15
+    [ $? -ne 0 ] \
+        && echo "Frontend's nginx isn't available" && return 22 \
+        || echo "Frontend's nginx ready"
+    echo
+
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
+    start_blex_cont $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
+
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
+    stop_blex &
+
+    ### Update ### 20180405 ### 08fad ### begin ###
+
+    setup_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications setup isn't completed" && return 23 \
+        || echo "Backend applications setup is completed"
+    echo
+
+    ### Update ### 20180405 ### 08fad #### end ####
+
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
+
+    setup_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications setup isn't completed" && return 24 \
+        || echo "Fronend applications setup is completed"
+    echo
+
+    start_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications arn't available" && return 24 \
+        || echo "Fronend applications are ready"
+    echo
+
+    stop_be_apps $num
+    start_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications arn't available" && return 23 \
+        || echo "Backend applications ready"
+    echo
+
+    #start_update_keys # || return 5
+    #echo
+
+    #start_update_full_nodes || return 6
+    #echo
+
+    #keep_restart_be_apps_on_error $num 503 10 || return 7
+
+    #start_import_demo_apps || return 9
+    #echo
+
+    #echo "Comparing backends 1_keys ..."
+    #cmp_keys $num || return 28
+    #echo
+
+    #echo "Comparing backends first blocks ..."
+    #cmp_first_blocks $num || return 29
+    #echo
+
+    #check_host_side $num $wps $cps $dbp
+    #stop_clients
+    #[ $? -ne 2 ] && start_clients $num $wps $cps
+    ## FIXME: add cfp
+}
+
+find_first_dbs_dumps() {
+    local dir
+    [ -z "$1" ] && dir="$SCRIPT_DIR" || dir="$1"
+    db_dumps="$(cd "$dir" && find . -mindepth 1 -maxdepth 1 -name 'dbs-and-data-dirs-*' | tail -1)"
+    [ -n "$db_dumps" ] && echo "$db_dumps"
+}
+
+prep_fast_install_data_set() {
+    local i src_dir session
+
+    delete_install
+    clear_install_params
+    save_install_params $MAX_NUM_OF_NODES
+
+    prep_fast_install_data $MAX_NUM_OF_NODES || return 1
+    start_import_initial_apps || return 2
+    start_sys_params_tweaks || return 3
+    keep_restart_be_apps_on_error $MAX_NUM_OF_NODES 503 10 || return 4
+
+    safe_dump_be_dbs_and_data_dirs_non_inter
+    src_dir="$(find_first_dbs_dumps)" || return 5
+    safe_restore_be_dbs_and_data_dirs_non_inter "$src_dir"
+
+    session="$(date '+%Y%m%d%H%M%S')"
+
+    for i in $(seq $MAX_NUM_OF_NODES 1); do
+        delete_install
+        clear_install_params
+        save_install_params $i
+        prep_fast_install_data $i || return 6
+        keep_restart_be_apps_on_error $i 503 10 || return 7
+        restore_fast_install_data "$src_dir" || return 8
+ 
+        start_update_keys || return 9
+        start_update_full_nodes || return 10 
+        keep_restart_be_apps_on_error $num 503 10 || return 11 
+        start_import_demo_apps || return 12 
+        dump_fast_install_data $session
+    done
+    [ ! -e "$src_dir" ] || rm "$src_dir"
+    echo "DONE"
+}
+
+get_fast_install_data_url() {
+    echo "$FAST_INSTALL_DATA_URL" | sed -E "s/(.*)([0-9]+)(-nodes.*)/\1$1\3/g"
+}
+
+get_fast_install_data_basename() {
+    echo "$FAST_INSTALL_DATA_BASENAME" | sed -E "s/(.*)([0-9]+)(-nodes.*)/\1$1\3/g"
+}
+
+get_fast_install_data_path() {
+    echo "$SCRIPT_DIR/$(get_fast_install_data_basename $1)"
+}
+
+start_fast_install() {
+    local num; num=$1
+    local wps; wps=$2
+    local cps; cps=$3
+    local dbp; dbp=$4
+    local cfp; cfp=$CF_PORT # FIXME: change to argument
+    local blexp; blexp=$BLEX_PORT # FIXME: change to argument
+
+    local tot_cont_res; tot_cont_res=0
+
+    local db_cont_res; check_cont $DB_CONT_NAME > /dev/null; db_cont_res=$? 
+    [ $db_cont_res -ne 1 ] \
+        && echo "DB container already exists. " \
+        && tot_cont_res=1
+
+    local cf_cont_res; check_cont $CF_CONT_NAME > /dev/null; cf_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Centrifugo container already exists. " \
+        && tot_cont_res=1
+
+    local rq_cont_res; check_cont $RQ_CONT_NAME > /dev/null; rq_cont_res=$? 
+    [ $cf_cont_res -ne 1 ] \
+        && echo "Redis queue container already exists. " \
+        && tot_cont_res=1
+
+    local blex_cont_res; check_cont $BLEX_CONT_NAME > /dev/null; blex_cont_res=$? 
+    [ $blex_cont_res -ne 1 ] \
+        && echo "Block explorer container already exists. " \
+        && tot_cont_res=1
+
+    local bf_cont_res; check_cont $BF_CONT_NAME > /dev/null; bf_cont_res=$? 
+    [ $bf_cont_res -ne 1 ] \
+        && echo "Backend/Frontend container already exists. " \
+        && tot_cont_res=1
+
+    if [ $tot_cont_res -ne 0 ]; then
+        echo -n "Do you want to stop all running clients, delete containers and start a new installation? [y/N] "
+        local stop; stop=0
+        while [ $stop -eq 0 ]; do
+            read -n 1 answ
+            case $answ in
+                y|Y)
+                    echo
+                    echo "OK, stopping clients, removing container ..."
+                    delete_install
+                    stop=1
+                    ;;
+                n|N)
+                    echo
+                    echo "OK, stopping installation ..."
+                    return 5
+                    ;;
+            esac
+        done
+    fi
+    
+    start_db_cont $dbp
+
+    wait_cont_proc $DB_CONT_NAME postgres 45
+    [ $? -ne 0 ] \
+        && echo "Postgres process isn't available" && return 10 \
+        || echo "Postgres ready"
+
+    wait_db_exists postgres 45
+    [ $? -ne 0 ] \
+        && echo "postgres database isn't available" && return 11 \
+        || echo "postgres database ready"
+
+    wait_db_exists template0 45
+    [ $? -ne 0 ] \
+        && echo "template0 database isn't available" && return 12 \
+        || echo "template0 database ready"
+
+    wait_db_exists template1 45
+    [ $? -ne 0 ] \
+        && echo "template1 database isn't available" && return 13 \
+        || echo "template1 database ready"
+
+    echo
+
+    create_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases creation failed" && return 14 \
+        || echo "Backend databases creation compete"
+
+    wait_dbs $num 45
+    [ $? -ne 0 ] \
+        && echo "Backend databases ant't available" && return 14 \
+        || echo "Backend databases ready"
+    echo
+
+    start_cf_cont $cfp
+
+    wait_cont_proc $CF_CONT_NAME centrifugo 10
+    [ $? -ne 0 ] \
+        && echo "Centrifugo process isn't available" && return 21 \
+        || echo "Centrifugo ready"
+    echo
+
+    wait_centrifugo_status || return 21
+    echo
+
+    start_bf_cont $num $wps $cps
+
+    wait_cont_proc $BF_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Backend's supervisord isn't available" && return 21 \
+        || echo "Backend's supervisord ready"
+
+    wait_cont_proc $BF_CONT_NAME nginx 15
+    [ $? -ne 0 ] \
+        && echo "Frontend's nginx isn't available" && return 22 \
+        || echo "Frontend's nginx ready"
+    echo
+
+    start_rq_cont
+
+    wait_cont_proc $RQ_CONT_NAME redis-server 15
+    [ $? -ne 0 ] \
+        && echo "Redis server isn't available" && return 21 \
+        || echo "Redis server ready"
+
+    start_blex_cont $blexp
+
+    wait_cont_proc $BLEX_CONT_NAME supervisord 15
+    [ $? -ne 0 ] \
+        && echo "Block explorer's supervisord isn't available" && return 21 \
+        || echo "Block explorer's supervisord ready"
+    stop_blex &
+
+    #setup_blex $num
+    #[ $? -ne 0 ] \
+    #    && echo "Block explorer setup isn't completed" && return 23 \
+    #    || echo "Block explorer setup is completed"
+    #echo
+    #stop_blex &
+
+    ### Update ### 20180405 ### 08fad ### begin ###
+
+    #setup_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications setup isn't completed" && return 23 \
+    #    || echo "Backend applications setup is completed"
+    #echo
+
+    ### Update ### 20180405 ### 08fad #### end ####
+
+    #start_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications arn't available" && return 23 \
+    #    || echo "Backend applications ready"
+    #echo
+
+    #echo "Sleeping for 10 seconds ..."
+    #sleep 10
+
+    #stop_be_apps $num
+
+    setup_be_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Backend applications setup isn't completed" && return 23 \
+        || echo "Backend applications setup is completed"
+    echo
+
+    #start_post_install_actions || return 26
+    local data_path data_url result
+    data_url="$(get_fast_install_data_url $num)"
+    data_basename="$(get_fast_install_data_basename $num)"
+    data_path="$(get_fast_install_data_path $num)"
+    download_fast_install_data "$data_url" "$data_path" || return 28
+    restore_fast_install_data "$data_path" || return 26
+    [ ! -e "$data_path" ] || rm "$data_path"
+
+    setup_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications setup isn't completed" && return 24 \
+        || echo "Fronend applications setup is completed"
+    echo
+
+    start_fe_apps $num $cps
+    [ $? -ne 0 ] \
+        && echo "Fronend applications arn't available" && return 24 \
+        || echo "Fronend applications are ready"
+    echo
+
+    #start_be_apps $num $cps
+    #[ $? -ne 0 ] \
+    #    && echo "Backend applications arn't available" && return 23 \
+    #    || echo "Backend applications ready"
+    #echo
+
+    setup_blex $num
+    [ $? -ne 0 ] \
+        && echo "Block explorer setup isn't completed" && return 23 \
+        || echo "Block explorer setup is completed"
+    echo
+    start_blex
 
     echo "Comparing backends 1_keys ..."
     cmp_keys $num || return 28
@@ -4218,12 +5009,34 @@ stop_all() {
     check_cont $CF_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $CF_CONT_NAME ..." && docker stop $CF_CONT_NAME
+    check_cont $RQ_CONT_NAME > /dev/null
+    [ $? -eq 0 ] \
+        && echo "Stopping $RQ_CONT_NAME ..." && docker stop $RQ_CONT_NAME
     check_cont $BLEX_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $BLEX_CONT_NAME ..." && docker stop $BLEX_CONT_NAME
     check_cont $DB_CONT_NAME > /dev/null
     [ $? -eq 0 ] \
         && echo "Stopping $DB_CONT_NAME ..." && docker stop $DB_CONT_NAME
+}
+
+get_conts_dates() {
+
+    echo -n "Date @ $DB_CONT_NAME: " \
+        && (cont_exec $DB_CONT_NAME date -u || echo "absent") 
+
+    echo -n "Date @ $BF_CONT_NAME: " \
+        && (cont_exec $BF_CONT_NAME date -u || echo "absent")
+
+    echo -n "Date @ $CF_CONT_NAME: " \
+        && (cont_exec $CF_CONT_NAME date -u || echo "absent")
+
+    echo -n "Date @ $RQ_CONT_NAME: " \
+        && (cont_exec $RQ_CONT_NAME date -u || echo "absent")
+
+    echo -n "Date @ $BLEX_CONT_NAME: " \
+        && (cont_exec $BLEX_CONT_NAME date -u || echo "absent")
+
 }
 
 start_all() {
@@ -4817,6 +5630,22 @@ pre_command() {
         echo "res: $?"
         ;;
 
+    fast-install-data-url|fi-url)
+        data_url="$(get_fast_install_data_url $2)"
+        echo "data_url: $data_url"
+        ;;
+
+    fast-install-data-path|fi-path)
+        data_path="$(get_fast_install_data_path $2)"
+        echo "data_path: $data_path"
+        ;;
+
+
+    download-fast-install-data|dl-fi-data)
+        download_fast_install_data "$FAST_INSTALL_DATA_URL" "$FAST_INSTALL_DATA_BASENAME"
+        echo "res: $?"
+        ;;
+
     install-client)
         check_run_as_root
         install_mac_client_directly
@@ -4906,6 +5735,14 @@ pre_command() {
         stop_clients
         ;;
 
+    clients-running)
+        are_clients_running
+        ;;
+
+    clients-pids)
+        get_mac_clients_pids
+        ;;
+
     restart-clients)
         stop_clients
         params="$(read_install_params)"
@@ -4913,6 +5750,10 @@ pre_command() {
             && echo "No install parameters found. Please start install first" \
             && exit 50
         start_clients $params
+        ;;
+
+    restart-running-clients)
+        restart_running_clients
         ;;
 
     ### Clients #### end ####
@@ -5635,18 +6476,29 @@ pre_command() {
         create_blex_dbs $num
         ;;
 
+    clear-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        clear_blex_dbs $num
+        ;;
+
+    stat-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        stat_blex_dbs $num
+        ;;
+
+    unlock-blex-dbs)
+        num=""; wps=""; cps=""; dbp=""; blexp=""
+        read_install_params_to_vars || exit 19
+        unlock_blex_dbs $num
+        ;;
+
     setup-blex)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 19
         setup_blex $num
         ;;
-
-    setop-blex)
-        num=""; wps=""; cps=""; dbp=""; blexp=""
-        read_install_params_to_vars || exit 16
-        start_blex
-        ;;
-
 
     start-blex)
         num=""; wps=""; cps=""; dbp=""; blexp=""
@@ -5735,6 +6587,11 @@ pre_command() {
     pub-keys)
         get_pub_keys $2
         ;;
+
+    n-pub-keys)
+        get_first_n_pub_keys $2
+        ;;
+
 
     node-pub-keys)
         get_node_pub_keys $2
@@ -5955,10 +6812,26 @@ pre_command() {
         safe_restore_be_dbs_and_data_dirs $2
         ;;
 
+    dump-fast-install-data|dump-fi-data)
+        dump_fast_install_data $2
+        ;;
+
+    prep-fi-ds)    
+        prep_fast_install_data_set
+        ;;
+
+    find-first-dbs-dump)
+        find_first_dbs_dumps .
+        ;;
+
+    restore-fast-install-data|rest-fi-data)
+        restore_fast_install_data $2
+        ;;
+
     update-keys)
         num=""; wps=""; cps=""; dbp=""; blexp=""
         read_install_params_to_vars || exit 21
-        start_update_keys $num
+        start_update_keys $2
         ;;
 
     sys-tweaks)
@@ -6121,6 +6994,20 @@ pre_command() {
         start_install $2 $3 $4 $5 $6
         ;;
 
+    fast-install|finstall)
+        check_run_as_root
+        check_num_param $2
+        start_docker
+        check_host_ports $2 $3 $4 $5 $6
+        [ $? -ne 0 ] \
+            && echo "Please free busy ports first or customize ports shifts" \
+            && exit 100
+        echo
+        save_install_params $2 $3 $4 $5 $6
+        start_fast_install $2 $3 $4 $5 $6
+        ;;
+
+
     set-params)
         echo "Saving install parameters ..."
         check_num_param $2
@@ -6144,6 +7031,16 @@ pre_command() {
             && exit 50
         delete_install
         start_install $(read_install_params) 
+        ;;
+
+    fast-reinstall|freinstall)
+        check_run_as_root
+        params="$(read_install_params)"
+        [ -z "$params" ] \
+            && echo "No install parameters found. Please start install first" \
+            && exit 50
+        delete_install
+        start_fast_install $(read_install_params) 
         ;;
 
     stop)
@@ -6225,6 +7122,10 @@ pre_command() {
         update_bf_dockerfile \
         update_blex_dockerfile \
         update_fe_dockerfile
+        ;;
+
+    dates)
+        get_conts_dates
         ;;
 
     product)
