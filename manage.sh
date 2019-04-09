@@ -108,7 +108,7 @@ else
     BLEX_REDIS_URL="redis://genesis-rq:6379/0"
     BE_API_URL_PREFIX="http://genesis-bf"
 fi
-BLEX_BRANCH="v0.3.2"
+BLEX_BRANCH="v0.3.3"
 BLEX_DB_HOST="$DB_HOST"
 BLEX_DB_USER="$DB_USER"
 BLEX_DB_PASSWORD="$DB_PASSWORD"
