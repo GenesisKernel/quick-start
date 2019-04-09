@@ -1,5 +1,6 @@
-## Version 0.9.4 / 2019-Apr-03 06:55
+## Version 0.9.4 / 2019-Apr-09 04:27
 * Update scripts to v0.2.5
+* Update block explorer to v0.3.3
 * Add clear-blex-dbs, create-blex-dbs, stat-blex-dbs, unlock-blex-dbs  commands
 
 ## Version 0.9.3 / 2019-Mar-29 11:39
