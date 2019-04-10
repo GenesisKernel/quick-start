@@ -16,7 +16,7 @@ ENV DEMO_APPS_URL https://github.com/GenesisKernel/apps/releases/download/v1.3.0
 RUN set -ex; apt-get update -y && \
     mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
     apt-get install -y --no-install-recommends sudo supervisor curl git gnupg2 \
-    postgresql-client-9.6 build-essential ca-certificates && apt-get clean; \
+    postgresql-client-9.6 build-essential ca-certificates apt-transport-https && apt-get clean; \
     (rm -rf /var/lib/apt/lists/*; :)
 
 RUN curl -L -o go$GOLANG_VER.linux-amd64.tar.gz https://dl.google.com/go/go$GOLANG_VER.linux-amd64.tar.gz && tar -C /usr/local -xzf go$GOLANG_VER.linux-amd64.tar.gz && rm go$GOLANG_VER.linux-amd64.tar.gz
@@ -45,13 +45,20 @@ RUN apt-get update -y && \
     apt-get clean; (rm -rf /var/lib/apt/lists/*; :)
 
 RUN curl -sL $NODEJS_SETUP_SCRIPT_URL | bash - && \
+    echo "nodesource.list: " && cat /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update -y && \
     apt-get install -y --no-install-recommends nodejs && \
     apt-get remove -y cmdtest && \
     apt-get autoremove -y
 
+#    apt-get install -y nodejs=10.15.3-1nodesource1 && \
+#    apt-get install -y --no-install-recommends nodejs && \
+RUN nodejs -v
+
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
-    apt-get update && apt-get install -y --no-install-recommends yarn
+    apt-get update -y && apt-get install -y --no-install-recommends yarn
+#    apt-get update -y && apt-get install -y yarn
 
 RUN git clone --recursive $FRONTEND_REPO_URL genesis-front && cd /genesis-front && git checkout $FRONT_BRANCH && git pull origin $FRONT_BRANCH && git rev-parse --abbrev-ref HEAD > /genesis-front.git_branch && git rev-parse HEAD > /genesis-front.git_commit && yarn install && yarn build && find /genesis-front -maxdepth 1 -mindepth 1 -not -name 'build*' -exec rm -rf {} \;
 COPY genesis-front/settings.json /genesis-front/build/
